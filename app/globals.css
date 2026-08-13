@@ -1,0 +1,17 @@
+@import "tailwindcss";
+:root { --bg: #f3f0e8; --ink: #17211d; }
+body { margin: 0; min-height: 100vh; background: radial-gradient(circle at 12% 10%, #d7e7d8, transparent 34%), var(--bg); color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+.shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.card { width: min(620px, 100%); padding: clamp(32px, 7vw, 64px); border: 1px solid #c9d2c5; border-radius: 26px; background: rgba(255,255,252,.86); box-shadow: 0 24px 70px rgba(31,57,39,.12); }
+.eyebrow { display: flex; gap: 9px; align-items: center; color: #50715a; font-size: 12px; font-weight: 700; letter-spacing: .14em; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: #6baf7c; box-shadow: 0 0 0 5px #e1f0e2; }
+h1 { margin: 24px 0 16px; font-size: clamp(38px, 7vw, 68px); line-height: .98; letter-spacing: -.06em; }
+p { color: #5e6b62; font-size: 18px; line-height: 1.55; }
+.details { display: flex; justify-content: space-between; gap: 20px; padding: 18px 0; border-bottom: 1px solid #d8dfd3; color: #31543a; }
+.details strong { color: #718075; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+.admin-link { display: inline-block; margin-top: 28px; color: #31543a; font-weight: 700; text-decoration: none; }
+.user-form { display: flex; gap: 10px; margin: 28px 0 12px; }
+.user-form input { min-width: 0; flex: 1; border: 1px solid #c9d2c5; border-radius: 10px; padding: 13px; font-size: 15px; }
+.user-form button { border: 0; border-radius: 10px; padding: 13px 16px; background: #31543a; color: white; font-weight: 700; cursor: pointer; }
+.user-list { margin-top: 18px; }
+@media (max-width: 600px) { .details { display: block; } .details span { display: block; margin-top: 8px; } }

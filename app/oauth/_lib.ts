@@ -29,6 +29,13 @@ export function validRedirect(uri: string) {
     const parsed = new URL(uri);
     const configured = (process.env.OAUTH_ALLOWED_REDIRECT_URIS ?? "").split(",").map((value) => value.trim()).filter(Boolean);
     if (configured.includes(uri)) return true;
+    const codexLoopback = parsed.protocol === "http:"
+      && parsed.hostname === "127.0.0.1"
+      && parsed.port !== ""
+      && /^\/callback\/[A-Za-z0-9_-]+$/.test(parsed.pathname)
+      && parsed.username === ""
+      && parsed.password === "";
+    if (codexLoopback) return true;
     const officialChatGPTHost = parsed.origin === "https://chatgpt.com" || parsed.origin === "https://chat.openai.com";
     const supportedPath = parsed.origin === "https://chatgpt.com" ? parsed.pathname.startsWith("/connector/oauth/") : /^\/aip\/[^/]+\/oauth\/callback$/.test(parsed.pathname);
     return officialChatGPTHost && supportedPath;

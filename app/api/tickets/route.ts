@@ -14,6 +14,18 @@ export async function GET(request: Request) {
   const target = new URL("https://api.movidesk.com/public/v1/tickets");
   for (const [key, value] of incoming.searchParams) target.searchParams.set(key, value);
   target.searchParams.set("token", token);
-  const upstream = await fetch(target, { headers: { Accept: "application/json" } });
-  return new Response(await upstream.text(), { status: upstream.status, headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json", "Cache-Control": "no-store" } });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
+  try {
+    const upstream = await fetch(target, { headers: { Accept: "application/json" }, signal: controller.signal });
+    const text = await upstream.text();
+    let data: unknown;
+    try { data = text ? JSON.parse(text) : null; } catch { data = { error: "Movidesk returned a non-JSON response." }; }
+    if (upstream.status === 404 || (upstream.ok && Array.isArray(data) && data.length === 0) || (upstream.ok && data === null)) return json({ error: "ticket_not_found" }, { status: 404 });
+    return json(data, { status: upstream.status });
+  } catch {
+    return json({ error: "Movidesk indisponível." }, { status: 502 });
+  } finally {
+    clearTimeout(timeout);
+  }
 }

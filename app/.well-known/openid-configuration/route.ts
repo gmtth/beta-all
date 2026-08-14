@@ -1,4 +1,4 @@
-import { clientId, json } from "../../oauth/_lib";
+import { GPT_ACTION_CLIENT_ID, json, MCP_CLIENT_ID } from "../../oauth/_lib";
 
 export async function GET(request: Request) {
   const issuer = new URL(request.url).origin;
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
       code_challenge_methods_supported: ["S256"],
       scopes_supported: ["movidesk:read"],
       token_endpoint_auth_methods_supported: ["none"],
-      client_id: clientId(),
+      client_ids_supported: [GPT_ACTION_CLIENT_ID, MCP_CLIENT_ID],
     },
     { headers: { "cache-control": "public, max-age=300" } },
   );

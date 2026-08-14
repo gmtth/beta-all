@@ -21,3 +21,17 @@ test("OAuth metadata advertises only the implemented PKCE flow", async () => {
   assert.match(metadata, /S256/);
   assert.doesNotMatch(metadata, /refresh_token|client_secret_post/);
 });
+
+test("the REST proxy remains read-only and protects its token boundary", async () => {
+  const route = await read("app/api/tickets/route.ts");
+  assert.match(route, /authorization/);
+  assert.match(route, /status: 401/);
+  assert.match(route, /export async function GET/);
+  assert.match(route, /ticket_not_found/);
+  assert.doesNotMatch(route, /POST|PUT|PATCH|DELETE/);
+});
+
+test("OAuth source does not log credentials", async () => {
+  const files = await Promise.all([read("app/oauth/_lib.ts"), read("app/oauth/authorize/route.ts"), read("app/oauth/token/route.ts"), read("app/api/tickets/route.ts")]);
+  assert.doesNotMatch(files.join("\n"), /console\.(log|info|debug|warn|error)/);
+});

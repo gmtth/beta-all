@@ -2,4 +2,15 @@ import { requireChatGPTUser } from "../../chatgpt-auth";
 import { ensureSchema, getUserRole, isMaster } from "../../oauth/_lib";
 import UserAdminPanel from "../../user-admin-panel";
 export const dynamic = "force-dynamic";
-export default async function UsersPage() { const user = await requireChatGPTUser("/admin/users"); await ensureSchema(); const role = await getUserRole(user.email); if (!isMaster(role)) return <main className="shell"><section className="card"><h1>Access restricted</h1><p>Only master accounts can manage users.</p></section></main>; return <main className="shell"><section className="card"><div className="eyebrow"><span className="dot" /> ADMINISTRATION</div><h1>Authorized users</h1><p>Register technical support accounts. They can authorize the GPT but cannot manage users.</p><UserAdminPanel /></section></main>; }
+export default async function UsersPage() {
+  const user = await requireChatGPTUser("/admin/users");
+  await ensureSchema();
+  const role = await getUserRole(user.email);
+  if (!isMaster(role)) return <main className="shell"><section className="card"><h1>Acesso restrito</h1><p>Apenas contas master podem gerenciar usuários.</p></section></main>;
+  return <main className="shell"><div className="ambient ambient-one" /><div className="ambient ambient-two" /><section className="card admin-card" aria-labelledby="users-title">
+    <header className="brandbar"><a className="brand" href="/"><img src="/favicon.png" alt="" /><span>movidesk</span></a><a className="back-link" href="/">← Voltar ao acesso</a></header>
+    <div className="admin-hero"><div className="eyebrow"><span className="pulse" /> CONTROLE DE ACESSO</div><h1 id="users-title">Usuários <em>autorizados.</em></h1><p className="lead">Libere o acesso do suporte ao conector Movidesk. Você pode adicionar ou remover permissões a qualquer momento.</p></div>
+    <UserAdminPanel />
+    <footer className="card-footer"><span>Alterações protegidas pela conta master</span><span className="version">MOVI / ACCESS CONTROL</span></footer>
+  </section></main>;
+}

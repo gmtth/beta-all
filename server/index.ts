@@ -20,6 +20,7 @@ export default { async fetch(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const config = loadProxyOAuthConfig(env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
+  if (request.method === "GET" && url.pathname === "/") return json({ service: "Movidesk MCP", status: "online", protocol: "MCP Streamable HTTP", endpoint: "/mcp" }, { headers: { "cache-control": "public, max-age=60" } });
   if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
   const protectedResourceMetadataPaths = new Set([
     "/.well-known/oauth-protected-resource",

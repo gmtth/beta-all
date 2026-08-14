@@ -1,7 +1,7 @@
 @import "tailwindcss";
 :root { --ink: #f8f7f5; --muted: #a3a0a4; --line: rgba(255,255,255,.12); --panel: rgba(255,255,255,.065); --accent: #ff4d22; --hot: #ff1b2d; }
 * { box-sizing: border-box; }
-body { margin: 0; min-height: 100vh; background: #100d13; color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
+body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; color: var(--ink); font-family: Arial, Helvetica, sans-serif; }
 .shell { min-height: 100vh; display: grid; place-items: center; overflow: hidden; position: relative; padding: 28px 20px; background: radial-gradient(circle at 15% 18%, rgba(255, 33, 54, .16), transparent 30%), radial-gradient(circle at 88% 86%, rgba(255, 120, 25, .13), transparent 34%), #100d13; }
 .ambient { position: absolute; width: 360px; height: 360px; border-radius: 50%; filter: blur(80px); opacity: .16; pointer-events: none; }.ambient-one { top: -180px; left: -100px; background: #ff1a39; }.ambient-two { right: -140px; bottom: -190px; background: #ff8d1b; }
 .card { width: min(680px, 100%); padding: clamp(24px, 5vw, 48px); position: relative; border: 1px solid var(--line); border-radius: 28px; background: linear-gradient(145deg, rgba(40,31,40,.93), rgba(20,16,24,.97)); box-shadow: 0 30px 100px rgba(0,0,0,.45), inset 0 1px rgba(255,255,255,.05); }
@@ -17,7 +17,7 @@ body { margin: 0; min-height: 100vh; background: #100d13; color: var(--ink); fon
 .privacy-content p:last-child { margin-bottom: 0; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 14px 18px; }
 .instructions-card { width: min(920px, 100%); }
-.instructions-shell { display: block; min-height: 100vh; overflow: auto; }
+.instructions-shell { display: block; min-height: 100vh; overflow: visible; }
 .instructions-shell .instructions-card { margin: 28px 0; }
 .instructions-shell .instructions-card { margin-left: auto; margin-right: auto; min-width: 0; }
 .instructions-content { display: grid; gap: 30px; min-width: 0; }

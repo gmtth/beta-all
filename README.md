@@ -16,7 +16,7 @@ OAUTH_SCOPE=movidesk:read
 OAUTH_CLIENT_ID=movidesk-gpt
 ```
 
-O endpoint MCP e `POST /mcp`. O health check e `GET /health`. Metadata OAuth fica em `/.well-known/oauth-protected-resource` e `/.well-known/oauth-authorization-server`.
+O endpoint MCP e `POST /mcp`. A raiz (`GET /`) exibe uma pagina explicativa; o health check e `GET /health`. Metadata OAuth fica em `/.well-known/oauth-protected-resource` e `/.well-known/oauth-authorization-server`.
 
 O MCP nao aceita `MOVIDESK_TOKEN`, `OAUTH_CLIENT_SECRET` ou Bearer como argumento de ferramenta. Nenhum segredo e registrado em logs, respostas ou metadados.
 

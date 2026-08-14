@@ -4,7 +4,7 @@ import { MovideskClient } from "../src/movidesk-client.js";
 import { bearerToken, loadProxyOAuthConfig, oauthAuthorizationServerMetadata, protectedResourceMetadata } from "../src/auth.js";
 import { registerTools } from "../src/tools/index.js";
 
-type Env = Record<string, string | undefined> & { OAUTH_PROXY_URL: string; OAUTH_CLIENT_ID: string; MCP_PUBLIC_URL: string };
+type Env = Record<string, string | undefined> & { OAUTH_PROXY_URL: string; OAUTH_MCP_CLIENT_ID?: string; MCP_PUBLIC_URL: string };
 
 const allowedOrigins = new Set(["https://chatgpt.com", "https://chat.openai.com"]);
 const corsHeaders = (origin?: string) => ({

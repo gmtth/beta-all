@@ -11,7 +11,7 @@ export const loadProxyOAuthConfig = (env: Record<string, string | undefined>): P
   const publicUrl = (env.MCP_PUBLIC_URL ?? "").replace(/\/$/, "");
   const proxyUrl = (env.OAUTH_PROXY_URL ?? "").replace(/\/$/, "");
   const scope = env.OAUTH_SCOPE ?? "movidesk:read";
-  const clientId = env.OAUTH_CLIENT_ID ?? "";
+  const clientId = env.OAUTH_MCP_CLIENT_ID ?? "movidesk-mcp-app";
   if (!publicUrl || !proxyUrl || !clientId) throw new Error("MCP_PUBLIC_URL, OAUTH_PROXY_URL and OAUTH_CLIENT_ID are required");
   new URL(publicUrl); new URL(proxyUrl);
   return { publicUrl, authorizationEndpoint: proxyUrl + "/oauth/authorize", tokenEndpoint: proxyUrl + "/oauth/token", scope, resource: publicUrl + "/mcp", clientId };

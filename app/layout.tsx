@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Movidesk OAuth Proxy",
-  description: "Autorização OAuth com PKCE para o MCP Movidesk.",
+  title: "Movidesk | Acesso seguro",
+  description: "Acesso seguro ao Movidesk pelo conector oficial.",
   icons: {
     icon: "/favicon.png",
     shortcut: "/favicon.png",
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

@@ -25,6 +25,13 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .instruction-block h2 { margin: 7px 0 8px; color: #f7f4f6; font-size: 19px; letter-spacing: -.03em; }
 .instruction-block p { margin: 0; color: #aaa6ad; font-size: 13px; line-height: 1.65; }
 .instruction-block strong { color: #f1ecef; }
+.tool-list { display: grid; gap: 10px; margin-top: 18px; }
+.tool-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 13px 14px; border: 1px solid rgba(255,255,255,.08); border-radius: 12px; background: rgba(0,0,0,.14); }
+.tool-row > div { display: grid; gap: 3px; min-width: 0; }
+.tool-row strong { font-size: 13px; }
+.tool-row code { color: #f3b4a0; font: 11px var(--font-geist-mono), Consolas, monospace; overflow-wrap: anywhere; }
+.tool-row small { color: #aaa6ad; font-size: 11px; line-height: 1.45; }
+.tool-row > span { flex: 0 0 38%; color: #c6c0c6; font-size: 11px; line-height: 1.45; text-align: right; }
 .section-kicker { color: #ff7250; font-size: 9px; font-weight: 800; letter-spacing: .16em; }
 .copy-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
 .copy-field label { display: block; margin-bottom: 6px; color: #817c84; font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
@@ -43,4 +50,4 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .schema-box { max-width: 100%; max-height: 520px; overflow: auto; margin: 18px 0 0; padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; color: #d9d2d8; background: #0c0a0f; font: 11px/1.6 var(--font-geist-mono), Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
 .prompt-example { margin: 17px 0 11px; padding: 15px 17px; border-left: 3px solid #ff633f; border-radius: 0 10px 10px 0; color: #ffd0bf; background: rgba(255,91,55,.08); font-size: 13px; font-style: italic; }
 .hint code { color: #f3b4a0; font-size: 11px; }
-@media (max-width: 600px) { .copy-grid { grid-template-columns: 1fr; }.schema-heading { flex-direction: column; }.schema-copy { margin-top: 12px; }.instruction-block { padding: 17px; }.footer-links { flex-direction: column; gap: 10px; } }
+@media (max-width: 600px) { .copy-grid { grid-template-columns: 1fr; }.schema-heading { flex-direction: column; }.schema-copy { margin-top: 12px; }.instruction-block { padding: 17px; }.tool-row { align-items: start; flex-direction: column; gap: 7px; }.tool-row > span { flex-basis: auto; text-align: left; }.footer-links { flex-direction: column; gap: 10px; } }

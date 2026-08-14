@@ -42,6 +42,13 @@ test("ticket search exposes bounded read-only filters", async () => {
   assert.doesNotMatch(route, /export async function POST|export async function PATCH|export async function DELETE/);
 });
 
+test("MCP instructions document the published tools and ticket id search", async () => {
+  const panel = await read("app/mcp-instructions-panel.tsx");
+  for (const tool of ["movidesk_get_ticket", "movidesk_search_tickets", "movidesk_search_people", "movidesk_list_services"]) assert.match(panel, new RegExp(tool));
+  assert.match(panel, /id, filter, keyword/);
+  assert.match(panel, /somente leitura/);
+});
+
 test("OAuth source does not log credentials", async () => {
   const files = await Promise.all([read("app/oauth/_lib.ts"), read("app/oauth/authorize/route.ts"), read("app/oauth/token/route.ts"), read("app/api/tickets/route.ts")]);
   assert.doesNotMatch(files.join("\n"), /console\.(log|info|debug|warn|error)/);

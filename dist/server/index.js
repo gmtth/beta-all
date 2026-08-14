@@ -21991,7 +21991,7 @@ var loadProxyOAuthConfig = (env) => {
   const publicUrl = (env.MCP_PUBLIC_URL ?? "").replace(/\/$/, "");
   const proxyUrl = (env.OAUTH_PROXY_URL ?? "").replace(/\/$/, "");
   const scope = env.OAUTH_SCOPE ?? "movidesk:read";
-  const clientId = env.OAUTH_MCP_CLIENT_ID ?? "movidesk-mcp-app";
+  const clientId = env.OAUTH_CLIENT_ID ?? "";
   if (!publicUrl || !proxyUrl || !clientId) throw new Error("MCP_PUBLIC_URL, OAUTH_PROXY_URL and OAUTH_CLIENT_ID are required");
   new URL(publicUrl);
   new URL(proxyUrl);
@@ -22002,8 +22002,8 @@ var oauthAuthorizationServerMetadata = (config2) => ({
   authorization_endpoint: config2.authorizationEndpoint,
   token_endpoint: config2.tokenEndpoint,
   response_types_supported: ["code"],
-  grant_types_supported: ["authorization_code"],
-  token_endpoint_auth_methods_supported: ["none"],
+  grant_types_supported: ["authorization_code", "refresh_token"],
+  token_endpoint_auth_methods_supported: ["none", "client_secret_post"],
   code_challenge_methods_supported: ["S256"],
   scopes_supported: [config2.scope]
 });
@@ -22016,63 +22016,53 @@ var protectedResourceMetadata = (config2) => ({
 var bearerToken = (authorization) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
 
 // src/tools/index.ts
-var ticketSchema = external_exports.object({ ticket_id: external_exports.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas n\xFAmeros") });
-var searchSchema = external_exports.object({
-  filter: external_exports.string().trim().max(1e3).optional(),
-  keyword: external_exports.string().trim().max(200).optional(),
-  from_date: external_exports.string().trim().max(40).optional(),
-  to_date: external_exports.string().trim().max(40).optional(),
-  date_field: external_exports.enum(["createdDate", "lastUpdate", "resolvedIn", "closedIn"]).default("createdDate"),
-  responsible_id: external_exports.string().trim().max(100).optional(),
-  responsible_email: external_exports.string().email().max(200).optional(),
-  owner_team: external_exports.string().trim().max(200).optional(),
-  status: external_exports.string().trim().max(128).optional(),
-  base_status: external_exports.string().trim().max(128).optional(),
-  urgency: external_exports.string().trim().max(128).optional(),
-  category: external_exports.string().trim().max(128).optional(),
-  service: external_exports.string().trim().max(200).optional(),
-  client_id: external_exports.string().trim().max(100).optional(),
-  include_past: external_exports.coerce.boolean().default(false),
-  select: external_exports.string().trim().max(500).optional(),
-  expand: external_exports.string().trim().max(500).optional(),
-  orderby: external_exports.string().trim().max(200).optional(),
-  top: external_exports.coerce.number().int().min(1).max(100).default(25),
-  skip: external_exports.coerce.number().int().min(0).max(1e4).default(0)
+var ticketSchema = external_exports.object({ ticket_id: external_exports.coerce.string().trim().min(1).max(100) });
+var searchTicketsSchema = external_exports.object({
+  protocol: external_exports.string().trim().min(1).max(100).optional(),
+  status: external_exports.string().trim().min(1).max(100).optional(),
+  created_date: external_exports.string().trim().min(1).max(100).optional(),
+  last_update: external_exports.string().trim().min(1).max(100).optional(),
+  filter: external_exports.string().trim().min(1).max(1e3).optional(),
+  orderby: external_exports.string().trim().min(1).max(200).optional(),
+  top: external_exports.coerce.number().int().min(1).max(100).optional(),
+  skip: external_exports.coerce.number().int().min(0).max(1e5).optional()
 });
-var peopleSchema = searchSchema.extend({ active: external_exports.coerce.boolean().optional() });
-var servicesSchema = searchSchema.extend({ active: external_exports.coerce.boolean().optional() });
+var openTicketsSchema = external_exports.object({
+  created_date: external_exports.string().trim().min(1).max(100),
+  filter: external_exports.string().trim().min(1).max(1e3).optional(),
+  orderby: external_exports.string().trim().min(1).max(200).optional(),
+  top: external_exports.coerce.number().int().min(1).max(100).optional(),
+  skip: external_exports.coerce.number().int().min(0).max(1e5).optional()
+});
+var servicesSchema = external_exports.object({
+  active: external_exports.coerce.boolean().optional(),
+  page: external_exports.coerce.number().int().min(1).max(1e3).optional(),
+  page_size: external_exports.coerce.number().int().min(1).max(100).optional()
+});
 var first = (value) => Array.isArray(value) ? value[0] : value;
 var pick2 = (value, keys) => {
   const object3 = value && typeof value === "object" ? value : {};
   return Object.fromEntries(keys.map((key) => [key, object3[key]]).filter(([, item]) => item !== void 0 && item !== null));
 };
-var apiParams = (args) => ({ filter: args.filter, keyword: args.keyword, from_date: args.from_date, to_date: args.to_date, date_field: args.date_field, responsible_id: args.responsible_id, responsible_email: args.responsible_email, owner_team: args.owner_team, status: args.status, base_status: args.base_status, urgency: args.urgency, category: args.category, service: args.service, client_id: args.client_id, include_past: args.include_past, select: args.select, expand: args.expand, orderby: args.orderby, top: args.top, skip: args.skip });
-var collectionResult = (label, value) => ({ content: [{ type: "text", text: `${label}: ${Array.isArray(value) ? value.length : 0} registro(s) encontrado(s).` }], structuredContent: { results: value } });
+var jsonResult = (value) => ({ content: [{ type: "text", text: JSON.stringify(value) }], structuredContent: value });
 function registerTools(server, client, accessToken) {
   server.registerTool("movidesk_get_ticket", { description: "Consulta um ticket autorizado no Movidesk.", inputSchema: ticketSchema, annotations: { readOnlyHint: true } }, async (args) => {
     const ticket = first(await client.getTicket(args.ticket_id, accessToken));
     return { content: [{ type: "text", text: "Ticket consultado com sucesso." }], structuredContent: pick2(ticket, ["id", "subject", "assunto", "status", "requester", "solicitante", "client", "cliente", "owner", "responsavel", "priority", "prioridade", "urgency", "urgencia", "createdDate", "dataCriacao", "lastUpdate", "ultimaAtualizacao", "actions", "acoes", "interactions", "interacoes"]) };
   });
-  server.registerTool("movidesk_search_tickets", { description: "Pesquisa tickets autorizados no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: searchSchema, annotations: { readOnlyHint: true } }, async (args) => collectionResult("Tickets", await client.searchTickets(apiParams(args), accessToken)));
-  server.registerTool("movidesk_search_people", { description: "Pesquisa pessoas autorizadas no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: peopleSchema, annotations: { readOnlyHint: true } }, async (args) => collectionResult("Pessoas", await client.searchPeople({ ...apiParams(args), active: args.active }, accessToken)));
-  server.registerTool("movidesk_list_services", { description: "Lista servi\xE7os autorizados no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: servicesSchema, annotations: { readOnlyHint: true } }, async (args) => collectionResult("Servi\xE7os", await client.listServices({ ...apiParams(args), active: args.active }, accessToken)));
+  server.registerTool("movidesk_search_tickets", { description: "Busca tickets autorizados no Movidesk por protocolo, assunto, status ou per\xEDodo de cria\xE7\xE3o.", inputSchema: searchTicketsSchema, annotations: { readOnlyHint: true } }, async (args) => {
+    return jsonResult(await client.searchTickets({ protocol: args.protocol, status: args.status, createdDate: args.created_date, lastUpdate: args.last_update, "$filter": args.filter, "$orderby": args.orderby, "$top": args.top, "$skip": args.skip }, accessToken));
+  });
+  server.registerTool("movidesk_list_open_tickets", { description: "Lista tickets em aberto no Movidesk dentro de um per\xEDodo de cria\xE7\xE3o. N\xE3o altera dados.", inputSchema: openTicketsSchema, annotations: { readOnlyHint: true } }, async (args) => {
+    return jsonResult(await client.searchTickets({ createdDate: args.created_date, "$filter": args.filter ?? "baseStatus ne 'Resolved' and baseStatus ne 'Closed' and baseStatus ne 'Canceled'", "$orderby": args.orderby ?? "createdDate desc", "$top": args.top, "$skip": args.skip }, accessToken));
+  });
+  server.registerTool("movidesk_list_services", { description: "Lista servi\xE7os dispon\xEDveis no Movidesk.", inputSchema: servicesSchema, annotations: { readOnlyHint: true } }, async (args) => {
+    return jsonResult(await client.listServices({ "$filter": args.active === void 0 ? void 0 : `isActive eq ${args.active}`, "$top": args.page_size, "$skip": args.page ? (args.page - 1) * (args.page_size ?? 25) : void 0 }, accessToken));
+  });
 }
 
 // server/index.ts
-var allowedOrigins = /* @__PURE__ */ new Set(["https://chatgpt.com", "https://chat.openai.com"]);
-var corsHeaders = (origin) => ({
-  "access-control-allow-origin": origin && allowedOrigins.has(origin) ? origin : "https://chatgpt.com",
-  "access-control-allow-methods": "GET, POST, OPTIONS",
-  "access-control-allow-headers": "Authorization, Content-Type, Accept, MCP-Protocol-Version, Last-Event-ID",
-  "access-control-expose-headers": "WWW-Authenticate, MCP-Session-Id"
-});
-var withCors = (response, origin) => new Response(response.body, { status: response.status, statusText: response.statusText, headers: { ...Object.fromEntries(response.headers), ...corsHeaders(origin) } });
-var json = (data, init = {}, origin) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...corsHeaders(origin), ...init.headers ?? {} } });
-var landingPage = () => `<!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Movidesk MCP \xB7 status</title>
-<style>
-:root{color-scheme:dark;--bg:#08090d;--line:rgba(255,255,255,.11);--muted:#a4a9b8;--text:#f7f8fb}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;font:15px/1.6 Inter,ui-sans-serif,system-ui,sans-serif;color:var(--text);background:radial-gradient(circle at 82% 10%,rgba(255,24,57,.2),transparent 28rem),radial-gradient(circle at 12% 90%,rgba(117,71,255,.16),transparent 28rem),var(--bg)}.hero-card{width:min(440px,100%);position:relative;overflow:hidden;padding:25px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,rgba(33,35,46,.86),rgba(13,14,20,.9));box-shadow:0 20px 80px rgba(0,0,0,.28)}.hero-card:before{content:"";position:absolute;inset:-80px -100px auto auto;width:230px;height:230px;border-radius:50%;background:#ff2442;filter:blur(60px);opacity:.23}.card-kicker{position:relative;display:flex;justify-content:space-between;color:var(--muted);font-size:12px;letter-spacing:.04em}.live{color:#66e38f}.terminal{position:relative;margin:30px 0 18px;padding:17px;border:1px solid rgba(255,255,255,.08);border-radius:14px;background:#0a0b10;color:#d8dbea;font:12px/1.8 ui-monospace,SFMono-Regular,Menlo,monospace}.terminal .prompt{color:#ff9c22}.terminal .ok{color:#72df91}.status-row{position:relative;display:flex;justify-content:space-between;align-items:center;gap:12px;padding-top:17px;border-top:1px solid var(--line);color:var(--muted);font-size:12px}.pill{padding:4px 9px;border-radius:999px;color:#a8edbb;background:rgba(88,224,137,.1)}
-</style></head><body><main class="hero-card"><div class="card-kicker"><span>STATUS DO SERVI\xC7O</span><span class="live">\u25CF online</span></div><div class="terminal"><div><span class="prompt">$</span> GET /health</div><div class="ok">{ "status": "ok" }</div><br /><div><span class="prompt">$</span> POST /mcp</div><div class="ok">Streamable HTTP \xB7 OAuth Bearer</div></div><div class="status-row"><span>Recurso protegido</span><span class="pill">movidesk:read</span></div></main></body></html>`;
+var json = (data, init = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...init.headers ?? {} } });
 var createMcpServer = (env, accessToken) => {
   const server = new McpServer({ name: "movidesk-mcp", version: "1.0.0" });
   registerTools(server, new MovideskClient({ proxyUrl: env.OAUTH_PROXY_URL }), accessToken);
@@ -22081,24 +22071,29 @@ var createMcpServer = (env, accessToken) => {
 var index_default = { async fetch(request, env) {
   const url = new URL(request.url);
   const config2 = loadProxyOAuthConfig(env);
-  const origin = request.headers.get("origin") ?? void 0;
-  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders(origin) });
-  if (request.method === "GET" && url.pathname === "/") return new Response(landingPage(), { status: 200, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60", ...corsHeaders(origin) } });
-  if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" }, {}, origin);
-  const protectedResourceMetadataPaths = /* @__PURE__ */ new Set(["/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp", "/mcp/.well-known/oauth-protected-resource"]);
-  const authorizationServerMetadataPaths = /* @__PURE__ */ new Set(["/.well-known/oauth-authorization-server", "/.well-known/oauth-authorization-server/mcp", "/mcp/.well-known/oauth-authorization-server"]);
-  if (request.method === "GET" && protectedResourceMetadataPaths.has(url.pathname)) return json(protectedResourceMetadata(config2), { headers: { "cache-control": "public, max-age=300" } }, origin);
-  if (request.method === "GET" && authorizationServerMetadataPaths.has(url.pathname)) return json(oauthAuthorizationServerMetadata(config2), { headers: { "cache-control": "public, max-age=300" } }, origin);
-  if (url.pathname !== "/mcp") return new Response("Not found", { status: 404, headers: corsHeaders(origin) });
+  if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
+  const protectedResourceMetadataPaths = /* @__PURE__ */ new Set([
+    "/.well-known/oauth-protected-resource",
+    "/.well-known/oauth-protected-resource/mcp",
+    "/mcp/.well-known/oauth-protected-resource"
+  ]);
+  const authorizationServerMetadataPaths = /* @__PURE__ */ new Set([
+    "/.well-known/oauth-authorization-server",
+    "/.well-known/oauth-authorization-server/mcp",
+    "/mcp/.well-known/oauth-authorization-server"
+  ]);
+  if (request.method === "GET" && protectedResourceMetadataPaths.has(url.pathname)) return json(protectedResourceMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
+  if (request.method === "GET" && authorizationServerMetadataPaths.has(url.pathname)) return json(oauthAuthorizationServerMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
+  if (url.pathname !== "/mcp" || request.method !== "POST") return new Response("Not found", { status: 404 });
   const accessToken = bearerToken(request.headers.get("authorization") ?? void 0);
   if (!accessToken) {
     const metadata = config2.publicUrl + "/.well-known/oauth-protected-resource";
-    return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": 'Bearer resource_metadata="' + metadata + '", scope="' + config2.scope + '"' } }, origin);
+    return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": 'Bearer resource_metadata="' + metadata + '", scope="' + config2.scope + '"' } });
   }
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: void 0 });
   const server = createMcpServer(env, accessToken);
   await server.connect(transport);
-  return withCors(await transport.handleRequest(request), origin);
+  return transport.handleRequest(request);
 } };
 export {
   index_default as default

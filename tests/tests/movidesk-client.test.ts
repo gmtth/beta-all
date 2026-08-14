@@ -1,7 +1,0 @@
-import assert from "node:assert/strict";
-import { test } from "node:test";
-import { MovideskClient, MovideskHttpError } from "../src/movidesk-client.js";
-
-test("client forwards Bearer to the proxy without a Movidesk token", async () => { let seen = ""; const client = new MovideskClient({ proxyUrl: "https://proxy.example.com", fetchImpl: async (input, init) => { seen = String(input) + " " + String((init?.headers as Record<string, string>).Authorization); return new Response(JSON.stringify([{ id: 7 }]), { status: 200 }); } }); assert.deepEqual(await client.getTicket("7", "temporary"), [{ id: 7 }]); assert.match(seen, /https:\/\/proxy\.example\.com\/api\/tickets\?id=7 Bearer temporary/); });
-test("client retries 429 and 5xx", async () => { let calls = 0; const client = new MovideskClient({ proxyUrl: "https://proxy.example.com", sleep: async () => {}, fetchImpl: async () => { calls++; return calls < 3 ? new Response("", { status: calls === 1 ? 429 : 500 }) : new Response("{}", { status: 200 }); } }); assert.deepEqual(await client.get("tickets", {}, "temporary"), {}); assert.equal(calls, 3); });
-test("non-retryable proxy errors do not expose response body", async () => { const client = new MovideskClient({ proxyUrl: "https://proxy.example.com", fetchImpl: async () => new Response("temporary-secret", { status: 400 }) }); await assert.rejects(() => client.get("tickets", {}, "temporary"), (error: unknown) => error instanceof MovideskHttpError && error.status === 400 && !String(error).includes("temporary-secret")); });

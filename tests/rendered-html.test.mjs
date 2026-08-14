@@ -31,6 +31,17 @@ test("the REST proxy remains read-only and protects its token boundary", async (
   assert.doesNotMatch(route, /POST|PUT|PATCH|DELETE/);
 });
 
+test("ticket search exposes bounded read-only filters", async () => {
+  const route = await read("app/api/tickets/route.ts");
+  assert.match(route, /from_date/);
+  assert.match(route, /responsible_id/);
+  assert.match(route, /keyword/);
+  assert.match(route, /include_past/);
+  assert.match(route, /invalid_pagination/);
+  assert.match(route, /search_criteria_required/);
+  assert.doesNotMatch(route, /export async function POST|export async function PATCH|export async function DELETE/);
+});
+
 test("OAuth source does not log credentials", async () => {
   const files = await Promise.all([read("app/oauth/_lib.ts"), read("app/oauth/authorize/route.ts"), read("app/oauth/token/route.ts"), read("app/api/tickets/route.ts")]);
   assert.doesNotMatch(files.join("\n"), /console\.(log|info|debug|warn|error)/);

@@ -17,9 +17,10 @@ body { margin: 0; min-height: 100vh; background: #100d13; color: var(--ink); fon
 .privacy-content p:last-child { margin-bottom: 0; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 14px 18px; }
 .instructions-card { width: min(920px, 100%); }
-.instructions-shell { place-items: start center; overflow: auto; }
+.instructions-shell { display: block; min-height: 100vh; overflow: auto; }
 .instructions-shell .instructions-card { margin: 28px 0; }
-.instructions-content { display: grid; gap: 30px; }
+.instructions-shell .instructions-card { margin-left: auto; margin-right: auto; min-width: 0; }
+.instructions-content { display: grid; gap: 30px; min-width: 0; }
 .instruction-block { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.035); }
 .instruction-block h2 { margin: 7px 0 8px; color: #f7f4f6; font-size: 19px; letter-spacing: -.03em; }
 .instruction-block p { margin: 0; color: #aaa6ad; font-size: 13px; line-height: 1.65; }
@@ -38,7 +39,8 @@ body { margin: 0; min-height: 100vh; background: #100d13; color: var(--ink); fon
 .notice small { margin-top: 4px; color: #a99b96; font-size: 11px; line-height: 1.5; }
 .schema-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
 .schema-copy { margin-top: 7px; padding: 9px 12px; }
-.schema-box { max-height: 520px; overflow: auto; margin: 18px 0 0; padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; color: #d9d2d8; background: #0c0a0f; font: 11px/1.6 var(--font-geist-mono), Consolas, monospace; white-space: pre; }
+.schema-heading > div { min-width: 0; }
+.schema-box { max-width: 100%; max-height: 520px; overflow: auto; margin: 18px 0 0; padding: 18px; border: 1px solid rgba(255,255,255,.1); border-radius: 12px; color: #d9d2d8; background: #0c0a0f; font: 11px/1.6 var(--font-geist-mono), Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
 .prompt-example { margin: 17px 0 11px; padding: 15px 17px; border-left: 3px solid #ff633f; border-radius: 0 10px 10px 0; color: #ffd0bf; background: rgba(255,91,55,.08); font-size: 13px; font-style: italic; }
 .hint code { color: #f3b4a0; font-size: 11px; }
 @media (max-width: 600px) { .copy-grid { grid-template-columns: 1fr; }.schema-heading { flex-direction: column; }.schema-copy { margin-top: 12px; }.instruction-block { padding: 17px; }.footer-links { flex-direction: column; gap: 10px; } }

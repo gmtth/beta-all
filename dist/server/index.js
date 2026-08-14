@@ -22042,6 +22042,7 @@ var index_default = { async fetch(request, env) {
   const url = new URL(request.url);
   const config2 = loadProxyOAuthConfig(env);
   if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
+  if (request.method === "GET" && url.pathname === "/") return json({ service: "Movidesk MCP", status: "online", protocol: "MCP Streamable HTTP", endpoint: "/mcp" }, { headers: { "cache-control": "public, max-age=60" } });
   if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
   const protectedResourceMetadataPaths = new Set(["/.well-known/oauth-protected-resource", "/.well-known/oauth-protected-resource/mcp", "/mcp/.well-known/oauth-protected-resource"]);
   if (request.method === "GET" && protectedResourceMetadataPaths.has(url.pathname)) return json(protectedResourceMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });

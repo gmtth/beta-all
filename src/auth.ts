@@ -14,7 +14,7 @@ export const loadProxyOAuthConfig = (env: Record<string, string | undefined>): P
   const clientId = env.OAUTH_CLIENT_ID ?? "";
   if (!publicUrl || !proxyUrl || !clientId) throw new Error("MCP_PUBLIC_URL, OAUTH_PROXY_URL and OAUTH_CLIENT_ID are required");
   new URL(publicUrl); new URL(proxyUrl);
-  return { publicUrl, authorizationEndpoint: proxyUrl + "/oauth/authorize", tokenEndpoint: proxyUrl + "/oauth/token", scope, resource: publicUrl + "/mcp", clientId };
+  return { publicUrl, authorizationEndpoint: proxyUrl + "/oauth/authorize", tokenEndpoint: proxyUrl + "/oauth/token", scope, resource: publicUrl + "/mcp/", clientId };
 };
 
 export const oauthAuthorizationServerMetadata = (config: ProxyOAuthConfig) => ({

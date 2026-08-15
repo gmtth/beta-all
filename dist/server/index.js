@@ -21995,7 +21995,7 @@ var loadProxyOAuthConfig = (env) => {
   if (!publicUrl || !proxyUrl || !clientId) throw new Error("MCP_PUBLIC_URL, OAUTH_PROXY_URL and OAUTH_CLIENT_ID are required");
   new URL(publicUrl);
   new URL(proxyUrl);
-  return { publicUrl, authorizationEndpoint: proxyUrl + "/oauth/authorize", tokenEndpoint: proxyUrl + "/oauth/token", scope, resource: publicUrl + "/mcp", clientId };
+  return { publicUrl, authorizationEndpoint: proxyUrl + "/oauth/authorize", tokenEndpoint: proxyUrl + "/oauth/token", scope, resource: publicUrl + "/mcp/", clientId };
 };
 var oauthAuthorizationServerMetadata = (config2) => ({
   issuer: config2.authorizationEndpoint.replace(/\/oauth\/authorize$/, ""),

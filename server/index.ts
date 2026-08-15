@@ -11,8 +11,9 @@ const createMcpServer = (env: Env, accessToken: string) => { const server = new 
 
 export default { async fetch(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+  const pathname = url.pathname.replace(/\/+$/, "") || "/";
   const config = loadProxyOAuthConfig(env);
-  if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
+  if (request.method === "GET" && pathname === "/health") return json({ status: "ok" });
   const protectedResourceMetadataPaths = new Set([
     "/.well-known/oauth-protected-resource",
     "/.well-known/oauth-protected-resource/mcp",
@@ -23,9 +24,9 @@ export default { async fetch(request: Request, env: Env): Promise<Response> {
     "/.well-known/oauth-authorization-server/mcp",
     "/mcp/.well-known/oauth-authorization-server",
   ]);
-  if (request.method === "GET" && protectedResourceMetadataPaths.has(url.pathname)) return json(protectedResourceMetadata(config), { headers: { "cache-control": "public, max-age=300" } });
-  if (request.method === "GET" && authorizationServerMetadataPaths.has(url.pathname)) return json(oauthAuthorizationServerMetadata(config), { headers: { "cache-control": "public, max-age=300" } });
-  if (url.pathname !== "/mcp" || request.method !== "POST") return new Response("Not found", { status: 404 });
+  if (request.method === "GET" && protectedResourceMetadataPaths.has(pathname)) return json(protectedResourceMetadata(config), { headers: { "cache-control": "public, max-age=300" } });
+  if (request.method === "GET" && authorizationServerMetadataPaths.has(pathname)) return json(oauthAuthorizationServerMetadata(config), { headers: { "cache-control": "public, max-age=300" } });
+  if (pathname !== "/mcp" || request.method !== "POST") return new Response("Not found", { status: 404 });
   const accessToken = bearerToken(request.headers.get("authorization") ?? undefined); if (!accessToken) { const metadata = config.publicUrl + "/.well-known/oauth-protected-resource"; return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": 'Bearer resource_metadata="' + metadata + '", scope="' + config.scope + '"' } }); }
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined }); const server = createMcpServer(env, accessToken); await server.connect(transport); return transport.handleRequest(request);
 } };

@@ -22071,8 +22071,9 @@ var createMcpServer = (env, accessToken) => {
 };
 var index_default = { async fetch(request, env) {
   const url = new URL(request.url);
+  const pathname = url.pathname.replace(/\/+$/, "") || "/";
   const config2 = loadProxyOAuthConfig(env);
-  if (request.method === "GET" && url.pathname === "/health") return json({ status: "ok" });
+  if (request.method === "GET" && pathname === "/health") return json({ status: "ok" });
   const protectedResourceMetadataPaths = /* @__PURE__ */ new Set([
     "/.well-known/oauth-protected-resource",
     "/.well-known/oauth-protected-resource/mcp",
@@ -22083,9 +22084,9 @@ var index_default = { async fetch(request, env) {
     "/.well-known/oauth-authorization-server/mcp",
     "/mcp/.well-known/oauth-authorization-server"
   ]);
-  if (request.method === "GET" && protectedResourceMetadataPaths.has(url.pathname)) return json(protectedResourceMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
-  if (request.method === "GET" && authorizationServerMetadataPaths.has(url.pathname)) return json(oauthAuthorizationServerMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
-  if (url.pathname !== "/mcp" || request.method !== "POST") return new Response("Not found", { status: 404 });
+  if (request.method === "GET" && protectedResourceMetadataPaths.has(pathname)) return json(protectedResourceMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
+  if (request.method === "GET" && authorizationServerMetadataPaths.has(pathname)) return json(oauthAuthorizationServerMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
+  if (pathname !== "/mcp" || request.method !== "POST") return new Response("Not found", { status: 404 });
   const accessToken = bearerToken(request.headers.get("authorization") ?? void 0);
   if (!accessToken) {
     const metadata = config2.publicUrl + "/.well-known/oauth-protected-resource";

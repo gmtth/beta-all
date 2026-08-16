@@ -49,6 +49,12 @@ test("individual ticket lookups use Movidesk direct identifiers", async () => {
   assert.match(route, /else target\.searchParams\.set\("\$filter", filters\.join\(" and "\)\)/);
 });
 
+test("ticket date filters use the documented UTC literal", async () => {
+  const route = await read("app/api/tickets/route.ts");
+  assert.match(route, /23:59:59.*00:00:00.*Z/);
+  assert.doesNotMatch(route, /23:59:59\.99.*00:00:00\.00.*z/);
+});
+
 test("MCP instructions document the published tools and ticket id search", async () => {
   const panel = await read("app/mcp-instructions-panel.tsx");
   for (const tool of ["movidesk_get_ticket", "movidesk_search_tickets", "movidesk_search_people", "movidesk_list_services"]) assert.match(panel, new RegExp(tool));

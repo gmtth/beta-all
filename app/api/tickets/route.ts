@@ -76,7 +76,7 @@ export async function GET(request: Request) {
 function escapeOData(value: string) { return value.replace(/'/g, "''"); }
 function textFilter(field: string, value: string | null) { const text = value?.trim(); return text ? `${field} eq '${escapeOData(text)}'` : ""; }
 function keywordFilter(value: string | null) { const text = value?.trim(); return text ? `(contains(subject, '${escapeOData(text)}') or contains(category, '${escapeOData(text)}'))` : ""; }
-function utcODataLiteral(date: string, endOfDay: boolean) { return `${date}T${endOfDay ? "23:59:59.99" : "00:00:00.00"}z`; }
+function utcODataLiteral(date: string, endOfDay: boolean) { return `${date}T${endOfDay ? "23:59:59" : "00:00:00"}Z`; }
 function normalizeDate(value: string | null, endOfDay: boolean) {
   if (!value) return "";
   const text = value.trim();

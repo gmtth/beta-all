@@ -1,6 +1,13 @@
 # movidesk-mcp-server
 
-Servidor MCP remoto somente leitura para consultar tickets Movidesk. A primeira versao expoe apenas `movidesk_get_ticket`.
+Servidor MCP remoto somente leitura para consultar dados do Movidesk.
+
+Ferramentas expostas:
+
+- `movidesk_get_ticket`: consulta um ticket por protocolo.
+- `movidesk_search_tickets`: busca tickets por protocolo, status, datas ou filtro OData.
+- `movidesk_list_open_tickets`: lista tickets não resolvidos/cancelados dentro de um período.
+- `movidesk_list_services`: lista serviços.
 
 ## Arquitetura
 
@@ -16,9 +23,9 @@ OAUTH_SCOPE=movidesk:read
 OAUTH_CLIENT_ID=movidesk-gpt
 ```
 
-O endpoint MCP e `POST /mcp`. A raiz (`GET /`) exibe uma pagina explicativa; o health check e `GET /health`. Metadata OAuth fica em `/.well-known/oauth-protected-resource` e `/.well-known/oauth-authorization-server`.
+O endpoint MCP e `POST /mcp`. O health check e `GET /health`. Metadata OAuth fica em `/.well-known/oauth-protected-resource` e `/.well-known/oauth-authorization-server`.
 
-O MCP nao aceita `MOVIDESK_TOKEN`, `OAUTH_CLIENT_SECRET` ou Bearer como argumento de ferramenta. Nenhum segredo e registrado em logs, respostas ou metadados.
+O MCP nao aceita `MOVIDESK_TOKEN`, `OAUTH_CLIENT_SECRET` ou Bearer como argumento de ferramenta. Nenhum segredo e registrado em logs, respostas ou metadados. As ferramentas atuais são somente leitura; ações como responder, alterar status ou atribuir tickets exigem suporte correspondente no proxy OAuth antes de serem adicionadas.
 
 ## Execucao
 

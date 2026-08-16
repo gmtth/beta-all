@@ -8,7 +8,7 @@ info:
   version: 1.0.0
   description: Consulta somente leitura de tickets do Movidesk.
 servers:
-  - url: https://movidesk-oauth-proxy-pkce.matheusgregoviski.chatgpt.site
+  - url: https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site
 paths:
   /api/tickets:
     get:
@@ -166,15 +166,15 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://movidesk-oauth-proxy-pkce.matheusgregoviski.chatgpt.site/oauth/authorize
-          tokenUrl: https://movidesk-oauth-proxy-pkce.matheusgregoviski.chatgpt.site/oauth/token
+          authorizationUrl: https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/oauth/authorize
+          tokenUrl: https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/oauth/token
           scopes:
             movidesk:read: Consultar tickets (somente leitura).`;
 
 const items = [
-  { label: "URL base", value: "https://movidesk-oauth-proxy-pkce.matheusgregoviski.chatgpt.site" },
-  { label: "Authorization URL", value: "https://movidesk-oauth-proxy-pkce.matheusgregoviski.chatgpt.site/oauth/authorize" },
-  { label: "Token URL", value: "https://movidesk-oauth-proxy-pkce.matheusgregoviski.chatgpt.site/oauth/token" },
+  { label: "URL base", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site" },
+  { label: "Authorization URL", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/oauth/authorize" },
+  { label: "Token URL", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/oauth/token" },
   { label: "Client ID", value: "movidesk-gpt-action" },
   { label: "Scope", value: "movidesk:read" },
 ];

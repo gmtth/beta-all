@@ -3,7 +3,7 @@
 import { useState } from "react";
 
 const mcpConfig = `{
-  "serverUrl": "https://movidesk-mcp-server.thngrns.chatgpt.site/mcp/",
+  "serverUrl": "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/",
   "oauth": {
     "authorizationServer": "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site",
     "scope": "movidesk:read",
@@ -21,7 +21,7 @@ const tools = [
 const sharedFilters = "id, filter, keyword, from_date, to_date, date_field, responsible_id, responsible_email, owner_team, status, base_status, urgency, category, service, client_id, include_past, select, expand, orderby, top e skip";
 
 const items = [
-  { label: "Endpoint MCP (barra final obrigatória)", value: "https://movidesk-mcp-server.thngrns.chatgpt.site/mcp/" },
+  { label: "Endpoint MCP (barra final obrigatória)", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/" },
   { label: "OAuth discovery", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server" },
   { label: "Client ID", value: "movidesk-mcp-app" },
   { label: "Scope", value: "movidesk:read" },

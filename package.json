@@ -14,10 +14,12 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
     "drizzle-orm": "0.45.2",
     "react": "19.2.6",
     "react-dom": "19.2.6",
-    "react-loading-skeleton": "3.5.0"
+    "react-loading-skeleton": "3.5.0",
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "1.37.1",

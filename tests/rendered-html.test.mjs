@@ -62,6 +62,17 @@ test("MCP instructions document the published tools and ticket id search", async
   assert.match(panel, /somente leitura/);
 });
 
+test("MCP runs inside the OAuth proxy without a Worker-to-Worker HTTP hop", async () => {
+  const entry = await read("worker/index.ts");
+  const mcp = await read("worker/mcp.ts");
+  const tools = await read("worker/mcp-tools.ts");
+  assert.match(entry, /handleMcp/);
+  assert.match(mcp, /LocalMovideskClient/);
+  assert.match(mcp, /getTickets\(request\)/);
+  assert.doesNotMatch(mcp, /OAUTH_PROXY_URL|fetch\(.*api\//);
+  for (const tool of ["movidesk_get_ticket", "movidesk_search_tickets", "movidesk_search_people", "movidesk_list_services"]) assert.match(tools, new RegExp(tool));
+});
+
 test("OAuth source does not log credentials", async () => {
   const files = await Promise.all([read("app/oauth/_lib.ts"), read("app/oauth/authorize/route.ts"), read("app/oauth/token/route.ts"), read("app/api/tickets/route.ts")]);
   assert.doesNotMatch(files.join("\n"), /console\.(log|info|debug|warn|error)/);

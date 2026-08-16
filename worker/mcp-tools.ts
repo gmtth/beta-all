@@ -1,4 +1,6 @@
 import { z } from "zod";
+import { MovideskAnalysisSession } from "./movidesk-analysis";
+import { buildTicketTimeline } from "./movidesk-timeline";
 
 export interface MovideskReader {
   getTicket(id: string, accessToken: string): Promise<unknown>;
@@ -8,6 +10,7 @@ export interface MovideskReader {
 }
 
 const ticketSchema = z.object({ ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números") });
+const timelineSchema = ticketSchema;
 const searchSchema = z.object({
   id: z.coerce.string().trim().regex(/^\d{1,30}$/, "id deve conter apenas números").optional(),
   protocol: z.string().trim().regex(/^[A-Za-z0-9_-]{1,30}$/, "protocol inválido").optional(),
@@ -82,6 +85,13 @@ export function registerMovideskTools(server: any, client: MovideskReader, acces
   server.registerTool("movidesk_get_ticket", { title: "Consultar ticket", description: "Consulta um ticket autorizado no Movidesk.", inputSchema: ticketSchema, outputSchema: { ticket: z.record(z.string(), z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof ticketSchema>) => {
     const ticket = first(await client.getTicket(args.ticket_id, accessToken));
     return { content: [{ type: "text" as const, text: "Ticket consultado com sucesso." }], structuredContent: { ticket: pick(ticket, ["id", "subject", "assunto", "status", "requester", "solicitante", "client", "cliente", "owner", "responsavel", "priority", "prioridade", "urgency", "urgencia", "createdDate", "dataCriacao", "lastUpdate", "ultimaAtualizacao", "actions", "acoes", "interactions", "interacoes"]) } };
+  });
+  server.registerTool("movidesk_get_ticket_timeline", { title: "Obter linha do tempo do ticket", description: "Transforma as ações e interações de um ticket em uma linha do tempo cronológica.", inputSchema: timelineSchema, outputSchema: { events: z.array(z.record(z.string(), z.unknown())), firstClientManifestation: z.record(z.string(), z.unknown()).nullable(), lastTeamResponse: z.record(z.string(), z.unknown()).nullable(), terminalStatus: z.string().nullable() }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof timelineSchema>) => {
+    const session = new MovideskAnalysisSession(client, accessToken, { maxTickets: 1 });
+    const ticket = await session.getTicket(args.ticket_id);
+    session.registerAnalyzed();
+    const timeline = buildTicketTimeline(ticket);
+    return { content: [{ type: "text" as const, text: `${timeline.events.length} evento(s) encontrado(s) na linha do tempo.` }], structuredContent: timeline };
   });
   server.registerTool("movidesk_search_tickets", { title: "Pesquisar tickets", description: "Pesquisa tickets autorizados no Movidesk usando filtros e paginação.", inputSchema: searchSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof searchSchema>) => collectionResult("Tickets", await client.searchTickets(apiParams(args), accessToken)));
   server.registerTool("movidesk_list_open_tickets", { title: "Listar tickets abertos", description: "Lista tickets em aberto na data informada. Aceita YYYY-MM-DD, DD/MM/AAAA ou DD/MM.", inputSchema: openTicketsSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof openTicketsSchema>) => collectionResult("Tickets", await client.searchTickets({ from_date: args.created_date, to_date: args.created_date, date_field: "createdDate", filter: args.filter ?? "baseStatus ne 'Resolved' and baseStatus ne 'Closed' and baseStatus ne 'Canceled'", orderby: args.orderby ?? "createdDate desc", top: args.top ?? 25, skip: args.skip ?? 0 }, accessToken)));

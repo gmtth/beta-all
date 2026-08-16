@@ -71,6 +71,15 @@ function normalizeDate(value: string | null, endOfDay: boolean) {
   if (!value) return "";
   const text = value.trim();
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return `${text}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`;
+  const brazilian = /^(\d{2})\/(\d{2})(?:\/(\d{4}))?$/.exec(text);
+  if (brazilian) {
+    const year = brazilian[3] ?? String(new Date().getUTCFullYear());
+    const month = Number(brazilian[2]);
+    const day = Number(brazilian[1]);
+    const candidate = new Date(Date.UTC(Number(year), month - 1, day));
+    if (candidate.getUTCFullYear() !== Number(year) || candidate.getUTCMonth() !== month - 1 || candidate.getUTCDate() !== day) return "";
+    return `${year}-${brazilian[2]}-${brazilian[1]}T${endOfDay ? "23:59:59.999" : "00:00:00.000"}Z`;
+  }
   const parsed = Date.parse(text);
   return Number.isNaN(parsed) ? "" : new Date(parsed).toISOString();
 }

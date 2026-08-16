@@ -42,8 +42,9 @@ export async function GET(request: Request) {
   ].filter(Boolean);
   if (!id && !filters.length) return json({ error: "search_criteria_required", message: "Informe ao menos um filtro para pesquisar tickets." }, { status: 400 });
   const target = new URL(`https://api.movidesk.com/public/v1/${incoming.searchParams.get("include_past") === "true" ? "tickets/past" : "tickets"}`);
-  if (id) target.searchParams.set("id", id);
-  else target.searchParams.set("$filter", filters.join(" and "));
+  // Movidesk's public API accepts ticket IDs through OData, not an `id`
+  // query parameter. Sending `id=...` is rejected as INVALID_ARGUMENT.
+  target.searchParams.set("$filter", filters.join(" and "));
   for (const key of ["select", "expand", "orderby"]) { const value = incoming.searchParams.get(key); if (value) target.searchParams.set(`$${key}`, value); }
   if (!id) { target.searchParams.set("$top", String(top)); target.searchParams.set("$skip", String(skip)); }
   target.searchParams.set("token", token);

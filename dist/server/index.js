@@ -22023,7 +22023,7 @@ var bearerToken = (authorization) => authorization?.match(/^Bearer\s+([^\s]+)$/i
 var ticketSchema = external_exports.object({ ticket_id: external_exports.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas n\xFAmeros") });
 var searchSchema = external_exports.object({
   id: external_exports.coerce.string().trim().regex(/^\d{1,30}$/, "id deve conter apenas n\xFAmeros").optional(),
-  protocol: external_exports.coerce.string().trim().regex(/^\d{1,30}$/, "protocol deve conter apenas n\xFAmeros").optional(),
+  protocol: external_exports.string().trim().regex(/^[A-Za-z0-9_-]{1,30}$/, "protocol inv\xE1lido").optional(),
   filter: external_exports.string().trim().max(1e3).optional(),
   keyword: external_exports.string().trim().max(200).optional(),
   from_date: external_exports.string().trim().max(40).optional(),
@@ -22056,7 +22056,7 @@ var pick2 = (value, keys) => {
   const object3 = value && typeof value === "object" ? value : {};
   return Object.fromEntries(keys.map((key) => [key, object3[key]]).filter(([, item]) => item !== void 0 && item !== null));
 };
-var apiParams = (args) => ({ id: args.id ?? args.protocol, filter: args.filter, keyword: args.keyword, from_date: args.from_date ?? args.created_date, to_date: args.to_date, date_field: args.last_update ? "lastUpdate" : args.date_field, responsible_id: args.responsible_id, responsible_email: args.responsible_email, owner_team: args.owner_team, status: args.status, base_status: args.base_status, urgency: args.urgency, category: args.category, service: args.service, client_id: args.client_id, include_past: args.include_past, select: args.select, expand: args.expand, orderby: args.orderby, top: args.top, skip: args.skip });
+var apiParams = (args) => ({ id: args.id, protocol: args.protocol, filter: args.filter, keyword: args.keyword, from_date: args.from_date ?? args.created_date, to_date: args.to_date, date_field: args.last_update ? "lastUpdate" : args.date_field, responsible_id: args.responsible_id, responsible_email: args.responsible_email, owner_team: args.owner_team, status: args.status, base_status: args.base_status, urgency: args.urgency, category: args.category, service: args.service, client_id: args.client_id, include_past: args.include_past, select: args.select, expand: args.expand, orderby: args.orderby, top: args.top, skip: args.skip });
 var collectionResult = (label, value) => ({ content: [{ type: "text", text: `${label}: ${Array.isArray(value) ? value.length : 0} registro(s) encontrado(s).` }], structuredContent: { results: Array.isArray(value) ? value : [] } });
 var jsonResult = (value) => ({ content: [{ type: "text", text: JSON.stringify(value) }], structuredContent: value });
 function registerTools(server, client, accessToken) {
@@ -22088,16 +22088,8 @@ async function handleDiscovery(request) {
   return json({
     jsonrpc: "2.0",
     id: body.id ?? null,
-    result: {
-      resultType: "complete",
-      // The bundled SDK currently implements the 2025 transport/lifecycle.
-      // Advertising that explicitly lets newer clients fall back to initialize
-      // instead of receiving the SDK's generic HTTP 400 for server/discover.
-      supportedVersions: ["2025-11-25"],
-      capabilities: { tools: {} },
-      _meta: { "io.modelcontextprotocol/serverInfo": { name: "movidesk-mcp", version: "1.0.0" } }
-    }
-  });
+    error: { code: -32601, message: "Method not found: server/discover" }
+  }, { status: 404 });
 }
 var index_default = { async fetch(request, env) {
   const url = new URL(request.url);

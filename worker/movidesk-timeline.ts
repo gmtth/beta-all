@@ -48,31 +48,35 @@ const dateSortValue = (date: string | null) => {
   return Number.isNaN(parsed) ? Number.POSITIVE_INFINITY : parsed;
 };
 
-const actionAuthor = (value: unknown) => objectOf(value);
-const classificationValue = (object: Record<string, unknown>) => {
-  const author = actionAuthor(firstValue(object, ["createdBy", "author", "user", "usuario"]));
-  return `${textValue(firstValue(object, ["origin", "origem", "originName", "channel", "source"])) ?? ""} ${textValue(firstValue(object, ["type", "tipo", "actionType", "interactionType", "eventType"])) ?? ""} ${textValue(firstValue(author, ["personType", "PersonType", "profileType", "ProfileType", "type"])) ?? ""}`.toLocaleLowerCase();
+type ActorType = "client" | "team" | "system" | "unknown";
+const actionAuthor = (value: unknown): Record<string, unknown> => {
+  const object = objectOf(value);
+  const nested = firstValue(object, ["person", "Person", "user", "User", "createdBy", "CreatedBy"]);
+  return nested && typeof nested === "object" ? objectOf(nested) : object;
+};
+const actorEmail = (author: Record<string, unknown>) => textValue(firstValue(author, ["email", "Email", "userName", "username", "login"]));
+const normalizedActorValue = (value: unknown) => (textValue(value) ?? "").toLocaleLowerCase();
+const actorTypeFromValue = (value: unknown): ActorType => {
+  const normalized = normalizedActorValue(value);
+  if (["1", "agent", "atendente", "operator", "operatoria", "team", "equipe"].includes(normalized)) return "team";
+  if (["2", "client", "cliente", "requester", "solicitante"].includes(normalized)) return "client";
+  if (["3", "agent and client", "agent e cliente", "both", "ambos"].includes(normalized)) return "unknown";
+  return "unknown";
+};
+const classifyActor = (source: unknown): ActorType => {
+  const action = objectOf(source);
+  const author = actionAuthor(firstValue(action, ["createdBy", "CreatedBy", "author", "Author", "user", "User", "usuario"]));
+  const profile = actorTypeFromValue(firstValue(author, ["profileType", "ProfileType", "profile", "Profile"]));
+  const person = actorTypeFromValue(firstValue(author, ["personType", "PersonType", "personTypeName", "PersonTypeName"]));
+  if (profile !== "unknown") return profile;
+  if (person !== "unknown") return person;
+  const email = (actorEmail(author) ?? textValue(firstValue(action, ["authorEmail", "email", "Email"])))?.toLocaleLowerCase() ?? "";
+  if (email.endsWith("@cencicia.com.br") || email.startsWith("service")) return "team";
+  if (email.includes("@")) return "client";
+  return "unknown";
 };
 
-const isClientEvent = (event: TimelineEvent, source: unknown) => {
-  const value = classificationValue(objectOf(source));
-  if (value.includes("internal") || value.includes("interno")) return false;
-  if (value.includes("client") || value.includes("cliente") || value.includes("requester") || value.includes("solicitante")) return true;
-  const author = actionAuthor(firstValue(objectOf(source), ["createdBy", "author", "user", "usuario"]));
-  const profileType = textValue(firstValue(author, ["profileType", "ProfileType"]));
-  if (profileType === "2" || profileType === "3") return true;
-  const personType = textValue(firstValue(author, ["personType", "PersonType"]));
-  if (personType === "2" || personType === "3") return true;
-  return textValue(firstValue(objectOf(source), ["origin", "origem"])) === "0" && !value.includes("agent") && !value.includes("atendente");
-};
-
-const isTeamEvent = (event: TimelineEvent, source: unknown) => {
-  const value = classificationValue(objectOf(source));
-  if (value.includes("team") || value.includes("equipe") || value.includes("agent") || value.includes("atendente") || value.includes("operator") || value.includes("intern") || value.includes("internal")) return true;
-  const author = actionAuthor(firstValue(objectOf(source), ["createdBy", "author", "user", "usuario"]));
-  const profileType = textValue(firstValue(author, ["profileType", "ProfileType"]));
-  return profileType === "1" || event.type === "1";
-};
+const isPublicEvent = (event: TimelineEvent) => event.type !== "1";
 
 const eventList = (ticket: unknown) => {
   const object = objectOf(Array.isArray(ticket) ? ticket[0] : ticket);
@@ -91,9 +95,9 @@ export function buildTicketTimeline(ticket: unknown): TicketTimeline {
     } satisfies TimelineEvent;
   });
   const sorted = [...events].sort((left, right) => dateSortValue(left.date) - dateSortValue(right.date) || left.sourceIndex - right.sourceIndex);
-  const sourceByIndex = new Map(rawEvents.map((value, index) => [index, value]));
-  const firstClientManifestation = sorted.find((event) => isClientEvent(event, sourceByIndex.get(event.sourceIndex))) ?? null;
-  const publicTeamEvents = sorted.filter((event) => event.type !== "1" && isTeamEvent(event, sourceByIndex.get(event.sourceIndex)));
+  const actorByIndex = new Map(rawEvents.map((value, index) => [index, classifyActor(value)]));
+  const firstClientManifestation = sorted.find((event) => isPublicEvent(event) && actorByIndex.get(event.sourceIndex) === "client") ?? null;
+  const publicTeamEvents = sorted.filter((event) => isPublicEvent(event) && actorByIndex.get(event.sourceIndex) === "team");
   const lastTeamResponse = publicTeamEvents.length ? publicTeamEvents[publicTeamEvents.length - 1] : null;
   const ticketObject = objectOf(Array.isArray(ticket) ? ticket[0] : ticket);
   return { events: sorted, firstClientManifestation, lastTeamResponse, terminalStatus: statusValue(ticketObject) ?? (sorted.length ? sorted[sorted.length - 1].status : null) };

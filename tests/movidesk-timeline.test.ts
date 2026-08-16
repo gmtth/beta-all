@@ -51,6 +51,39 @@ test("lastTeamResponse is null when the ticket has no public team response", () 
   assert.equal(timeline.lastTeamResponse, null);
 });
 
+test("real-ticket regressions classify actors from createdBy before mapping", () => {
+  const ticket6280 = buildTicketTimeline({ actions: [
+    { createdDate: "2026-08-16T09:00:00Z", origin: 3, type: 2, description: "fabio relata", createdBy: { email: "fabio.farias@yara.com", profileType: 2 } },
+    { createdDate: "2026-08-16T09:10:00Z", origin: 2, type: 2, description: "service responde", createdBy: { email: "service36@cencicia.com.br", profileType: 1 } },
+  ] });
+  assert.equal(ticket6280.firstClientManifestation?.author, "fabio.farias@yara.com");
+  assert.equal(ticket6280.lastTeamResponse?.author, "service36@cencicia.com.br");
+
+  const ticket6273 = buildTicketTimeline({ actions: [
+    { createdDate: "2026-08-16T15:00:00Z", origin: 3, type: 2, description: "ammachado relata", createdBy: { email: "ammachado@viemar.com.br", profileType: 2 } },
+    { createdDate: "2026-08-16T16:24:00Z", origin: 23, type: 1, description: "Validar com time interno", createdBy: { email: "service35@cencicia.com.br", profileType: 1 } },
+    { createdDate: "2026-08-16T17:59:00Z", origin: 2, type: 2, description: "retorno público", createdBy: { email: "service35@cencicia.com.br", profileType: 1 } },
+  ] });
+  assert.equal(ticket6273.firstClientManifestation?.author, "ammachado@viemar.com.br");
+  assert.equal(ticket6273.lastTeamResponse?.summary, "retorno público");
+
+  const ticket6267 = buildTicketTimeline({ actions: [
+    { createdDate: "2026-08-16T08:00:00Z", origin: 0, type: 2, description: "preparação do ambiente", createdBy: { email: "service28@cencicia.com.br", profileType: 1 } },
+    { createdDate: "2026-08-16T09:00:00Z", origin: 3, type: 2, description: "resposta cliente", createdBy: { email: "cliente@externo.com", profileType: 2 } },
+  ] });
+  assert.equal(ticket6267.firstClientManifestation?.author, "cliente@externo.com");
+
+  const ticket5836 = buildTicketTimeline({ actions: [{ createdDate: "2026-08-16T10:00:00Z", origin: 2, type: 2, description: "service36 responde", createdBy: { email: "service36@cencicia.com.br", profileType: 1 } }] });
+  assert.equal(ticket5836.lastTeamResponse?.author, "service36@cencicia.com.br");
+
+  const ticket6255 = buildTicketTimeline({ actions: [
+    { createdDate: "2026-08-16T11:00:00Z", origin: 23, type: 2, description: "chat cliente", createdBy: { email: "cliente@externo.com", profileType: 2 } },
+    { createdDate: "2026-08-16T11:05:00Z", origin: 23, type: 2, description: "chat equipe", createdBy: { email: "service36@cencicia.com.br", profileType: 1 } },
+  ] });
+  assert.equal(ticket6255.firstClientManifestation?.author, "cliente@externo.com");
+  assert.equal(ticket6255.lastTeamResponse?.author, "service36@cencicia.com.br");
+});
+
 test("timeline preserves ordering, sourceIndex, fields, and attachments", () => {
   const timeline = buildTicketTimeline({ actions: [
     { createdDate: "2026-08-16T10:00:00Z", origin: 2, type: 0, status: "Resolved", justification: "done", description: "later", attachments: [{ id: 1 }], createdBy: { name: "Equipe" } },

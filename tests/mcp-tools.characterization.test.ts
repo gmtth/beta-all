@@ -74,6 +74,17 @@ test("characterization: search_ticket_content finds subject and action text", as
   assert.deepEqual(result.structuredContent.results[0].matchedIn, ["subject", "initialDescription"]);
 });
 
+test("search_ticket_content accepts the individual-ticket object returned by id lookups", async () => {
+  const ticket = { id: 6246, subject: "Senha incorreta", actions: [{ id: 1, description: "consta senha incorreta" }] };
+  const tools = setup({
+    searchTickets: async (params) => params.id ? ticket : { results: [] },
+    getTicket: async () => ticket,
+  });
+  const result = await tools.get("movidesk_search_ticket_content")!.handler({ id: "6246", keyword: "senha" }) as { structuredContent: { total: number; results: Array<{ id: number }> } };
+  assert.equal(result.structuredContent.total, 1);
+  assert.equal(result.structuredContent.results[0].id, 6246);
+});
+
 test("characterization: people and services preserve known filter calls", async () => {
   const calls: Record<string, Record<string, unknown>> = {};
   const tools = setup({

@@ -22078,6 +22078,7 @@ var createMcpServer = (env, accessToken) => {
 var index_default = { async fetch(request, env) {
   const url = new URL(request.url);
   const pathname = url.pathname.replace(/\/+$/, "") || "/";
+  const isMcpEndpoint = url.pathname === "/mcp" || url.pathname === "/mcp/";
   const config2 = loadProxyOAuthConfig(env);
   if (request.method === "GET" && pathname === "/health") return json({ status: "ok" });
   const protectedResourceMetadataPaths = /* @__PURE__ */ new Set([
@@ -22092,7 +22093,7 @@ var index_default = { async fetch(request, env) {
   ]);
   if (request.method === "GET" && protectedResourceMetadataPaths.has(pathname)) return json(protectedResourceMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
   if (request.method === "GET" && authorizationServerMetadataPaths.has(pathname)) return json(oauthAuthorizationServerMetadata(config2), { headers: { "cache-control": "public, max-age=300" } });
-  if (pathname !== "/mcp" || request.method !== "POST") return new Response("Not found", { status: 404 });
+  if (!isMcpEndpoint || request.method !== "POST") return new Response("Not found", { status: 404 });
   const accessToken = bearerToken(request.headers.get("authorization") ?? void 0);
   if (!accessToken) {
     const metadata = config2.publicUrl + "/.well-known/oauth-protected-resource";

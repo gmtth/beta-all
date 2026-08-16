@@ -43,3 +43,16 @@ test("MCP registers summary and classification as additive read-only tools", asy
   assert.match(summary.structuredContent.reportedProblem, /máquina parou/i);
   assert.equal(classification.structuredContent.category, "máquina inoperante");
 });
+
+test("analysis tools expose ticket_id and protocol in MCP input schemas and keep XOR at runtime", async () => {
+  const configs = new Map<string, unknown>();
+  const tools = new Map<string, (args: unknown) => Promise<unknown>>();
+  registerMovideskTools({ registerTool(name: string, config: unknown, handler: (args: unknown) => Promise<unknown>) { configs.set(name, config); tools.set(name, handler); } }, { getTicket: async () => ticket } as Partial<MovideskReader> as MovideskReader, "temporary-token");
+  for (const name of ["movidesk_get_ticket_timeline", "movidesk_summarize_ticket", "movidesk_classify_ticket_issue"]) {
+    const config = configs.get(name) as { inputSchema: { _def?: { typeName?: string }; shape?: Record<string, unknown> } };
+    assert.equal(config.inputSchema._def?.typeName, "ZodObject");
+    assert.ok(config.inputSchema.shape?.ticket_id);
+    assert.ok(config.inputSchema.shape?.protocol);
+    await assert.rejects(() => tools.get(name)!({ ticket_id: "6280", protocol: "20260814000000159" }), /Informe exatamente um/);
+  }
+});

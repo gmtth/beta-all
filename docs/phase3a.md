@@ -24,6 +24,12 @@ O objeto original do Movidesk não é alterado. A Phase 3A cria internamente men
 
 Boilerplate de saudação, encerramento, assinatura e canais de atendimento é marcado apenas na representação analítica e não é removido da timeline nem de outras ferramentas.
 
+## Catálogo semântico
+
+As regras semânticas mutáveis ficam em `config/movidesk_semantic_models.yaml`, com snapshot JSON versionado para o runtime em `config/movidesk_semantic_models.json`. O catálogo possui `schema_version: 1.1` e ruleset `2026.08.16.1`; sua validação pode ser executada com `node scripts/validate-semantic-catalog.mjs`.
+
+O YAML contém sinais, aliases, exclusões, desambiguações e exemplos. Ele nunca executa código nem substitui a lógica estrutural do MCP. Se a configuração for inválida, o runtime usa o fallback determinístico e não derruba a Phase 2.
+
 ## Limites
 
 O MCP não determina causa provável, problema predominante, intenção, correlação conceitual ou solução. Essas interpretações começam na IA cliente, usando `evidence`, o histórico e os dados oficiais preservados.

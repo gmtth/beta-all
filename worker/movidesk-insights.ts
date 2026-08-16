@@ -1,4 +1,5 @@
 export type InsightTicket = Record<string, unknown>;
+import { semanticCatalog } from "./semantic-catalog";
 
 type Actor = "client" | "agent" | "system" | "unknown";
 type AnalysisMessage = { text: string; actor: Actor; visibility: "public" | "internal"; timestamp: string | null; sourceIndex: number; actionId: string | null; boilerplate: boolean };
@@ -79,7 +80,15 @@ export function summarizeTicket(ticketValue: unknown) {
   return { ...ticketIdentity(sourceTicket), summary, reportedProblem, actionsTaken, pendingItems, evidence, hypotheses, confidence, incomplete };
 }
 
+const escapePattern = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const catalogCategories = Object.values(semanticCatalog.classification.categories).flatMap((definition) => {
+  const label = typeof definition.label === "string" ? definition.label : null;
+  const weakTerms = new Set((semanticCatalog.classification.universal_weak_terms ?? []).map((term) => term.toLocaleLowerCase()));
+  const signals = Array.isArray(definition.strong_signals) ? definition.strong_signals.filter((signal): signal is string => typeof signal === "string" && signal.trim() && signal.trim().length > 6 && !weakTerms.has(signal.trim().toLocaleLowerCase())) : [];
+  return label ? signals.map((signal) => ({ category: label, pattern: new RegExp(escapePattern(signal), "i") })) : [];
+});
 const explicitCategories: Array<{ category: string; pattern: RegExp }> = [
+  ...catalogCategories,
   { category: "acesso e autenticação", pattern: /\b(?:senha|login|autentica[çc][aã]o|acesso)\b.{0,80}\b(?:incorreta|recusad[ao]|rejeitad[ao]|bloquead[ao]|falh[ao]|não funciona|nao funciona)\b|\b(?:incorreta|recusad[ao]|rejeitad[ao]|bloquead[ao]|falh[ao])\b.{0,80}\b(?:senha|login|acesso)\b/i },
   { category: "máquina offline", pattern: /\b(?:máquina|maquina)\b.{0,50}\b(?:offline|sem conexão|sem conexao|desconectad[ao])\b/i },
   { category: "máquina inoperante", pattern: /\b(?:máquina|maquina)\b.{0,50}\b(?:inoperante|parad[ao]|não liga|nao liga)\b|\b(?:inoperante|parad[ao]|não liga|nao liga)\b.{0,50}\b(?:máquina|maquina)\b/i },

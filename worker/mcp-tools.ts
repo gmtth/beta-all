@@ -52,13 +52,16 @@ const findMatches = (value: unknown, keyword: string, caseSensitive: boolean, pa
   if (matches.length >= 8) return matches;
   if (typeof value === "string") {
     const normalized = normalizeText(value, caseSensitive);
-    if (normalized.includes(keyword)) matches.push({ matchedIn: path.startsWith("initialDescription") ? "initialDescription" : path.startsWith("actions") ? "actions" : path === "ticket" ? "ticket" : path, matchedText: stripHtml(value).slice(0, 500) });
+    const actionMatch = /^(?:actions|acoes|interactions|interacoes)\[(\d+)\]/i.exec(path);
+    const matchedIn = actionMatch ? (actionMatch[1] === "0" && /^(?:actions|acoes)\[/i.test(path) ? "initialDescription" : "interactions") : path.startsWith("initialDescription") ? "initialDescription" : path === "ticket" ? "ticket" : path;
+    if (normalized.includes(keyword)) matches.push({ matchedIn, matchedText: stripHtml(value).slice(0, 500) });
   } else if (Array.isArray(value)) {
     value.forEach((item, index) => findMatches(item, keyword, caseSensitive, `${path}[${index}]`, matches));
   } else if (value && typeof value === "object") {
     for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
       if (typeof item === "string" && !textFields.has(key)) continue;
-      const label = key === "description" || key === "descricao" || key === "initialDescription" || key === "descriptionHtml" ? "initialDescription" : key === "actions" || key === "acoes" || key === "interactions" || key === "interacoes" ? "actions" : key;
+      const actionPath = /^(?:actions|acoes|interactions|interacoes)\[\d+\]/i.test(path);
+      const label = actionPath ? path : key === "description" || key === "descricao" || key === "initialDescription" || key === "descriptionHtml" ? "initialDescription" : key === "actions" || key === "acoes" || key === "interactions" || key === "interacoes" ? key : key;
       findMatches(item, keyword, caseSensitive, label, matches);
     }
   }

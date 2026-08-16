@@ -85,6 +85,13 @@ test("search_ticket_content accepts the individual-ticket object returned by id 
   assert.equal(result.structuredContent.results[0].id, 6246);
 });
 
+test("search_ticket_content reports later action matches as interactions", async () => {
+  const ticket = { id: 6246, subject: "Senha", actions: [{ id: 1, description: "manifestação inicial" }, { id: 2, description: "Verificar zeros à esquerda" }] };
+  const tools = setup({ searchTickets: async (params) => params.id ? ticket : { results: [] }, getTicket: async () => ticket });
+  const result = await tools.get("movidesk_search_ticket_content")!.handler({ id: "6246", keyword: "zeros" }) as { structuredContent: { results: Array<{ matchedIn: string[] }> } };
+  assert.deepEqual(result.structuredContent.results[0].matchedIn, ["interactions"]);
+});
+
 test("characterization: people and services preserve known filter calls", async () => {
   const calls: Record<string, Record<string, unknown>> = {};
   const tools = setup({

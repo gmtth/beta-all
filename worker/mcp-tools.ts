@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { MovideskAnalysisSession } from "./movidesk-analysis";
+import { classifyTicketIssue, summarizeTicket } from "./movidesk-insights";
 import { buildTicketTimeline } from "./movidesk-timeline";
 
 export interface MovideskReader {
@@ -80,6 +81,14 @@ const contentSearch = async (client: MovideskReader, args: z.infer<typeof conten
   }
   return { keyword: args.keyword, results, total: results.length };
 };
+const loadAnalysisTicket = async (session: MovideskAnalysisSession, args: z.infer<typeof timelineSchema>) => {
+  if (args.ticket_id) return session.getTicket(args.ticket_id);
+  const searched = await session.searchTickets({ protocol: args.protocol, top: 1, skip: 0 });
+  const candidate = first(searched);
+  if (!candidate) throw new Error("ticket_not_found");
+  const object = candidate && typeof candidate === "object" ? candidate as Record<string, unknown> : {};
+  return object.id === undefined ? candidate : session.getTicket(String(object.id));
+};
 
 export function registerMovideskTools(server: any, client: MovideskReader, accessToken: string) {
   server.registerTool("movidesk_get_ticket", { title: "Consultar ticket", description: "Consulta um ticket autorizado no Movidesk.", inputSchema: ticketSchema, outputSchema: { ticket: z.record(z.string(), z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof ticketSchema>) => {
@@ -88,18 +97,22 @@ export function registerMovideskTools(server: any, client: MovideskReader, acces
   });
   server.registerTool("movidesk_get_ticket_timeline", { title: "Obter linha do tempo do ticket", description: "Transforma as ações e interações de um ticket em uma linha do tempo cronológica. Em cada evento, summary contém o texto integral da ação.", inputSchema: timelineSchema, outputSchema: { events: z.array(z.record(z.string(), z.unknown())), firstClientManifestation: z.record(z.string(), z.unknown()).nullable(), lastTeamResponse: z.record(z.string(), z.unknown()).nullable(), terminalStatus: z.string().nullable() }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof timelineSchema>) => {
     const session = new MovideskAnalysisSession(client, accessToken, { maxTickets: 1 });
-    let ticket: unknown;
-    if (args.ticket_id) ticket = await session.getTicket(args.ticket_id);
-    else {
-      const searched = await session.searchTickets({ protocol: args.protocol, top: 1, skip: 0 });
-      const candidate = first(searched);
-      if (!candidate) throw new Error("ticket_not_found");
-      const candidateObject = candidate && typeof candidate === "object" ? candidate as Record<string, unknown> : {};
-      ticket = candidateObject.id === undefined ? candidate : await session.getTicket(String(candidateObject.id));
-    }
+    const ticket = await loadAnalysisTicket(session, args);
     session.registerAnalyzed();
     const timeline = buildTicketTimeline(ticket);
     return { content: [{ type: "text" as const, text: `${timeline.events.length} evento(s) encontrado(s) na linha do tempo.` }], structuredContent: timeline };
+  });
+  server.registerTool("movidesk_summarize_ticket", { title: "Resumir ticket", description: "Gera resumo operacional separando fatos, ações, pendências, evidências e hipóteses.", inputSchema: timelineSchema, outputSchema: { id: z.unknown().optional(), protocol: z.unknown().optional(), summary: z.string(), reportedProblem: z.string().nullable(), actionsTaken: z.array(z.string()), pendingItems: z.array(z.string()), evidence: z.array(z.string()), hypotheses: z.array(z.string()), confidence: z.enum(["high", "medium", "low"]), incomplete: z.boolean() }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof timelineSchema>) => {
+    const session = new MovideskAnalysisSession(client, accessToken, { maxTickets: 1 });
+    const result = summarizeTicket(await loadAnalysisTicket(session, args));
+    session.registerAnalyzed();
+    return { content: [{ type: "text" as const, text: "Resumo estruturado gerado." }], structuredContent: result };
+  });
+  server.registerTool("movidesk_classify_ticket_issue", { title: "Classificar problema do ticket", description: "Classifica o problema com categoria, evidências e confiança sem substituir a categoria oficial do Movidesk.", inputSchema: timelineSchema, outputSchema: { id: z.unknown().optional(), protocol: z.unknown().optional(), category: z.string(), categories: z.array(z.string()), officialCategory: z.string().nullable(), evidence: z.array(z.string()), confidence: z.enum(["high", "medium", "low"]) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof timelineSchema>) => {
+    const session = new MovideskAnalysisSession(client, accessToken, { maxTickets: 1 });
+    const result = classifyTicketIssue(await loadAnalysisTicket(session, args));
+    session.registerAnalyzed();
+    return { content: [{ type: "text" as const, text: `Categoria: ${result.category}.` }], structuredContent: result };
   });
   server.registerTool("movidesk_search_tickets", { title: "Pesquisar tickets", description: "Pesquisa tickets autorizados no Movidesk usando filtros e paginação.", inputSchema: searchSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof searchSchema>) => collectionResult("Tickets", await client.searchTickets(apiParams(args), accessToken)));
   server.registerTool("movidesk_list_open_tickets", { title: "Listar tickets abertos", description: "Lista tickets em aberto na data informada. Aceita YYYY-MM-DD, DD/MM/AAAA ou DD/MM.", inputSchema: openTicketsSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof openTicketsSchema>) => collectionResult("Tickets", await client.searchTickets({ from_date: args.created_date, to_date: args.created_date, date_field: "createdDate", filter: args.filter ?? "baseStatus ne 'Resolved' and baseStatus ne 'Closed' and baseStatus ne 'Canceled'", orderby: args.orderby ?? "createdDate desc", top: args.top ?? 25, skip: args.skip ?? 0 }, accessToken)));

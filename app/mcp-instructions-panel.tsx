@@ -14,6 +14,8 @@ const mcpConfig = `{
 const tools = [
   { name: "movidesk_get_ticket", title: "Consultar ticket", detail: "Consulta um ticket autorizado pelo identificador numérico.", input: "ticket_id" },
   { name: "movidesk_get_ticket_timeline", title: "Obter linha do tempo", detail: "Ordena ações e interações do ticket e identifica manifestações do cliente e respostas da equipe.", input: "ticket_id" },
+  { name: "movidesk_summarize_ticket", title: "Resumir ticket", detail: "Separa fatos, ações, pendências, evidências e hipóteses sem inventar causas.", input: "ticket_id ou protocol" },
+  { name: "movidesk_classify_ticket_issue", title: "Classificar problema", detail: "Classifica o problema com evidências e confiança sem substituir a categoria oficial.", input: "ticket_id ou protocol" },
   { name: "movidesk_search_tickets", title: "Pesquisar tickets", detail: "Pesquisa tickets com filtros, consulta por id e paginação.", input: "id, keyword, período, responsável, status, categoria, serviço, cliente e filtros OData" },
   { name: "movidesk_list_open_tickets", title: "Listar tickets abertos", detail: "Lista tickets não resolvidos em uma data e retorna results estruturado.", input: "created_date, filtro e paginação" },
   { name: "movidesk_search_ticket_content", title: "Pesquisar conteúdo", detail: "Pesquisa no assunto, descrição inicial e interações do ticket.", input: "keyword + escopo, paginação e case_sensitive" },

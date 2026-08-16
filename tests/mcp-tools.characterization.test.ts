@@ -13,14 +13,24 @@ function setup(client: Partial<MovideskReader>) {
 
 test("characterization: stable Movidesk tools remain registered", () => {
   const tools = setup({});
-  assert.deepEqual([...tools.keys()], [
+  for (const name of [
     "movidesk_get_ticket",
     "movidesk_search_tickets",
     "movidesk_list_open_tickets",
     "movidesk_search_ticket_content",
     "movidesk_search_people",
     "movidesk_list_services",
-  ]);
+  ]) assert.equal(tools.has(name), true, name);
+  assert.equal(tools.has("movidesk_get_ticket_timeline"), true);
+});
+
+test("new timeline tool preserves event order and returns analysis fields", async () => {
+  const tools = setup({ getTicket: async () => ({ status: "Aguardando", actions: [
+    { createdDate: "2026-08-16T10:00:00Z", origin: "team", description: "resposta" },
+    { createdDate: "2026-08-15T10:00:00Z", origin: "client", description: "problema" },
+  ] }) });
+  const result = await tools.get("movidesk_get_ticket_timeline")!.handler({ ticket_id: "6280" }) as { structuredContent: { events: Array<{ summary: string | null }> } };
+  assert.deepEqual(result.structuredContent.events.map((event) => event.summary), ["problema", "resposta"]);
 });
 
 test("characterization: search_tickets preserves filters and collection envelope", async () => {

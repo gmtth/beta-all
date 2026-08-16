@@ -21944,12 +21944,14 @@ var RateLimiter = class {
 };
 var MovideskClient = class {
   proxyUrl;
+  siteAuthorization;
   fetchImpl;
   timeoutMs;
   sleep;
   limiter = new RateLimiter();
   constructor(options) {
     this.proxyUrl = options.proxyUrl.replace(/\/$/, "");
+    this.siteAuthorization = options.siteAuthorization?.trim() || void 0;
     this.fetchImpl = (options.fetchImpl ?? fetch).bind(globalThis);
     this.timeoutMs = options.timeoutMs ?? 15e3;
     this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
@@ -21962,7 +21964,9 @@ var MovideskClient = class {
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
       try {
-        const response = await this.fetchImpl(url, { method: "GET", signal: controller.signal, headers: { Accept: "application/json", Authorization: "Bearer " + accessToken } });
+        const headers = { Accept: "application/json", Authorization: "Bearer " + accessToken };
+        if (this.siteAuthorization) headers["OAI-Sites-Authorization"] = "Bearer " + this.siteAuthorization;
+        const response = await this.fetchImpl(url, { method: "GET", signal: controller.signal, headers });
         if (response.ok) return await response.json();
         const body = await response.text();
         const detail = body ? `: ${body.slice(0, 500)}` : "";
@@ -22079,7 +22083,7 @@ function registerTools(server, client, accessToken) {
 var json = (data, init = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...init.headers ?? {} } });
 var createMcpServer = (env, accessToken) => {
   const server = new McpServer({ name: "movidesk-mcp", version: "1.0.0" });
-  registerTools(server, new MovideskClient({ proxyUrl: env.OAUTH_PROXY_URL }), accessToken);
+  registerTools(server, new MovideskClient({ proxyUrl: env.OAUTH_PROXY_URL, siteAuthorization: env.OAUTH_PROXY_SITE_TOKEN }), accessToken);
   return server;
 };
 async function handleDiscovery(request) {

@@ -21959,12 +21959,14 @@ var MovideskClient = class {
       try {
         const response = await this.fetchImpl(url, { method: "GET", signal: controller.signal, headers: { Accept: "application/json", Authorization: "Bearer " + accessToken } });
         if (response.ok) return await response.json();
-        const error2 = new MovideskHttpError(response.status, "Movidesk proxy request failed with HTTP " + response.status);
+        const body = await response.text();
+        const detail = body ? `: ${body.slice(0, 500)}` : "";
+        const error2 = new MovideskHttpError(response.status, "Movidesk proxy request failed with HTTP " + response.status + detail);
         if (response.status !== 429 && response.status < 500) throw error2;
-        if (attempt === 2) throw new Error("Movidesk proxy request failed after retries");
+        if (attempt === 2) throw error2;
       } catch (error2) {
         if (error2 instanceof MovideskHttpError && error2.status !== 429 && error2.status < 500) throw error2;
-        if (attempt === 2) throw new Error("Movidesk proxy request failed after retries");
+        if (attempt === 2) throw new Error("Movidesk proxy request failed after retries", { cause: error2 });
       } finally {
         clearTimeout(timeout);
       }
@@ -22018,6 +22020,7 @@ var bearerToken = (authorization) => authorization?.match(/^Bearer\s+([^\s]+)$/i
 // src/tools/index.ts
 var ticketSchema = external_exports.object({ ticket_id: external_exports.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas n\xFAmeros") });
 var searchSchema = external_exports.object({
+  id: external_exports.coerce.string().trim().regex(/^\d{1,30}$/, "id deve conter apenas n\xFAmeros").optional(),
   filter: external_exports.string().trim().max(1e3).optional(),
   keyword: external_exports.string().trim().max(200).optional(),
   from_date: external_exports.string().trim().max(40).optional(),
@@ -22046,16 +22049,17 @@ var pick2 = (value, keys) => {
   const object3 = value && typeof value === "object" ? value : {};
   return Object.fromEntries(keys.map((key) => [key, object3[key]]).filter(([, item]) => item !== void 0 && item !== null));
 };
-var apiParams = (args) => ({ filter: args.filter, keyword: args.keyword, from_date: args.from_date, to_date: args.to_date, date_field: args.date_field, responsible_id: args.responsible_id, responsible_email: args.responsible_email, owner_team: args.owner_team, status: args.status, base_status: args.base_status, urgency: args.urgency, category: args.category, service: args.service, client_id: args.client_id, include_past: args.include_past, select: args.select, expand: args.expand, orderby: args.orderby, top: args.top, skip: args.skip });
-var collectionResult = (label, value) => ({ content: [{ type: "text", text: `${label}: ${Array.isArray(value) ? value.length : 0} registro(s) encontrado(s).` }], structuredContent: { results: value } });
+var apiParams = (args) => ({ id: args.id, filter: args.filter, keyword: args.keyword, from_date: args.from_date, to_date: args.to_date, date_field: args.date_field, responsible_id: args.responsible_id, responsible_email: args.responsible_email, owner_team: args.owner_team, status: args.status, base_status: args.base_status, urgency: args.urgency, category: args.category, service: args.service, client_id: args.client_id, include_past: args.include_past, select: args.select, expand: args.expand, orderby: args.orderby, top: args.top, skip: args.skip });
+var collectionResult = (label, value) => ({ content: [{ type: "text", text: `${label}: ${Array.isArray(value) ? value.length : 0} registro(s) encontrado(s).` }], structuredContent: { results: Array.isArray(value) ? value : [] } });
+var readOnlyAnnotations = { readOnlyHint: true, destructiveHint: false, openWorldHint: false };
 function registerTools(server, client, accessToken) {
-  server.registerTool("movidesk_get_ticket", { description: "Consulta um ticket autorizado no Movidesk.", inputSchema: ticketSchema, annotations: { readOnlyHint: true } }, async (args) => {
+  server.registerTool("movidesk_get_ticket", { title: "Consultar ticket", description: "Consulta um ticket autorizado no Movidesk.", inputSchema: ticketSchema, outputSchema: { ticket: external_exports.record(external_exports.string(), external_exports.unknown()) }, annotations: readOnlyAnnotations }, async (args) => {
     const ticket = first(await client.getTicket(args.ticket_id, accessToken));
-    return { content: [{ type: "text", text: "Ticket consultado com sucesso." }], structuredContent: pick2(ticket, ["id", "subject", "assunto", "status", "requester", "solicitante", "client", "cliente", "owner", "responsavel", "priority", "prioridade", "urgency", "urgencia", "createdDate", "dataCriacao", "lastUpdate", "ultimaAtualizacao", "actions", "acoes", "interactions", "interacoes"]) };
+    return { content: [{ type: "text", text: "Ticket consultado com sucesso." }], structuredContent: { ticket: pick2(ticket, ["id", "subject", "assunto", "status", "requester", "solicitante", "client", "cliente", "owner", "responsavel", "priority", "prioridade", "urgency", "urgencia", "createdDate", "dataCriacao", "lastUpdate", "ultimaAtualizacao", "actions", "acoes", "interactions", "interacoes"]) } };
   });
-  server.registerTool("movidesk_search_tickets", { description: "Pesquisa tickets autorizados no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: searchSchema, annotations: { readOnlyHint: true } }, async (args) => collectionResult("Tickets", await client.searchTickets(apiParams(args), accessToken)));
-  server.registerTool("movidesk_search_people", { description: "Pesquisa pessoas autorizadas no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: peopleSchema, annotations: { readOnlyHint: true } }, async (args) => collectionResult("Pessoas", await client.searchPeople({ ...apiParams(args), active: args.active }, accessToken)));
-  server.registerTool("movidesk_list_services", { description: "Lista servi\xE7os autorizados no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: servicesSchema, annotations: { readOnlyHint: true } }, async (args) => collectionResult("Servi\xE7os", await client.listServices({ ...apiParams(args), active: args.active }, accessToken)));
+  server.registerTool("movidesk_search_tickets", { title: "Pesquisar tickets", description: "Pesquisa tickets autorizados no Movidesk usando os filtros do GPT Action e pagina\xE7\xE3o.", inputSchema: searchSchema, outputSchema: { results: external_exports.array(external_exports.unknown()) }, annotations: readOnlyAnnotations }, async (args) => collectionResult("Tickets", await client.searchTickets(apiParams(args), accessToken)));
+  server.registerTool("movidesk_search_people", { title: "Pesquisar pessoas", description: "Pesquisa pessoas autorizadas no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: peopleSchema, outputSchema: { results: external_exports.array(external_exports.unknown()) }, annotations: readOnlyAnnotations }, async (args) => collectionResult("Pessoas", await client.searchPeople({ ...apiParams(args), active: args.active }, accessToken)));
+  server.registerTool("movidesk_list_services", { title: "Listar servi\xE7os", description: "Lista servi\xE7os autorizados no Movidesk usando filtros e pagina\xE7\xE3o.", inputSchema: servicesSchema, outputSchema: { results: external_exports.array(external_exports.unknown()) }, annotations: readOnlyAnnotations }, async (args) => collectionResult("Servi\xE7os", await client.listServices({ ...apiParams(args), active: args.active }, accessToken)));
 }
 
 // server/index.ts

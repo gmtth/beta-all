@@ -104,3 +104,32 @@ test("ticket without a resolution is not automatically incomplete", () => {
   const result = summarizeTicket({ id: 7, subject: "Falha", status: "Em atendimento", description: "A falha continua em investigação." });
   assert.equal(result.incomplete, false);
 });
+
+test("Phase 3A segments role-marked chat and ignores boilerplate for factual extraction", () => {
+  const result = summarizeTicket({
+    id: 6246,
+    protocol: "20260812000000125",
+    subject: "Senha incorreta",
+    status: "Em atendimento",
+    actions: [{
+      id: 10,
+      htmlDescription: '<div data-person-role="client">Olá! Muitos funcionários recebem senha incorreta.</div><div data-person-role="agent">Foi realizado teste com a mesma senha.</div><div data-person-role="system">Entrou na conversa</div>',
+    }],
+  });
+  assert.match(result.reportedProblem ?? "", /Muitos funcionários/);
+  assert.ok(result.actionsTaken.some((value) => /teste/i.test(value)));
+  assert.ok(!result.actionsTaken.some((value) => /entrou na conversa|olá/i.test(value)));
+});
+
+test("Phase 3A does not infer categories from isolated terms", () => {
+  const result = classifyTicketIssue({ id: 6264, subject: "Biometria e RFID", description: "O fluxo menciona biometria e RFID, sem relatar falha de acesso." });
+  assert.equal(result.category, "não classificado");
+  assert.deepEqual(result.categories, []);
+});
+
+test("Phase 3A preserves explicit official category and only explicit hypotheses", () => {
+  const result = classifyTicketIssue({ id: 6277, category: "2 - Erro Máquina", subject: "GHE divergente", description: "Funcionário está no Apollus e ausente na Cenci. RFID citado posteriormente." });
+  assert.equal(result.officialCategory, "2 - Erro Máquina");
+  assert.equal(result.category, "não classificado");
+  assert.deepEqual(summarizeTicket({ id: 6252, description: "Estamos analisando e aguardamos retorno." }).hypotheses, []);
+});

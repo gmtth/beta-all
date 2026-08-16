@@ -1,93 +1,99 @@
 export type InsightTicket = Record<string, unknown>;
 
+type Actor = "client" | "agent" | "system" | "unknown";
+type AnalysisMessage = { text: string; actor: Actor; visibility: "public" | "internal"; timestamp: string | null; sourceIndex: number; actionId: string | null; boilerplate: boolean };
+type AnalysisContext = { id: unknown; protocol: unknown; subject: string | null; status: string | null; officialCategory: string | null; messages: AnalysisMessage[]; actions: Record<string, unknown>[] };
+
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Record<string, unknown> : {};
 const firstValue = (object: Record<string, unknown>, keys: string[]) => keys.map((key) => object[key]).find((value) => value !== undefined && value !== null && value !== "");
 const text = (value: unknown) => typeof value === "string" && value.trim() ? value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim() : null;
 const valueText = (object: Record<string, unknown>, keys: string[]) => text(firstValue(object, keys));
-const actionsOf = (ticket: InsightTicket) => {
-  const value = firstValue(ticket, ["actions", "acoes", "interactions", "interacoes", "history", "historico"]);
-  return Array.isArray(value) ? value.map(objectOf) : [];
-};
+const actionsOf = (ticket: InsightTicket) => { const value = firstValue(ticket, ["actions", "acoes", "interactions", "interacoes", "history", "historico"]); return Array.isArray(value) ? value.map(objectOf) : []; };
 const subjectOf = (ticket: InsightTicket) => valueText(ticket, ["subject", "assunto", "title", "titulo"]);
 const initialDescriptionOf = (ticket: InsightTicket) => valueText(ticket, ["initialDescription", "description", "descriptionHtml", "descricao"]);
-const actionDescription = (action: Record<string, unknown>) => valueText(action, ["description", "htmlDescription", "text", "message", "content", "observation", "observacao", "descricao"]);
-const firstSentence = (value: string | null) => value ? (value.split(/(?<=[.!?])\s+/)[0] ?? value).slice(0, 300) : null;
+const actionTextOf = (action: Record<string, unknown>) => valueText(action, ["htmlDescription", "description", "text", "message", "content", "observation", "observacao", "descricao"]);
+const actionDateOf = (action: Record<string, unknown>) => valueText(action, ["createdDate", "date", "timestamp", "createdAt", "data", "dataCriacao"]);
 const unique = (values: Array<string | null>) => [...new Set(values.filter((value): value is string => Boolean(value)))];
 const ticketIdentity = (ticket: InsightTicket) => ({ id: firstValue(ticket, ["id", "ticketId"]), protocol: firstValue(ticket, ["protocol", "protocolo"]) });
-const confidence = (evidence: string[], actions: string[]) => evidence.length > 1 && actions.length > 0 ? "high" : evidence.length ? "medium" : "low";
-const analysisText = (value: string) => value.replace(/https?:\/\/\S+/gi, " ").replace(/\b(?:telefone|whatsapp|e-mail|email)\s*[:=-]?\s*\S+/gi, " ").replace(/\s+/g, " ").trim();
-const isAdministrative = (value: string) => /^(olá|ola|oi|bom dia|boa tarde|boa noite|att\.?|atenciosamente|obrigad[oa]|entrou na conversa|finalizou a conversa|estamos analisando|estamos verificando|caso em análise|caso em analise|encaminhado para desenvolvimento|aguardamos retorno|será aberto um card|sera aberto um card)\b/i.test(value.trim()) || /(?:^|\s)(?:att|atenciosamente)\.?\s*$/i.test(value.trim());
-const isQuestion = (value: string) => /\?\s*$/.test(value.trim()) || /^(?:poderia|pode|favor|consegue|conseguem|sabe|qual|quando|foi|é|e|há|tem)\b/i.test(value.trim());
-const actionSignal = /\b(?:consult|verific|analis|test|rein[ií]ci|alter|configur|encaminh|criad?o?\s+card|abrir|reproduz|colet|corrig|ajust|valid|retorn|log|fornecedor|integra|servi[çc]o\s+rein[ií]ci|equipamento\s+analis)\w*/i;
-const evidenceSignal = /\b(?:teste|testado|reproduz|log|retorno|integra[çc][aã]o|tentativa|aceita|aceitou|incorreta|senha|funcion[aá]rio|máquina|maquina|evid[eê]ncia|registro|compar|recorr[eê]ncia|erro)\b/i;
-const causalSignal = /\b(?:pode ser|poderia ser|poss[ií]vel|possivelmente|suspeita(?:-se)?|hip[oó]tese|rela[çc][aã]o com|causa pode|provavelmente|maybe|possibly|suspect)\b/i;
+const stripHtml = (value: string) => value.replace(/<br\s*\/?>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
+const cleanForAnalysis = (value: string) => value.replace(/https?:\/\/\S+/gi, " ").replace(/\b(?:telefone|whatsapp|e-mail|email)\s*[:=-]?\s*\S+/gi, " ").replace(/\s+/g, " ").trim();
+const boilerplate = (value: string) => /^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|att\.?|atenciosamente|entrou na conversa|finalizou a conversa|estamos encerrando este chat|estamos analisando|estamos verificando|aguardamos retorno|caso encaminhado para desenvolvimento)\b/i.test(value.trim()) || /(?:canais oficiais|horário de atendimento|horario de atendimento|e-mail sac|whatsapp)/i.test(value);
 
-const actionActor = (action: Record<string, unknown>) => {
+const actorFrom = (action: Record<string, unknown>, role?: string): Actor => {
   const author = objectOf(firstValue(action, ["createdBy", "author", "user", "usuario"]));
   const profile = String(firstValue(author, ["profileType", "profile", "personType"]) ?? "").toLocaleLowerCase();
-  const origin = String(firstValue(action, ["origin", "origem"]) ?? "").toLocaleLowerCase();
   const email = String(firstValue(author, ["email", "userName", "username"]) ?? firstValue(action, ["authorEmail", "email"]) ?? "").toLocaleLowerCase();
-  if (["1", "agent", "atendente", "team", "equipe"].includes(profile)) return "team";
-  if (["2", "client", "cliente", "requester", "solicitante"].includes(profile)) return "client";
-  if (email.endsWith("@cencicia.com.br") || email.startsWith("service")) return "team";
-  if (email.includes("@")) return "client";
-  if (origin === "2") return "team";
+  if (/system|sistema|automát|automatic/i.test(role ?? "")) return "system";
+  if (["1", "agent", "atendente", "team", "equipe"].includes(profile) || email.endsWith("@cencicia.com.br") || email.startsWith("service")) return "agent";
+  if (["2", "client", "cliente", "requester", "solicitante"].includes(profile) || email.includes("@")) return "client";
+  if (role && /agent|atendente|team|equipe/i.test(role)) return "agent";
+  if (role && /client|cliente|solicitante/i.test(role)) return "client";
+  const origin = String(firstValue(action, ["origin", "origem"]) ?? "");
+  if (origin === "2") return "agent";
   if (origin === "3") return "client";
   return "unknown";
 };
+const visibilityOf = (action: Record<string, unknown>) => String(firstValue(action, ["type", "tipo", "actionType"]) ?? "") === "1" ? "internal" as const : "public" as const;
+
+/** Split structured chat HTML on role markers; otherwise keep one factual message per action. */
+const messagesFromAction = (action: Record<string, unknown>, sourceIndex: number): AnalysisMessage[] => {
+  const raw = actionTextOf(action);
+  if (!raw) return [];
+  const html = firstValue(action, ["htmlDescription"]);
+  const chunks: Array<{ role?: string; text: string }> = [];
+  if (typeof html === "string" && /data-person-role|message-container|message-ids/i.test(html)) {
+    const markers = [...html.matchAll(/data-person-role\s*=\s*["']([^"']+)["']/gi)];
+    markers.forEach((marker, index) => { const next = markers[index + 1]?.index ?? html.length; const chunk = stripHtml(html.slice(marker.index ?? 0, next)); if (chunk) chunks.push({ role: marker[1], text: chunk }); });
+  }
+  if (!chunks.length) chunks.push({ text: stripHtml(raw) });
+  return chunks.map((chunk) => { const normalized = cleanForAnalysis(chunk.text); return { text: normalized, actor: actorFrom(action, chunk.role), visibility: visibilityOf(action), timestamp: actionDateOf(action), sourceIndex, actionId: text(firstValue(action, ["id", "actionId"])), boilerplate: boilerplate(normalized) }; }).filter((message) => Boolean(message.text));
+};
+
+const normalizeTicket = (ticketValue: unknown): AnalysisContext => {
+  const ticket = objectOf(Array.isArray(ticketValue) ? ticketValue[0] : ticketValue);
+  const actions = actionsOf(ticket);
+  return { ...ticketIdentity(ticket), subject: subjectOf(ticket), status: valueText(ticket, ["status", "baseStatus"]), officialCategory: valueText(ticket, ["category", "categoria"]), actions, messages: actions.flatMap(messagesFromAction) };
+};
+const usefulMessages = (context: AnalysisContext) => context.messages.filter((message) => message.visibility === "public" && !message.boilerplate && message.text.length > 8);
+const explicitHypothesis = (value: string) => /\b(?:pode ser|poderia ser|poss[ií]vel|possivelmente|suspeita(?:-se)?|hip[oó]tese|rela[çc][aã]o com|causa pode|provavelmente|maybe|possibly|suspect)\b/i.test(value);
+const completedAction = (value: string) => /\b(?:foi|foram|realizad[oa]|verificad[oa]|consultad[oa]|testad[oa]|reproduzid[oa]|reiniciad[oa]|alterad[oa]|configurad[oa]|encaminhad[oa]|criad[oa]|abert[oa]|enviad[oa]|coletad[oa]|corrigid[oa]|ajustad[oa]|obtivemos|retornou|analisad[oa])\b/i.test(value) || /\b(?:reinício|reinicio|teste|consulta|verificação|verificacao|log)\s+(?:realizado|realizada|feito|feita|concluído|concluída)/i.test(value);
+const futureOrQuestion = (value: string) => /\?\s*$/.test(value) || /^(?:vou|iremos|vamos|pode|poderia|favor|aguarde|será|sera|pretendemos)\b/i.test(value);
+const isAnsweredLater = (candidate: string, later: string[]) => { const terms = candidate.toLocaleLowerCase().split(/[^\p{L}\p{N}]+/u).filter((term) => term.length > 4); const corpus = later.join(" ").toLocaleLowerCase(); return /\b(?:não|nao|sim|respondeu|informou|confirmou|realizado|realizada|retornado|obtido|conclu[ií]d|resolvido|fechado)\b/i.test(corpus) && terms.filter((term) => corpus.includes(term)).length >= Math.min(2, terms.length); };
 
 export function summarizeTicket(ticketValue: unknown) {
-  const ticket = objectOf(Array.isArray(ticketValue) ? ticketValue[0] : ticketValue);
-  const subject = subjectOf(ticket);
-  const initialDescription = initialDescriptionOf(ticket);
-  const actions = actionsOf(ticket);
-  const entries = actions.map((action, index) => ({ action, index, text: actionDescription(action), actor: actionActor(action) })).filter((entry): entry is { action: Record<string, unknown>; index: number; text: string; actor: string } => Boolean(entry.text)).map((entry) => ({ ...entry, text: analysisText(entry.text) }));
-  const firstClientText = entries.find((entry) => entry.actor === "client" && !isAdministrative(entry.text))?.text ?? null;
-  const reportedProblem = firstClientText ?? firstSentence(initialDescription) ?? firstSentence(subject);
-  const actionTexts = entries.map((entry) => entry.text);
-  const actionsTaken = unique(entries.filter((entry) => actionSignal.test(entry.text) && !isAdministrative(entry.text) && !isQuestion(entry.text) && !causalSignal.test(entry.text)).map((entry) => entry.text.slice(0, 500))).slice(0, 20);
-  const pendingCandidates = entries.filter((entry) => /(aguardar|pendente|pendência|pending|confirmar|validar|retorno|visita|investigar|analisar|verificar|abrir\s+(?:um\s+)?card|acompanhar)/i.test(entry.text) && !isAdministrative(entry.text));
-  const pendingItems = unique(pendingCandidates.filter((entry) => {
-    const terms = entry.text.toLocaleLowerCase().split(/[^\p{L}\p{N}]+/u).filter((term) => term.length > 4);
-    const later = entries.filter((candidate) => candidate.index > entry.index).map((candidate) => candidate.text.toLocaleLowerCase()).join(" ");
-    const answered = /\b(?:não|nao|sim|respondeu|informou|confirmou|realizado|realizada|retornado|obtido|conclu[ií]d|resolvido)\b/i.test(later) && terms.filter((term) => later.includes(term)).length >= Math.min(2, terms.length);
-    return !answered;
-  }).map((entry) => entry.text.slice(0, 500))).slice(0, 20);
-  const hypotheses = unique(actionTexts.filter((value) => causalSignal.test(value) && !isAdministrative(value)).map((value) => value.slice(0, 500)));
-  const evidence = unique([
-    firstClientText ? `Manifestação do cliente: ${firstClientText.slice(0, 500)}` : null,
-    initialDescription ? `Descrição inicial: ${initialDescription.slice(0, 500)}` : null,
-    ...entries.filter((entry) => evidenceSignal.test(entry.text) && !isAdministrative(entry.text)).map((entry) => entry.text.slice(0, 500)),
-    subject ? `Assunto: ${subject}` : null,
-  ]).slice(0, 20);
-  const status = valueText(ticket, ["status", "baseStatus"]);
-  const summary = [reportedProblem, status ? `Status atual: ${status}.` : null].filter(Boolean).join(" ") || "Histórico sem texto suficiente para resumo.";
-  // `incomplete` means missing structural history, not an unresolved ticket.
-  const incomplete = !initialDescription && !actions.length || Boolean(firstValue(ticket, ["historyIncomplete", "historicoIncompleto"]));
-  return { ...ticketIdentity(ticket), summary, reportedProblem, actionsTaken, pendingItems, evidence, hypotheses, confidence: confidence(evidence, actionsTaken), incomplete };
+  const context = normalizeTicket(ticketValue);
+  const sourceTicket = objectOf(Array.isArray(ticketValue) ? ticketValue[0] : ticketValue);
+  const messages = usefulMessages(context);
+  const firstClient = messages.find((message) => message.actor === "client");
+  const initial = initialDescriptionOf(sourceTicket);
+  const reportedProblem = firstClient?.text ?? initial ?? context.subject;
+  const actionsTaken = unique(messages.filter((message) => message.actor !== "client" && completedAction(message.text) && !futureOrQuestion(message.text) && !explicitHypothesis(message.text)).map((message) => message.text.slice(0, 500))).slice(0, 20);
+  const pendingCandidates = messages.filter((message) => /\b(?:aguardando|aguardar|pendente|pendência|confirmar|validar|retorno|investigar|analisar|verificar|abrir\s+(?:um\s+)?card|acompanhar)\b/i.test(message.text) && !futureOrQuestion(message.text));
+  const terminal = /^(?:resolvido|fechado|closed|resolved|canceled|cancelado)$/i.test(context.status ?? "");
+  const pendingItems = terminal ? [] : unique(pendingCandidates.filter((candidate) => !isAnsweredLater(candidate.text, messages.filter((message) => message.sourceIndex > candidate.sourceIndex).map((message) => message.text))).map((message) => message.text.slice(0, 500))).slice(0, 20);
+  const hypotheses = unique(messages.filter((message) => explicitHypothesis(message.text)).map((message) => message.text.slice(0, 500))).slice(0, 20);
+  const evidence = unique([firstClient ? `Cliente: ${firstClient.text.slice(0, 500)}` : null, initial ? `Descrição inicial: ${initial.slice(0, 500)}` : null, ...messages.filter((message) => message.actor !== "system" && /\b(?:teste|testado|reproduz|log|retorno|integração|integracao|tentativa|aceita|aceitou|incorreta|senha|funcionário|funcionario|máquina|maquina|registro|compar|erro|offline|inoperante)\b/i.test(message.text)).map((message) => message.text.slice(0, 500)), context.subject ? `Assunto: ${context.subject}` : null]).slice(0, 20);
+  const summary = [reportedProblem, context.status ? `Status atual: ${context.status}.` : null].filter(Boolean).join(" ") || "Histórico sem texto suficiente para extração factual.";
+  const incomplete = Boolean(firstValue(sourceTicket, ["historyIncomplete", "historicoIncompleto"])) || (!initial && !context.actions.length);
+  const confidence = messages.length >= 3 && evidence.length >= 2 ? "high" : messages.length || evidence.length ? "medium" : "low";
+  return { ...ticketIdentity(sourceTicket), summary, reportedProblem, actionsTaken, pendingItems, evidence, hypotheses, confidence, incomplete };
 }
 
-const rules: Array<{ category: string; terms: string[]; weight: number }> = [
-  { category: "máquina inoperante", terms: ["inoperante", "não liga", "nao liga", "parada", "sem operação", "sem operacao"], weight: 4 },
-  { category: "máquina offline", terms: ["offline", "sem conexão", "sem conexao", "desconectada"], weight: 4 },
-  { category: "falha de dispensação", terms: ["dispensação", "dispensacao", "não dispensa", "nao dispensa"], weight: 4 },
-  { category: "entrega registrada incorretamente", terms: ["entrega incorreta", "registrou errado", "baixa divergente"], weight: 4 },
-  { category: "integração parada", terms: ["integração parada", "integracao parada", "não sincroniza", "nao sincroniza"], weight: 4 },
-  { category: "estoque ou baixa divergente", terms: ["estoque", "baixa divergente", "saldo divergente"], weight: 3 },
-  { category: "vínculo de funcionário", terms: ["vínculo de funcionário", "vinculo de funcionario", "cadastro de funcionário", "cadastro de funcionario"], weight: 3 },
-  { category: "acesso e autenticação", terms: ["login", "senha", "autenticação", "autenticacao", "acesso"], weight: 5 },
-  { category: "solicitação de melhoria", terms: ["melhoria", "sugestão", "sugestao", "feature"], weight: 3 },
-  { category: "erro de relatório", terms: ["relatório", "relatorio", "dashboard"], weight: 3 },
+const explicitCategories: Array<{ category: string; pattern: RegExp }> = [
+  { category: "acesso e autenticação", pattern: /\b(?:senha|login|autentica[çc][aã]o|acesso)\b.{0,80}\b(?:incorreta|recusad[ao]|rejeitad[ao]|bloquead[ao]|falh[ao]|não funciona|nao funciona)\b|\b(?:incorreta|recusad[ao]|rejeitad[ao]|bloquead[ao]|falh[ao])\b.{0,80}\b(?:senha|login|acesso)\b/i },
+  { category: "máquina offline", pattern: /\b(?:máquina|maquina)\b.{0,50}\b(?:offline|sem conexão|sem conexao|desconectad[ao])\b/i },
+  { category: "máquina inoperante", pattern: /\b(?:máquina|maquina)\b.{0,50}\b(?:inoperante|parad[ao]|não liga|nao liga)\b|\b(?:inoperante|parad[ao]|não liga|nao liga)\b.{0,50}\b(?:máquina|maquina)\b/i },
+  { category: "falha de dispensação", pattern: /\b(?:não dispensa|nao dispensa|falha de dispensação|falha de dispensacao)\b/i },
+  { category: "integração parada", pattern: /\b(?:integração parada|integracao parada|não sincroniza|nao sincroniza)\b/i },
 ];
 
 export function classifyTicketIssue(ticketValue: unknown) {
   const ticket = objectOf(Array.isArray(ticketValue) ? ticketValue[0] : ticketValue);
   const summary = summarizeTicket(ticket);
-  const weightedSources = [summary.reportedProblem ?? "", ...summary.evidence, ...summary.actionsTaken, ...summary.pendingItems];
-  const matches = rules.map((rule) => ({ rule, matched: rule.terms.filter((term) => weightedSources.some((source, index) => source.toLocaleLowerCase().includes(term) && index < 3)), score: rule.terms.reduce((score, term) => score + (weightedSources[0].toLocaleLowerCase().includes(term) ? rule.weight : weightedSources.some((source) => source.toLocaleLowerCase().includes(term) ? 1 : 0)), 0) })).filter((entry) => entry.matched.length).sort((left, right) => right.score - left.score);
-  const best = matches[0];
-  const matchingEvidence = best ? weightedSources.filter((value) => best.rule.terms.some((term) => value.toLocaleLowerCase().includes(term))).map((value) => value.slice(0, 500)) : [];
-  const subjectEvidence = subjectOf(ticket);
-  const evidence = best ? unique([subjectEvidence && best.rule.terms.some((term) => subjectEvidence.toLocaleLowerCase().includes(term)) ? `Assunto: ${subjectEvidence}` : null, ...matchingEvidence]) : [];
-  return { ...ticketIdentity(ticket), category: best?.rule.category ?? "não classificado", categories: matches.map((entry) => entry.rule.category), officialCategory: valueText(ticket, ["category", "categoria"]), evidence, confidence: best ? (best.score >= 5 ? "high" : "medium") : "low" };
+  const factualText = [summary.reportedProblem ?? "", ...summary.evidence, ...summary.actionsTaken].join(" ");
+  const negated = /\b(?:sem|não|nao)\s+(?:relatar|haver|há|existe|apresentar|indicar)\b.{0,60}\b(?:falha|problema|erro)\b/i.test(factualText);
+  const match = negated ? undefined : explicitCategories.find((candidate) => candidate.pattern.test(factualText));
+  const subject = valueText(ticket, ["subject", "assunto", "title", "titulo"]);
+  const evidence = match ? unique([subject && match.pattern.test(subject) ? `Assunto: ${subject}` : null, summary.reportedProblem, ...summary.evidence].filter((value) => value && match.pattern.test(value))) : [];
+  return { ...ticketIdentity(ticket), category: match?.category ?? "não classificado", categories: match ? [match.category] : [], officialCategory: valueText(ticket, ["category", "categoria"]), evidence, confidence: match ? (evidence.length > 1 ? "high" : "medium") : "low" };
 }

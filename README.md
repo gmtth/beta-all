@@ -18,7 +18,7 @@ O MCP nao implementa Auth0 e nao armazena o token do Movidesk. O proxy OAuth exi
 ```env
 PORT=3000
 MCP_PUBLIC_URL=https://SEU-MCP.sites.openai.com
-OAUTH_PROXY_URL=https://movidesk-oauth-proxy.matheusgregoviski.chatgpt.site
+OAUTH_PROXY_URL=https://movidesk-oauth-proxy.thngrns.chatgpt.site
 OAUTH_SCOPE=movidesk:read
 OAUTH_CLIENT_ID=movidesk-gpt
 ```

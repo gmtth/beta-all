@@ -56,3 +56,51 @@ test("analysis tools expose ticket_id and protocol in MCP input schemas and keep
     await assert.rejects(() => tools.get(name)!({ ticket_id: "6280", protocol: "20260814000000159" }), /Informe exatamente um/);
   }
 });
+
+test("answered questions are removed from pending items and administrative text is not a hypothesis", () => {
+  const result = summarizeTicket({
+    id: 6246,
+    subject: "Senha incorreta na máquina",
+    description: "Muitos funcionários recebem senha incorreta; mais de 200 pessoas são afetadas.",
+    actions: [
+      { description: "Confirmar se o problema também acontece na entrega balcão" },
+      { description: "A cliente informou que não utiliza entrega balcão." },
+      { description: "Caso encaminhado para desenvolvimento; estamos analisando." },
+      { description: "Verificar se não pode ter relação com os zeros à esquerda" },
+    ],
+  });
+  assert.deepEqual(result.pendingItems, ["Verificar se não pode ter relação com os zeros à esquerda"]);
+  assert.deepEqual(result.hypotheses, ["Verificar se não pode ter relação com os zeros à esquerda"]);
+  assert.match(result.reportedProblem ?? "", /mais de 200/i);
+});
+
+test("semantic summary prioritizes technical evidence and keeps an open ticket structurally complete", () => {
+  const result = summarizeTicket({
+    id: 6246,
+    subject: "COFCO - SENHA INCORRETA MÁQUINA",
+    status: "Em atendimento",
+    description: "O mesmo funcionário tentou a mesma senha várias vezes; em algumas tentativas foi aceita e em outras foi identificada como incorreta.",
+    actions: [{ description: "Teste reproduzido e retorno da integração Power verificado." }],
+  });
+  assert.equal(result.incomplete, false);
+  assert.ok(result.evidence.some((item) => /mesma senha|retorno da integração|teste reproduzido/i.test(item)));
+  assert.ok(result.evidence.length > 1);
+});
+
+test("classification uses causal evidence instead of the generic word funcionário", () => {
+  const result = classifyTicketIssue({
+    id: 6246,
+    subject: "Senha incorreta na máquina",
+    category: "2 - Erro Máquina",
+    description: "Muitos funcionários não conseguem acessar a máquina porque a senha cadastrada é recusada.",
+    actions: [{ description: "Teste reproduzido com senha incorreta." }],
+  });
+  assert.equal(result.category, "acesso e autenticação");
+  assert.equal(result.officialCategory, "2 - Erro Máquina");
+  assert.ok(!result.categories.includes("vínculo de funcionário"));
+});
+
+test("ticket without a resolution is not automatically incomplete", () => {
+  const result = summarizeTicket({ id: 7, subject: "Falha", status: "Em atendimento", description: "A falha continua em investigação." });
+  assert.equal(result.incomplete, false);
+});

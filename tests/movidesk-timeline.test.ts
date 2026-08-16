@@ -23,11 +23,32 @@ test("timeline extracts nested createdBy and attributes client/team sequence acr
 test("internal note type=1 is a team event and never a client manifestation", () => {
   const timeline = buildTicketTimeline({ actions: [
     clientAction("2026-08-15T09:00:00Z", 0, "relato", "client"),
-    teamAction("2026-08-15T10:00:00Z", 23, "nota interna", "agent", 1),
+    teamAction("2026-08-15T10:00:00Z", 2, "resposta pública", "agent", 2),
+    teamAction("2026-08-15T11:00:00Z", 23, "nota interna", "agent", 1),
   ] });
   assert.equal(timeline.firstClientManifestation?.summary, "relato");
-  assert.equal(timeline.lastTeamResponse?.summary, "nota interna");
-  assert.equal(timeline.lastTeamResponse?.type, "1");
+  assert.equal(timeline.lastTeamResponse?.summary, "resposta pública");
+  assert.equal(timeline.events[2].type, "1");
+});
+
+test("lastTeamResponse keeps the latest public team response before internal notes", () => {
+  const timeline = buildTicketTimeline({ actions: [
+    clientAction("2026-08-15T09:00:00Z", 3, "relato", "client"),
+    teamAction("2026-08-15T10:00:00Z", 2, "primeira resposta", "agent", 2),
+    clientAction("2026-08-15T11:00:00Z", 3, "complemento", "client"),
+    teamAction("2026-08-15T12:00:00Z", 2, "última resposta", "agent", 2),
+    teamAction("2026-08-15T13:00:00Z", 23, "nota interna posterior", "agent", 1),
+  ], status: "Resolved" });
+  assert.equal(timeline.lastTeamResponse?.summary, "última resposta");
+  assert.equal(timeline.terminalStatus, "Resolved");
+});
+
+test("lastTeamResponse is null when the ticket has no public team response", () => {
+  const timeline = buildTicketTimeline({ actions: [
+    clientAction("2026-08-15T09:00:00Z", 3, "relato", "client"),
+    teamAction("2026-08-15T10:00:00Z", 23, "somente nota interna", "agent", 1),
+  ] });
+  assert.equal(timeline.lastTeamResponse, null);
 });
 
 test("timeline preserves ordering, sourceIndex, fields, and attachments", () => {

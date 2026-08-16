@@ -21923,6 +21923,11 @@ var MovideskHttpError = class extends Error {
   }
   status;
 };
+var networkErrorDetail = (error2) => {
+  if (!(error2 instanceof Error)) return "unknown network error";
+  const cause = error2.cause instanceof Error ? `; cause=${error2.cause.name}: ${error2.cause.message}` : "";
+  return `${error2.name}: ${error2.message}${cause}`.slice(0, 500);
+};
 var RateLimiter = class {
   calls = [];
   async acquire() {
@@ -21968,7 +21973,7 @@ var MovideskClient = class {
         if (error2 instanceof MovideskHttpError) {
           if (error2.status !== 429 && error2.status < 500) throw error2;
           if (attempt === 2) throw error2;
-        } else if (attempt === 2) throw new Error("Movidesk proxy request failed after retries", { cause: error2 });
+        } else if (attempt === 2) throw new Error(`Movidesk proxy request failed after retries: ${networkErrorDetail(error2)}`, { cause: error2 });
       } finally {
         clearTimeout(timeout);
       }

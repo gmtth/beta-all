@@ -1,7 +1,6 @@
 import { authorizeMovidesk } from "../_movidesk";
 import { json } from "../../oauth/_lib";
 
-const textFields = new Set(["subject", "assunto", "category", "categoria", "description", "descricao", "initialDescription", "descriptionHtml", "actions", "acoes", "interactions", "interacoes", "justification", "justificativa", "observation", "observacao", "text"]);
 const escapeOData = (value: string) => value.replace(/'/g, "''");
 const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
 const normalizeDate = (value: string | null, endOfDay: boolean) => {
@@ -15,18 +14,19 @@ const normalizeDate = (value: string | null, endOfDay: boolean) => {
   if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() !== Number(match[2]) - 1 || date.getUTCDate() !== Number(match[1])) return "";
   return `${year}-${match[2]}-${match[1]}T${endOfDay ? "23:59:59" : "00:00:00"}Z`;
 };
-const findMatches = (value: unknown, keyword: string, caseSensitive: boolean, path = "ticket", matches: { matchedIn: string; matchedText: string }[] = []) => {
-  if (matches.length >= 8) return matches;
-  if (typeof value === "string") {
-    const text = stripHtml(value);
-    const haystack = caseSensitive ? text : text.toLocaleLowerCase();
-    if (haystack.includes(keyword)) matches.push({ matchedIn: path.startsWith("initialDescription") ? "initialDescription" : path.startsWith("actions") ? "actions" : path, matchedText: text.slice(0, 500) });
-  } else if (Array.isArray(value)) value.forEach((item, index) => findMatches(item, keyword, caseSensitive, `${path}[${index}]`, matches));
-  else if (value && typeof value === "object") for (const [key, item] of Object.entries(value as Record<string, unknown>)) {
-    if (typeof item === "string" && !textFields.has(key)) continue;
-    const label = /description|descricao/i.test(key) ? "initialDescription" : /actions|acoes|interactions|interacoes/i.test(key) ? "actions" : key;
-    findMatches(item, keyword, caseSensitive, label, matches);
-  }
+const findMatches = (ticket: unknown, keyword: string, caseSensitive: boolean) => {
+  if (!ticket || typeof ticket !== "object") return [] as { matchedIn: string; matchedText: string; actionId?: unknown }[];
+  const value = ticket as Record<string, unknown>;
+  const matches: { matchedIn: string; matchedText: string; actionId?: unknown }[] = [];
+  const matchesText = (value: unknown) => { const text = stripHtml(String(value ?? "")); return (caseSensitive ? text : text.toLocaleLowerCase()).includes(keyword); };
+  if (matchesText(value.subject ?? value.assunto)) matches.push({ matchedIn: "subject", matchedText: stripHtml(String(value.subject ?? value.assunto)).slice(0, 500) });
+  const actions = Array.isArray(value.actions) ? value.actions : [];
+  actions.forEach((action, index) => {
+    if (matches.length >= 8 || !action || typeof action !== "object") return;
+    const item = action as Record<string, unknown>;
+    const description = item.description;
+    if (matchesText(description)) matches.push({ matchedIn: index === 0 ? "initial_action" : "action", actionId: item.id, matchedText: stripHtml(String(description ?? "")).slice(0, 500) });
+  });
   return matches;
 };
 
@@ -52,8 +52,7 @@ export async function GET(request: Request) {
   if (rawFilter) filters.push(`(${rawFilter})`);
   const target = new URL("https://api.movidesk.com/public/v1/tickets");
   target.searchParams.set("$filter", filters.join(" and "));
-  target.searchParams.set("$select", incoming.searchParams.get("select")?.trim() || "id,protocol,subject,status,category,urgency,baseStatus,createdDate,lastUpdate,ownerTeam,description");
-  target.searchParams.set("$expand", incoming.searchParams.get("expand")?.trim() || "actions");
+  target.searchParams.set("$select", "id,protocol,subject,status,category,urgency,baseStatus,createdDate,lastUpdate,ownerTeam");
   target.searchParams.set("$orderby", incoming.searchParams.get("orderby")?.trim() || "createdDate desc");
   target.searchParams.set("$top", String(top));
   target.searchParams.set("$skip", String(skip));
@@ -67,12 +66,27 @@ export async function GET(request: Request) {
     const tickets = Array.isArray(data) ? data : [];
     const caseSensitive = incoming.searchParams.get("case_sensitive") === "true";
     const needle = caseSensitive ? keywordInput : keywordInput.toLocaleLowerCase();
-    const results = tickets.flatMap((ticket) => {
-      const matches = findMatches(ticket, needle, caseSensitive);
-      if (!matches.length || !ticket || typeof ticket !== "object") return [];
-      const item = ticket as Record<string, unknown>;
-      return [{ id: item.id, protocol: item.protocol, subject: item.subject ?? item.assunto, status: item.status, matchedIn: [...new Set(matches.map((match) => match.matchedIn))], matchedText: matches.map((match) => match.matchedText).join(" … ").slice(0, 1000) }];
-    });
+    const results: Record<string, unknown>[] = [];
+    for (const ticket of tickets) {
+      if (!ticket || typeof ticket !== "object") continue;
+      const candidate = ticket as Record<string, unknown>;
+      if (candidate.id === undefined || candidate.id === null) continue;
+      const detailUrl = new URL("https://api.movidesk.com/public/v1/tickets");
+      detailUrl.searchParams.set("id", String(candidate.id));
+      detailUrl.searchParams.set("$select", "id,protocol,subject,status,category,urgency,baseStatus,createdDate,lastUpdate,ownerTeam");
+      detailUrl.searchParams.set("$expand", "actions($select=id,description,createdDate,type,origin)");
+      detailUrl.searchParams.set("token", auth.token);
+      const detailResponse = await fetch(detailUrl, { headers: { Accept: "application/json" } });
+      if (!detailResponse.ok) continue;
+      const detailBody = await detailResponse.text();
+      let detailData: unknown;
+      try { detailData = detailBody ? JSON.parse(detailBody) : null; } catch { continue; }
+      const detail = Array.isArray(detailData) ? detailData[0] : detailData;
+      const matches = findMatches(detail, needle, caseSensitive);
+      if (!matches.length) continue;
+      const item = detail && typeof detail === "object" ? detail as Record<string, unknown> : candidate;
+      results.push({ id: item.id ?? candidate.id, protocol: item.protocol ?? candidate.protocol, subject: item.subject ?? item.assunto ?? candidate.subject, status: item.status ?? candidate.status, category: item.category ?? candidate.category, urgency: item.urgency ?? candidate.urgency, ownerTeam: item.ownerTeam ?? candidate.ownerTeam, createdDate: item.createdDate ?? candidate.createdDate, lastUpdate: item.lastUpdate ?? candidate.lastUpdate, matchedIn: [...new Set(matches.map((match) => match.matchedIn))], matchedActionIds: matches.map((match) => match.actionId).filter((id) => id !== undefined), matchedText: matches.map((match) => match.matchedText).join(" … ").slice(0, 1000) });
+    }
     return json({ keyword: keywordInput, results, total: results.length });
   } catch { return json({ error: "Movidesk indisponível." }, { status: 502 }); }
 }

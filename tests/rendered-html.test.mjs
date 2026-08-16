@@ -49,7 +49,7 @@ test("GPT Action documents ticket content search", async () => {
   assert.match(panel, /\/api\/ticket-content/);
   assert.match(panel, /case_sensitive/);
   assert.match(route, /export async function GET/);
-  assert.match(route, /initialDescription/);
+  assert.match(route, /initial_action/);
   assert.match(route, /actions/);
   assert.match(route, /\$select/);
   assert.doesNotMatch(route, /export async function POST|export async function PATCH|export async function DELETE/);

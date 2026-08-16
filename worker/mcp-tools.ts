@@ -11,7 +11,9 @@ export interface MovideskReader {
 }
 
 const ticketSchema = z.object({ ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números") });
-const timelineSchema = z.object({ ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números").optional(), protocol: z.string().trim().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/, "protocol inválido").optional() }).refine((value) => Boolean(value.ticket_id) !== Boolean(value.protocol), { message: "Informe ticket_id ou protocol, mas não ambos." });
+// Keep this as a plain Zod object: MCP schema generation exposes its optional fields.
+// The XOR rule is enforced at runtime by loadAnalysisTicket.
+const timelineSchema = z.object({ ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números").optional(), protocol: z.string().trim().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/, "protocol inválido").optional() });
 const searchSchema = z.object({
   id: z.coerce.string().trim().regex(/^\d{1,30}$/, "id deve conter apenas números").optional(),
   protocol: z.string().trim().regex(/^[A-Za-z0-9_-]{1,30}$/, "protocol inválido").optional(),
@@ -82,6 +84,7 @@ const contentSearch = async (client: MovideskReader, args: z.infer<typeof conten
   return { keyword: args.keyword, results, total: results.length };
 };
 const loadAnalysisTicket = async (session: MovideskAnalysisSession, args: z.infer<typeof timelineSchema>) => {
+  if (Boolean(args.ticket_id) === Boolean(args.protocol)) throw new Error("Informe exatamente um entre ticket_id e protocol.");
   if (args.ticket_id) return session.getTicket(args.ticket_id);
   const searched = await session.searchTickets({ protocol: args.protocol, top: 1, skip: 0 });
   const candidate = first(searched);

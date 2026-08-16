@@ -21950,7 +21950,7 @@ var MovideskClient = class {
   limiter = new RateLimiter();
   constructor(options) {
     this.proxyUrl = options.proxyUrl.replace(/\/$/, "");
-    this.fetchImpl = options.fetchImpl ?? fetch;
+    this.fetchImpl = (options.fetchImpl ?? fetch).bind(globalThis);
     this.timeoutMs = options.timeoutMs ?? 15e3;
     this.sleep = options.sleep ?? ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
   }

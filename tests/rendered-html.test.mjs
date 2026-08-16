@@ -51,6 +51,7 @@ test("GPT Action documents ticket content search", async () => {
   assert.match(route, /export async function GET/);
   assert.match(route, /initialDescription/);
   assert.match(route, /actions/);
+  assert.match(route, /\$select/);
   assert.doesNotMatch(route, /export async function POST|export async function PATCH|export async function DELETE/);
 });
 

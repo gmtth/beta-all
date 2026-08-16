@@ -52,6 +52,7 @@ export async function GET(request: Request) {
   if (rawFilter) filters.push(`(${rawFilter})`);
   const target = new URL("https://api.movidesk.com/public/v1/tickets");
   target.searchParams.set("$filter", filters.join(" and "));
+  target.searchParams.set("$select", incoming.searchParams.get("select")?.trim() || "id,protocol,subject,status,category,urgency,baseStatus,createdDate,lastUpdate,ownerTeam,description");
   target.searchParams.set("$expand", incoming.searchParams.get("expand")?.trim() || "actions");
   target.searchParams.set("$orderby", incoming.searchParams.get("orderby")?.trim() || "createdDate desc");
   target.searchParams.set("$top", String(top));

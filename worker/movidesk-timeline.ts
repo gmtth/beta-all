@@ -93,8 +93,8 @@ export function buildTicketTimeline(ticket: unknown): TicketTimeline {
   const sorted = [...events].sort((left, right) => dateSortValue(left.date) - dateSortValue(right.date) || left.sourceIndex - right.sourceIndex);
   const sourceByIndex = new Map(rawEvents.map((value, index) => [index, value]));
   const firstClientManifestation = sorted.find((event) => isClientEvent(event, sourceByIndex.get(event.sourceIndex))) ?? null;
-  const teamEvents = sorted.filter((event) => isTeamEvent(event, sourceByIndex.get(event.sourceIndex)));
-  const lastTeamResponse = teamEvents.length ? teamEvents[teamEvents.length - 1] : null;
+  const publicTeamEvents = sorted.filter((event) => event.type !== "1" && isTeamEvent(event, sourceByIndex.get(event.sourceIndex)));
+  const lastTeamResponse = publicTeamEvents.length ? publicTeamEvents[publicTeamEvents.length - 1] : null;
   const ticketObject = objectOf(Array.isArray(ticket) ? ticket[0] : ticket);
   return { events: sorted, firstClientManifestation, lastTeamResponse, terminalStatus: statusValue(ticketObject) ?? (sorted.length ? sorted[sorted.length - 1].status : null) };
 }

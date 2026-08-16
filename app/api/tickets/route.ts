@@ -12,7 +12,10 @@ export async function GET(request: Request) {
   if (!token) return json({ error: "Proxy não configurado." }, { status: 503 });
   const incoming = new URL(request.url);
   const id = incoming.searchParams.get("id")?.trim() ?? "";
+  const protocol = incoming.searchParams.get("protocol")?.trim() ?? "";
   if (id && !/^\d{1,30}$/.test(id)) return json({ error: "invalid_ticket_id" }, { status: 400 });
+  if (protocol && !/^[A-Za-z0-9_-]{1,30}$/.test(protocol)) return json({ error: "invalid_ticket_protocol" }, { status: 400 });
+  if (id && protocol) return json({ error: "multiple_ticket_identifiers" }, { status: 400 });
   const top = Number(incoming.searchParams.get("top") ?? "25");
   const skip = Number(incoming.searchParams.get("skip") ?? "0");
   if (!Number.isInteger(top) || top < 1 || top > 100 || !Number.isInteger(skip) || skip < 0 || skip > 10000) return json({ error: "invalid_pagination" }, { status: 400 });
@@ -25,7 +28,6 @@ export async function GET(request: Request) {
   const rawFilter = incoming.searchParams.get("filter")?.trim() ?? "";
   if (rawFilter.length > 1000 || /[;\r\n]/.test(rawFilter)) return json({ error: "invalid_filter" }, { status: 400 });
   const filters = [
-    id ? `id eq ${id}` : "",
     from ? `${dateField} ge ${from}` : "",
     to ? `${dateField} le ${to}` : "",
     keywordFilter(incoming.searchParams.get("keyword")),
@@ -40,17 +42,20 @@ export async function GET(request: Request) {
     incoming.searchParams.get("client_id")?.trim() ? `clients/any(c: c/id eq '${escapeOData(incoming.searchParams.get("client_id")!.trim())}')` : "",
     rawFilter ? `(${rawFilter})` : "",
   ].filter(Boolean);
-  if (!id && !filters.length) return json({ error: "search_criteria_required", message: "Informe ao menos um filtro para pesquisar tickets." }, { status: 400 });
+  const individual = Boolean(id || protocol);
+  if (!individual && !filters.length) return json({ error: "search_criteria_required", message: "Informe ao menos um filtro para pesquisar tickets." }, { status: 400 });
   const target = new URL(`https://api.movidesk.com/public/v1/${incoming.searchParams.get("include_past") === "true" ? "tickets/past" : "tickets"}`);
-  // Movidesk's public API accepts ticket IDs through OData, not an `id`
-  // query parameter. Sending `id=...` is rejected as INVALID_ARGUMENT.
-  target.searchParams.set("$filter", filters.join(" and "));
-  if (!id) {
+  // Individual ticket lookups use the API's direct id/protocol parameters.
+  // OData $filter is only for collection searches.
+  if (id) target.searchParams.set("id", id);
+  else if (protocol) target.searchParams.set("protocol", protocol);
+  else target.searchParams.set("$filter", filters.join(" and "));
+  if (!individual) {
     const select = incoming.searchParams.get("select")?.trim() || "id,protocol,type,subject,category,urgency,status,baseStatus,createdDate,lastUpdate,ownerTeam";
     target.searchParams.set("$select", select);
   }
   for (const key of ["expand", "orderby"]) { const value = incoming.searchParams.get(key); if (value) target.searchParams.set(`$${key}`, value); }
-  if (!id) { target.searchParams.set("$top", String(top)); target.searchParams.set("$skip", String(skip)); }
+  if (!individual) { target.searchParams.set("$top", String(top)); target.searchParams.set("$skip", String(skip)); }
   target.searchParams.set("token", token);
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 15000);
@@ -59,7 +64,7 @@ export async function GET(request: Request) {
     const text = await upstream.text();
     let data: unknown;
     try { data = text ? JSON.parse(text) : null; } catch { data = { error: "Movidesk returned a non-JSON response." }; }
-    if (upstream.status === 404 || (id && upstream.ok && Array.isArray(data) && data.length === 0) || (id && upstream.ok && data === null)) return json({ error: "ticket_not_found" }, { status: 404 });
+    if (upstream.status === 404 || (individual && upstream.ok && Array.isArray(data) && data.length === 0) || (individual && upstream.ok && data === null)) return json({ error: "ticket_not_found" }, { status: 404 });
     return json(data, { status: upstream.status });
   } catch {
     return json({ error: "Movidesk indisponível." }, { status: 502 });

@@ -11,11 +11,13 @@
     "start": "vinext start",
     "test": "npm run build && node --test tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "validate:semantic-catalog": "node scripts/validate-semantic-catalog.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.30.0",
     "drizzle-orm": "0.45.2",
+    "js-yaml": "4.3.1",
     "react": "19.2.6",
     "react-dom": "19.2.6",
     "react-loading-skeleton": "3.5.0",

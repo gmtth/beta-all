@@ -10,7 +10,7 @@ export interface MovideskReader {
 }
 
 const ticketSchema = z.object({ ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números") });
-const timelineSchema = ticketSchema;
+const timelineSchema = z.object({ ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números").optional(), protocol: z.string().trim().min(1).max(128).regex(/^[A-Za-z0-9_-]+$/, "protocol inválido").optional() }).refine((value) => Boolean(value.ticket_id) !== Boolean(value.protocol), { message: "Informe ticket_id ou protocol, mas não ambos." });
 const searchSchema = z.object({
   id: z.coerce.string().trim().regex(/^\d{1,30}$/, "id deve conter apenas números").optional(),
   protocol: z.string().trim().regex(/^[A-Za-z0-9_-]{1,30}$/, "protocol inválido").optional(),
@@ -86,9 +86,17 @@ export function registerMovideskTools(server: any, client: MovideskReader, acces
     const ticket = first(await client.getTicket(args.ticket_id, accessToken));
     return { content: [{ type: "text" as const, text: "Ticket consultado com sucesso." }], structuredContent: { ticket: pick(ticket, ["id", "subject", "assunto", "status", "requester", "solicitante", "client", "cliente", "owner", "responsavel", "priority", "prioridade", "urgency", "urgencia", "createdDate", "dataCriacao", "lastUpdate", "ultimaAtualizacao", "actions", "acoes", "interactions", "interacoes"]) } };
   });
-  server.registerTool("movidesk_get_ticket_timeline", { title: "Obter linha do tempo do ticket", description: "Transforma as ações e interações de um ticket em uma linha do tempo cronológica.", inputSchema: timelineSchema, outputSchema: { events: z.array(z.record(z.string(), z.unknown())), firstClientManifestation: z.record(z.string(), z.unknown()).nullable(), lastTeamResponse: z.record(z.string(), z.unknown()).nullable(), terminalStatus: z.string().nullable() }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof timelineSchema>) => {
+  server.registerTool("movidesk_get_ticket_timeline", { title: "Obter linha do tempo do ticket", description: "Transforma as ações e interações de um ticket em uma linha do tempo cronológica. Em cada evento, summary contém o texto integral da ação.", inputSchema: timelineSchema, outputSchema: { events: z.array(z.record(z.string(), z.unknown())), firstClientManifestation: z.record(z.string(), z.unknown()).nullable(), lastTeamResponse: z.record(z.string(), z.unknown()).nullable(), terminalStatus: z.string().nullable() }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof timelineSchema>) => {
     const session = new MovideskAnalysisSession(client, accessToken, { maxTickets: 1 });
-    const ticket = await session.getTicket(args.ticket_id);
+    let ticket: unknown;
+    if (args.ticket_id) ticket = await session.getTicket(args.ticket_id);
+    else {
+      const searched = await session.searchTickets({ protocol: args.protocol, top: 1, skip: 0 });
+      const candidate = first(searched);
+      if (!candidate) throw new Error("ticket_not_found");
+      const candidateObject = candidate && typeof candidate === "object" ? candidate as Record<string, unknown> : {};
+      ticket = candidateObject.id === undefined ? candidate : await session.getTicket(String(candidateObject.id));
+    }
     session.registerAnalyzed();
     const timeline = buildTicketTimeline(ticket);
     return { content: [{ type: "text" as const, text: `${timeline.events.length} evento(s) encontrado(s) na linha do tempo.` }], structuredContent: timeline };

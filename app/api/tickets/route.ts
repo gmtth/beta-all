@@ -45,7 +45,11 @@ export async function GET(request: Request) {
   // Movidesk's public API accepts ticket IDs through OData, not an `id`
   // query parameter. Sending `id=...` is rejected as INVALID_ARGUMENT.
   target.searchParams.set("$filter", filters.join(" and "));
-  for (const key of ["select", "expand", "orderby"]) { const value = incoming.searchParams.get(key); if (value) target.searchParams.set(`$${key}`, value); }
+  if (!id) {
+    const select = incoming.searchParams.get("select")?.trim() || "id,protocol,type,subject,category,urgency,status,baseStatus,createdDate,lastUpdate,ownerTeam";
+    target.searchParams.set("$select", select);
+  }
+  for (const key of ["expand", "orderby"]) { const value = incoming.searchParams.get(key); if (value) target.searchParams.set(`$${key}`, value); }
   if (!id) { target.searchParams.set("$top", String(top)); target.searchParams.set("$skip", String(skip)); }
   target.searchParams.set("token", token);
   const controller = new AbortController();

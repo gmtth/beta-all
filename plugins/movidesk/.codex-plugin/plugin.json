@@ -1,0 +1,28 @@
+{
+  "name": "movidesk",
+  "version": "1.0.0",
+  "description": "Consulta dados autorizados do Movidesk e documenta a integração MCP/OAuth do projeto.",
+  "author": {
+    "name": "thngrns",
+    "email": "39179366+gmtth@users.noreply.github.com"
+  },
+  "keywords": ["movidesk", "mcp", "tickets", "suporte", "oauth"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Movidesk",
+    "shortDescription": "Consulte tickets, pessoas e serviços do Movidesk.",
+    "longDescription": "Conecta o Codex ao servidor MCP Movidesk somente leitura e inclui a documentação operacional e técnica do projeto, cobrindo ferramentas, filtros, OAuth com PKCE, arquitetura, segurança e diagnóstico.",
+    "developerName": "thngrns",
+    "category": "Productivity",
+    "capabilities": ["Read", "Search"],
+    "defaultPrompt": [
+      "Consulte um ticket do Movidesk para mim.",
+      "Liste os tickets abertos em uma data.",
+      "Explique como funciona a integração Movidesk."
+    ],
+    "brandColor": "#FF2A28",
+    "composerIcon": "./assets/icon-256_square.png",
+    "logo": "./assets/icon-256_square.png"
+  }
+}

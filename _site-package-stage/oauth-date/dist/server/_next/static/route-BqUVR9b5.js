@@ -1,0 +1,1 @@
+import{n as e,t}from"./_movidesk-BwsbEp_z.js";async function n(n){let r=await t(n);return`response`in r?r.response:e(`persons`,n,r.token,[`id`,`email`,`profileType`,`isActive`])}export{n as GET};

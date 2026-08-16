@@ -128,8 +128,45 @@ test("Phase 3A does not infer categories from isolated terms", () => {
 });
 
 test("Phase 3A preserves explicit official category and only explicit hypotheses", () => {
-  const result = classifyTicketIssue({ id: 6277, category: "2 - Erro Máquina", subject: "GHE divergente", description: "Funcionário está no Apollus e ausente na Cenci. RFID citado posteriormente." });
+  const result = classifyTicketIssue({ id: 6277, category: "2 - Erro Máquina", subject: "Cadastro", description: "Funcionário citado no histórico. RFID citado posteriormente, sem falha de autenticação." });
   assert.equal(result.officialCategory, "2 - Erro Máquina");
   assert.equal(result.category, "não classificado");
   assert.deepEqual(summarizeTicket({ id: 6252, description: "Estamos analisando e aguardamos retorno." }).hypotheses, []);
+});
+
+test("Phase 3A decodes escaped chat markup and never treats bot as the client", () => {
+  const result = summarizeTicket({
+    id: 6246,
+    subject: "Senha incorreta",
+    description: "<div data-person-role=\"bot\" class=\"message-container\">Olá! Seja bem-vindo ao suporte.</div>",
+    actions: [{ htmlDescription: '&lt;div data-person-role="bot" style="x"&gt;Olá!&lt;/div&gt;&lt;div data-person-role="client"&gt;Muitos funcionários recebem senha incorreta.&lt;/div&gt;' }],
+  });
+  assert.match(result.reportedProblem ?? "", /Muitos funcionários/);
+  assert.doesNotMatch(JSON.stringify(result), /data-person-role|message-container|style=/i);
+  assert.doesNotMatch(result.reportedProblem ?? "", /Olá|bem-vindo/i);
+});
+
+test("catalog contextual groups recognize registration and synchronization without RFID authentication", () => {
+  const result = classifyTicketIssue({
+    id: 6277,
+    subject: "Matrículas não aparecem",
+    category: "2 - Erro Máquina",
+    description: "Funcionário está correto no Apollus e não aparece no Cenci; há divergência e filas de sincronização paradas.",
+  });
+  assert.equal(result.category, "cadastro e sincronização");
+  assert.notEqual(result.category, "acesso e autenticação");
+  assert.equal(result.officialCategory, "2 - Erro Máquina");
+});
+
+test("6246 factual extraction keeps the client report, completed Power action, and explicit hypothesis", () => {
+  const result = summarizeTicket({
+    id: 6246,
+    subject: "Senha incorreta",
+    description: '&lt;div data-person-role="bot"&gt;Olá!&lt;/div&gt;',
+    actions: [{ htmlDescription: '&lt;div data-person-role="bot"&gt;Olá!&lt;/div&gt;&lt;div data-person-role="client"&gt;Mais de 200 funcionários recebem senha incorreta.&lt;/div&gt;&lt;div data-person-role="agent"&gt;Consultamos a Power e verificamos os registros.&lt;/div&gt;&lt;div data-person-role="agent"&gt;Verificar se não pode ter relação com zeros à esquerda.&lt;/div&gt;' }],
+  });
+  assert.match(result.reportedProblem ?? "", /Mais de 200 funcionários/);
+  assert.ok(result.actionsTaken.some((value) => /Consultamos a Power/i.test(value)));
+  assert.ok(result.hypotheses.some((value) => /zeros à esquerda/i.test(value)));
+  assert.doesNotMatch(JSON.stringify(result), /data-person-role|<div|style=/i);
 });

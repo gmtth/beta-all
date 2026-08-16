@@ -21965,8 +21965,10 @@ var MovideskClient = class {
         if (response.status !== 429 && response.status < 500) throw error2;
         if (attempt === 2) throw error2;
       } catch (error2) {
-        if (error2 instanceof MovideskHttpError && error2.status !== 429 && error2.status < 500) throw error2;
-        if (attempt === 2) throw new Error("Movidesk proxy request failed after retries", { cause: error2 });
+        if (error2 instanceof MovideskHttpError) {
+          if (error2.status !== 429 && error2.status < 500) throw error2;
+          if (attempt === 2) throw error2;
+        } else if (attempt === 2) throw new Error("Movidesk proxy request failed after retries", { cause: error2 });
       } finally {
         clearTimeout(timeout);
       }
@@ -22075,6 +22077,28 @@ var createMcpServer = (env, accessToken) => {
   registerTools(server, new MovideskClient({ proxyUrl: env.OAUTH_PROXY_URL }), accessToken);
   return server;
 };
+async function handleDiscovery(request) {
+  if (request.headers.get("mcp-method") !== "server/discover") return null;
+  let body;
+  try {
+    body = await request.clone().json();
+  } catch {
+    return null;
+  }
+  return json({
+    jsonrpc: "2.0",
+    id: body.id ?? null,
+    result: {
+      resultType: "complete",
+      // The bundled SDK currently implements the 2025 transport/lifecycle.
+      // Advertising that explicitly lets newer clients fall back to initialize
+      // instead of receiving the SDK's generic HTTP 400 for server/discover.
+      supportedVersions: ["2025-11-25"],
+      capabilities: { tools: {} },
+      _meta: { "io.modelcontextprotocol/serverInfo": { name: "movidesk-mcp", version: "1.0.0" } }
+    }
+  });
+}
 var index_default = { async fetch(request, env) {
   const url = new URL(request.url);
   const pathname = url.pathname.replace(/\/+$/, "") || "/";
@@ -22099,13 +22123,16 @@ var index_default = { async fetch(request, env) {
     const metadata = config2.publicUrl + "/.well-known/oauth-protected-resource";
     return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": 'Bearer resource_metadata="' + metadata + '", scope="' + config2.scope + '"' } });
   }
+  const discovery = await handleDiscovery(request);
+  if (discovery) return discovery;
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: void 0 });
   const server = createMcpServer(env, accessToken);
   await server.connect(transport);
   return transport.handleRequest(request);
 } };
 export {
-  index_default as default
+  index_default as default,
+  handleDiscovery
 };
 /*! Bundled license information:
 

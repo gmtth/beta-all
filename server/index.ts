@@ -9,6 +9,25 @@ type Env = Record<string, string | undefined> & { OAUTH_PROXY_URL: string; OAUTH
 const json = (data: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
 const createMcpServer = (env: Env, accessToken: string) => { const server = new McpServer({ name: "movidesk-mcp", version: "1.0.0" }); registerTools(server, new MovideskClient({ proxyUrl: env.OAUTH_PROXY_URL as string }), accessToken); return server; };
 
+export async function handleDiscovery(request: Request): Promise<Response | null> {
+  if (request.headers.get("mcp-method") !== "server/discover") return null;
+  let body: { id?: string | number | null };
+  try { body = await request.clone().json() as { id?: string | number | null }; } catch { return null; }
+  return json({
+    jsonrpc: "2.0",
+    id: body.id ?? null,
+    result: {
+      resultType: "complete",
+      // The bundled SDK currently implements the 2025 transport/lifecycle.
+      // Advertising that explicitly lets newer clients fall back to initialize
+      // instead of receiving the SDK's generic HTTP 400 for server/discover.
+      supportedVersions: ["2025-11-25"],
+      capabilities: { tools: {} },
+      _meta: { "io.modelcontextprotocol/serverInfo": { name: "movidesk-mcp", version: "1.0.0" } },
+    },
+  });
+}
+
 export default { async fetch(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
   const pathname = url.pathname.replace(/\/+$/, "") || "/";
@@ -29,5 +48,6 @@ export default { async fetch(request: Request, env: Env): Promise<Response> {
   if (request.method === "GET" && authorizationServerMetadataPaths.has(pathname)) return json(oauthAuthorizationServerMetadata(config), { headers: { "cache-control": "public, max-age=300" } });
   if (!isMcpEndpoint || request.method !== "POST") return new Response("Not found", { status: 404 });
   const accessToken = bearerToken(request.headers.get("authorization") ?? undefined); if (!accessToken) { const metadata = config.publicUrl + "/.well-known/oauth-protected-resource"; return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": 'Bearer resource_metadata="' + metadata + '", scope="' + config.scope + '"' } }); }
+  const discovery = await handleDiscovery(request); if (discovery) return discovery;
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined }); const server = createMcpServer(env, accessToken); await server.connect(transport); return transport.handleRequest(request);
 } };

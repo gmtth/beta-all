@@ -4,7 +4,7 @@ import type { MovideskClient } from "../movidesk-client.js";
 const ticketSchema = z.object({ ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números") });
 const searchSchema = z.object({
   id: z.coerce.string().trim().regex(/^\d{1,30}$/, "id deve conter apenas números").optional(),
-  protocol: z.coerce.string().trim().regex(/^\d{1,30}$/, "protocol deve conter apenas números").optional(),
+  protocol: z.string().trim().regex(/^[A-Za-z0-9_-]{1,30}$/, "protocol inválido").optional(),
   filter: z.string().trim().max(1000).optional(), keyword: z.string().trim().max(200).optional(),
   from_date: z.string().trim().max(40).optional(), to_date: z.string().trim().max(40).optional(),
   created_date: z.string().trim().max(40).optional(), last_update: z.string().trim().max(40).optional(),
@@ -24,7 +24,7 @@ const servicesSchema = searchSchema.extend({ active: z.coerce.boolean().optional
 const readOnlyAnnotations = { readOnlyHint: true, destructiveHint: false, openWorldHint: false } as const;
 const first = (value: unknown) => Array.isArray(value) ? value[0] : value;
 const pick = (value: unknown, keys: string[]) => { const object = (value && typeof value === "object" ? value : {}) as Record<string, unknown>; return Object.fromEntries(keys.map((key) => [key, object[key]]).filter(([, item]) => item !== undefined && item !== null)); };
-const apiParams = (args: z.infer<typeof searchSchema>) => ({ id: args.id ?? args.protocol, filter: args.filter, keyword: args.keyword, from_date: args.from_date ?? args.created_date, to_date: args.to_date, date_field: args.last_update ? "lastUpdate" : args.date_field, responsible_id: args.responsible_id, responsible_email: args.responsible_email, owner_team: args.owner_team, status: args.status, base_status: args.base_status, urgency: args.urgency, category: args.category, service: args.service, client_id: args.client_id, include_past: args.include_past, select: args.select, expand: args.expand, orderby: args.orderby, top: args.top, skip: args.skip });
+const apiParams = (args: z.infer<typeof searchSchema>) => ({ id: args.id, protocol: args.protocol, filter: args.filter, keyword: args.keyword, from_date: args.from_date ?? args.created_date, to_date: args.to_date, date_field: args.last_update ? "lastUpdate" : args.date_field, responsible_id: args.responsible_id, responsible_email: args.responsible_email, owner_team: args.owner_team, status: args.status, base_status: args.base_status, urgency: args.urgency, category: args.category, service: args.service, client_id: args.client_id, include_past: args.include_past, select: args.select, expand: args.expand, orderby: args.orderby, top: args.top, skip: args.skip });
 const collectionResult = (label: string, value: unknown) => ({ content: [{ type: "text" as const, text: `${label}: ${Array.isArray(value) ? value.length : 0} registro(s) encontrado(s).` }], structuredContent: { results: Array.isArray(value) ? value : [] } });
 const jsonResult = (value: unknown) => ({ content: [{ type: "text" as const, text: JSON.stringify(value) }], structuredContent: value });
 

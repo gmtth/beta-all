@@ -42,6 +42,18 @@ test("ticket search exposes bounded read-only filters", async () => {
   assert.doesNotMatch(route, /export async function POST|export async function PATCH|export async function DELETE/);
 });
 
+test("GPT Action documents ticket content search", async () => {
+  const panel = await read("app/action-instructions-panel.tsx");
+  const route = await read("app/api/ticket-content/route.ts");
+  assert.match(panel, /searchTicketContent/);
+  assert.match(panel, /\/api\/ticket-content/);
+  assert.match(panel, /case_sensitive/);
+  assert.match(route, /export async function GET/);
+  assert.match(route, /initialDescription/);
+  assert.match(route, /actions/);
+  assert.doesNotMatch(route, /export async function POST|export async function PATCH|export async function DELETE/);
+});
+
 test("individual ticket lookups use Movidesk direct identifiers", async () => {
   const route = await read("app/api/tickets/route.ts");
   assert.match(route, /target\.searchParams\.set\("id", id\)/);

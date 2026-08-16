@@ -16,16 +16,8 @@ export async function handleDiscovery(request: Request): Promise<Response | null
   return json({
     jsonrpc: "2.0",
     id: body.id ?? null,
-    result: {
-      resultType: "complete",
-      // The bundled SDK currently implements the 2025 transport/lifecycle.
-      // Advertising that explicitly lets newer clients fall back to initialize
-      // instead of receiving the SDK's generic HTTP 400 for server/discover.
-      supportedVersions: ["2025-11-25"],
-      capabilities: { tools: {} },
-      _meta: { "io.modelcontextprotocol/serverInfo": { name: "movidesk-mcp", version: "1.0.0" } },
-    },
-  });
+    error: { code: -32601, message: "Method not found: server/discover" },
+  }, { status: 404 });
 }
 
 export default { async fetch(request: Request, env: Env): Promise<Response> {

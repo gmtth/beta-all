@@ -69,6 +69,7 @@ test("MCP runs inside the OAuth proxy without a Worker-to-Worker HTTP hop", asyn
   assert.match(entry, /handleMcp/);
   assert.match(mcp, /LocalMovideskClient/);
   assert.match(mcp, /getTickets\(request\)/);
+  assert.match(mcp, /server\/discover/);
   assert.doesNotMatch(mcp, /OAUTH_PROXY_URL|fetch\(.*api\//);
   for (const tool of ["movidesk_get_ticket", "movidesk_search_tickets", "movidesk_search_people", "movidesk_list_services"]) assert.match(tools, new RegExp(tool));
 });

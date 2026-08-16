@@ -39,6 +39,11 @@ export async function handleMcp(request: Request): Promise<Response | null> {
   if (pathname !== "/mcp" || request.method !== "POST") return null;
   const accessToken = bearerToken(request.headers.get("authorization"));
   if (!accessToken) return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource", scope="movidesk:read"` } });
+  if (request.headers.get("mcp-method") === "server/discover") {
+    let id: string | number | null = null;
+    try { id = ((await request.clone().json()) as { id?: string | number | null }).id ?? null; } catch { /* SDK will handle malformed JSON below. */ }
+    return json({ jsonrpc: "2.0", id, error: { code: -32601, message: "Method not found: server/discover" } }, { status: 404 });
+  }
   const server = new McpServer({ name: "movidesk-mcp", version: "1.1.0" });
   registerMovideskTools(server, new LocalMovideskClient(), accessToken);
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });

@@ -6,11 +6,14 @@ export type OAuthClient = {
   id: string;
   kind: "gpt-action" | "mcp";
   requiresPkce: boolean;
+  stableRedirect: boolean;
 };
 
 export function oauthClient(id: string): OAuthClient | null {
-  if (id === GPT_ACTION_CLIENT_ID) return { id, kind: "gpt-action", requiresPkce: false };
-  if (id === MCP_CLIENT_ID) return { id, kind: "mcp", requiresPkce: true };
+  if (id === GPT_ACTION_CLIENT_ID) return { id, kind: "gpt-action", requiresPkce: false, stableRedirect: false };
+  if (id === MCP_CLIENT_ID) return { id, kind: "mcp", requiresPkce: true, stableRedirect: true };
+  if (id === "https://chatgpt.com/oauth/client.json") return { id, kind: "mcp", requiresPkce: true, stableRedirect: true };
+  if (/^https:\/\/chatgpt\.com\/oauth\/[A-Za-z0-9_-]+\/client\.json$/.test(id)) return { id, kind: "mcp", requiresPkce: true, stableRedirect: false };
   return null;
 }
 
@@ -36,7 +39,8 @@ function isOfficialMcpRedirect(uri: string) {
   try {
     const parsed = new URL(uri);
     const connector = parsed.origin === "https://chatgpt.com"
-      && /^\/connector\/oauth\/[A-Za-z0-9_-]+$/.test(parsed.pathname);
+      && (/^\/connector\/oauth\/[A-Za-z0-9_-]+$/.test(parsed.pathname)
+        || parsed.pathname === "/connector_platform_oauth_redirect");
     const loopback = parsed.protocol === "http:"
       && parsed.hostname === "127.0.0.1"
       && parsed.port !== ""
@@ -54,7 +58,9 @@ function isOfficialMcpRedirect(uri: string) {
 export function validRedirectForClient(clientId: string, uri: string, env: Record<string, string | undefined>) {
   const client = oauthClient(clientId);
   if (!client) return false;
-  const official = client.kind === "gpt-action" ? isOfficialGptActionRedirect(uri) : isOfficialMcpRedirect(uri);
+  const official = client.kind === "gpt-action"
+    ? isOfficialGptActionRedirect(uri)
+    : isOfficialMcpRedirect(uri) && (client.stableRedirect || !uri.endsWith("/connector_platform_oauth_redirect"));
   if (!official) return false;
   const configured = client.kind === "gpt-action" ? csv(env.OAUTH_GPT_ACTION_REDIRECT_URIS) : csv(env.OAUTH_MCP_REDIRECT_URIS);
   return configured.length === 0 ? true : configured.includes(uri);

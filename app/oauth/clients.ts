@@ -44,7 +44,7 @@ function isOfficialMcpRedirect(uri: string) {
     const loopback = parsed.protocol === "http:"
       && parsed.hostname === "127.0.0.1"
       && parsed.port !== ""
-      && /^\/callback\/[A-Za-z0-9_-]+$/.test(parsed.pathname)
+      && (/^\/callback\/[A-Za-z0-9_-]+$/.test(parsed.pathname) || parsed.pathname === "/callback")
       && parsed.username === ""
       && parsed.password === ""
       && parsed.search === ""

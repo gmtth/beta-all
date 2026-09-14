@@ -7,6 +7,8 @@ const actionRedirect = "https://chat.openai.com/aip/action-123/oauth/callback";
 const mcpRedirect = "https://chatgpt.com/connector/oauth/mcp-123";
 const stableRedirect = "https://chatgpt.com/connector_platform_oauth_redirect";
 const cimdClient = "https://chatgpt.com/oauth/client.json";
+const codexCimdClient = "https://chatgpt.com/oauth/codex/client.json";
+const loopbackRedirect = "http://127.0.0.1:61177/callback";
 
 test("GPT Action accepts Authorization Code without PKCE", () => {
   assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, OAUTH_SCOPE, "", "", env), true);
@@ -18,6 +20,7 @@ test("MCP requires PKCE S256", () => {
   assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
   assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", stableRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
   assert.equal(validateAuthorizationRequest(cimdClient, "code", stableRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
+  assert.equal(validateAuthorizationRequest(codexCimdClient, "code", loopbackRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
 });
 
 test("unknown clients, scopes, and redirects are rejected", () => {

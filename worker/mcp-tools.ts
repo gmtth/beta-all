@@ -2,6 +2,7 @@ import { z } from "zod";
 import { MovideskAnalysisSession } from "./movidesk-analysis";
 import { classifyTicketIssue, summarizeTicket } from "./movidesk-insights";
 import { buildTicketTimeline } from "./movidesk-timeline";
+import { findSimilarTickets } from "./movidesk-similarity";
 
 export interface MovideskReader {
   getTicket(id: string, accessToken: string): Promise<unknown>;
@@ -34,6 +35,15 @@ const openTicketsSchema = z.object({ created_date: z.string().trim().min(1).max(
 const contentSearchSchema = searchSchema.extend({
   keyword: z.string().trim().min(1).max(200),
   case_sensitive: z.coerce.boolean().default(false),
+});
+const similaritySchema = z.object({
+  ticket_id: z.coerce.string().trim().regex(/^\d{1,30}$/, "ticket_id deve conter apenas números").optional(),
+  keyword: z.string().trim().min(1).max(1000).optional(),
+  from_date: z.string().trim().max(40).optional(), to_date: z.string().trim().max(40).optional(),
+  date_field: z.enum(["createdDate", "lastUpdate", "resolvedIn", "closedIn"]).default("createdDate"),
+  owner_team: z.string().trim().max(200).optional(), category: z.string().trim().max(128).optional(),
+  service: z.string().trim().max(200).optional(), client_id: z.string().trim().max(100).optional(),
+  top: z.coerce.number().int().min(1).max(50).default(10), skip: z.coerce.number().int().min(0).max(10000).default(0),
 });
 const peopleSchema = searchSchema.extend({ active: z.coerce.boolean().optional() });
 const servicesSchema = searchSchema.extend({ active: z.coerce.boolean().optional(), page: z.coerce.number().int().min(1).max(1000).optional(), page_size: z.coerce.number().int().min(1).max(100).optional() });
@@ -125,6 +135,7 @@ export function registerMovideskTools(server: any, client: MovideskReader, acces
   server.registerTool("movidesk_search_tickets", { title: "Pesquisar tickets", description: "Pesquisa tickets autorizados no Movidesk usando filtros e paginação.", inputSchema: searchSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof searchSchema>) => collectionResult("Tickets", await client.searchTickets(apiParams(args), accessToken)));
   server.registerTool("movidesk_list_open_tickets", { title: "Listar tickets abertos", description: "Lista tickets em aberto na data informada. Aceita YYYY-MM-DD, DD/MM/AAAA ou DD/MM.", inputSchema: openTicketsSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof openTicketsSchema>) => collectionResult("Tickets", await client.searchTickets({ from_date: args.created_date, to_date: args.created_date, date_field: "createdDate", filter: args.filter ?? "baseStatus ne 'Resolved' and baseStatus ne 'Closed' and baseStatus ne 'Canceled'", orderby: args.orderby ?? "createdDate desc", top: args.top ?? 25, skip: args.skip ?? 0 }, accessToken)));
   server.registerTool("movidesk_search_ticket_content", { title: "Pesquisar conteúdo dos tickets", description: "Pesquisa uma palavra ou expressão no assunto, descrição inicial e interações dos tickets. Informe keyword e ao menos um critério de escopo.", inputSchema: contentSearchSchema, outputSchema: { keyword: z.string(), results: z.array(z.unknown()), total: z.number() }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof contentSearchSchema>) => { const result = await contentSearch(client, args, accessToken); return { content: [{ type: "text" as const, text: `${result.total} ticket(s) encontrado(s) para ${result.keyword}.` }], structuredContent: result }; });
+  server.registerTool("movidesk_find_similar_tickets", { title: "Encontrar tickets semelhantes", description: "Encontra tickets semelhantes por termos e sinais estruturados, com pontuação explicável. Informe ticket_id ou keyword.", inputSchema: similaritySchema, outputSchema: { reference: z.string(), results: z.array(z.unknown()), total: z.number() }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof similaritySchema>) => { if (!args.ticket_id && !args.keyword) throw new Error("Informe ticket_id ou keyword."); const result = await findSimilarTickets(client, args, accessToken); return { content: [{ type: "text" as const, text: `${result.total} ticket(s) semelhante(s) encontrado(s).` }], structuredContent: result }; });
   server.registerTool("movidesk_search_people", { title: "Pesquisar pessoas", description: "Pesquisa pessoas autorizadas no Movidesk.", inputSchema: peopleSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof peopleSchema>) => collectionResult("Pessoas", await client.searchPeople({ ...apiParams(args), active: args.active }, accessToken)));
   server.registerTool("movidesk_list_services", { title: "Listar serviços", description: "Lista serviços autorizados no Movidesk.", inputSchema: servicesSchema, outputSchema: { results: z.array(z.unknown()) }, annotations: readOnlyAnnotations }, async (args: z.infer<typeof servicesSchema>) => collectionResult("Serviços", await client.listServices({ ...apiParams(args), active: args.active, top: args.page_size ?? args.top, skip: args.page ? (args.page - 1) * (args.page_size ?? args.top ?? 25) : args.skip }, accessToken)));
 }

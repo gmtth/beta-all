@@ -19,6 +19,7 @@ const tools = [
   { name: "movidesk_search_tickets", title: "Pesquisar tickets", detail: "Pesquisa tickets com filtros, consulta por id e paginação.", input: "id, keyword, período, responsável, status, categoria, serviço, cliente e filtros OData" },
   { name: "movidesk_list_open_tickets", title: "Listar tickets abertos", detail: "Lista tickets não resolvidos em uma data e retorna results estruturado.", input: "created_date, filtro e paginação" },
   { name: "movidesk_search_ticket_content", title: "Pesquisar conteúdo", detail: "Pesquisa no assunto, descrição inicial e interações do ticket.", input: "keyword + escopo, paginação e case_sensitive" },
+  { name: "movidesk_find_similar_tickets", title: "Encontrar semelhantes", detail: "Compara conteúdo e sinais estruturados com pontuação explicável.", input: "ticket_id ou keyword, filtros e paginação" },
   { name: "movidesk_search_people", title: "Pesquisar pessoas", detail: "Pesquisa pessoas autorizadas usando filtros e paginação.", input: "filtros compartilhados + active" },
   { name: "movidesk_list_services", title: "Listar serviços", detail: "Lista serviços autorizados usando filtros e paginação.", input: "filtros compartilhados + active" },
 ];

@@ -1,1 +1,0 @@
-import{t as e}from"./rolldown-runtime-DUnMT5BP.js";import{r as t}from"./framework~index~page~page~page~page~app-route-handler-dispatch-6D5bNr1P.js";var n=e((e=>{e.prerender=t().prerender}));export{n as t};

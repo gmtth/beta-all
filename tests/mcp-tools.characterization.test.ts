@@ -18,10 +18,41 @@ test("characterization: stable Movidesk tools remain registered", () => {
     "movidesk_search_tickets",
     "movidesk_list_open_tickets",
     "movidesk_search_ticket_content",
+    "movidesk_find_similar_tickets",
     "movidesk_search_people",
     "movidesk_list_services",
   ]) assert.equal(tools.has(name), true, name);
   assert.equal(tools.has("movidesk_get_ticket_timeline"), true);
+});
+
+test("find_similar_tickets compares full content and exposes explainable signals", async () => {
+  const tickets = new Map<string, unknown>([
+    ["6280", { id: 6280, protocol: "P-6280", subject: "Máquina inoperante", category: "Hardware", service: "Suporte", ownerTeam: "N1", actions: [{ description: "Máquina não liga" }] }],
+    ["6290", { id: 6290, protocol: "P-6290", subject: "Máquina parada", category: "Hardware", service: "Suporte", ownerTeam: "N1", actions: [{ description: "Equipamento inoperante e sem energia" }] }],
+    ["6291", { id: 6291, protocol: "P-6291", subject: "Máquina parada", category: "Financeiro", service: "Faturamento", actions: [{ description: "Boleto vencido" }] }],
+  ]);
+  let searchParams: Record<string, unknown> | undefined;
+  const tools = setup({
+    getTicket: async (id) => tickets.get(id),
+    searchTickets: async (params) => { searchParams = params; return [{ id: 6290 }, { id: 6291 }, { id: 6280 }]; },
+  });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "6280", top: 10, skip: 0 }) as { structuredContent: { results: Array<{ id: number; similarityScore: number; matchedSignals: string[] }> } };
+  assert.match(String(searchParams?.keyword), /Máquina inoperante/);
+  assert.match(String(searchParams?.keyword), /Máquina não liga/);
+  assert.deepEqual(result.structuredContent.results.map((item) => item.id), [6290]);
+  assert.ok(result.structuredContent.results[0].similarityScore > 0.2);
+  assert.ok(result.structuredContent.results[0].matchedSignals.some((signal) => signal.includes("termos compartilhados")));
+});
+
+test("find_similar_tickets accepts text-only references and preserves scope", async () => {
+  let received: Record<string, unknown> | undefined;
+  const tools = setup({ searchTickets: async (params) => { received = params; return [{ id: 7001 }]; }, getTicket: async () => ({ id: 7001, subject: "Erro de login", description: "Erro de login no sistema" }) });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ keyword: "erro de login", from_date: "2026-08-01", to_date: "2026-08-16", top: 5, skip: 2 }) as { structuredContent: { reference: string; results: unknown[] } };
+  assert.equal(received?.from_date, "2026-08-01");
+  assert.equal(received?.to_date, "2026-08-16");
+  assert.equal(received?.skip, 2);
+  assert.equal(result.structuredContent.reference, "erro de login");
+  assert.equal(result.structuredContent.results.length, 1);
 });
 
 test("new timeline tool preserves event order and returns analysis fields", async () => {

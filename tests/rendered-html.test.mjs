@@ -19,6 +19,8 @@ test("OAuth metadata advertises only the implemented PKCE flow", async () => {
   const metadata = await read("app/.well-known/oauth-authorization-server/route.ts");
   assert.match(metadata, /authorization_code/);
   assert.match(metadata, /S256/);
+  assert.match(metadata, /authorization_response_iss_parameter_supported: true/);
+  assert.match(metadata, /client_id_metadata_document_supported: true/);
   assert.doesNotMatch(metadata, /refresh_token|client_secret_post/);
 });
 

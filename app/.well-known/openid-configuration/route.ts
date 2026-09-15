@@ -12,6 +12,8 @@ export async function GET(request: Request) {
       code_challenge_methods_supported: ["S256"],
       scopes_supported: ["movidesk:read"],
       token_endpoint_auth_methods_supported: ["none"],
+      authorization_response_iss_parameter_supported: true,
+      client_id_metadata_document_supported: true,
       client_ids_supported: [GPT_ACTION_CLIENT_ID, MCP_CLIENT_ID],
     },
     { headers: { "cache-control": "public, max-age=300" } },

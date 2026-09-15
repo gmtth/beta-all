@@ -41,12 +41,22 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
   const referenceCategory = field(referenceTicket ?? {}, "category", "categoria");
   const referenceService = field(referenceTicket ?? {}, "service", "servico", "serviço");
   const referenceTeam = field(referenceTicket ?? {}, "ownerTeam", "owner_team", "team", "equipe");
+  // Never send the full ticket transcript in the candidate query. Movidesk
+  // serializes keyword into the OData URL and long descriptions can produce 414.
+  // Full content is still fetched below for the actual similarity comparison.
+  const queryText = args.keyword ? clean(args.keyword).slice(0, 180) : (field(referenceTicket ?? {}, "subject", "assunto").slice(0, 180) || [...referenceTerms].slice(0, 8).join(" "));
   const params: Record<string, string | number | undefined> = {
-    keyword: referenceText || undefined, from_date: args.from_date, to_date: args.to_date,
+    keyword: queryText || undefined, from_date: args.from_date, to_date: args.to_date,
     date_field: args.date_field, owner_team: args.owner_team, category: args.category,
     service: args.service, client_id: args.client_id, top: Math.min(args.top + 1, 100), skip: args.skip,
   };
-  const candidates = asArray(await client.searchTickets(params, accessToken));
+  let candidates: unknown[];
+  try {
+    candidates = asArray(await client.searchTickets(params, accessToken));
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return { reference: args.ticket_id ? (referenceTicket?.protocol ?? args.ticket_id) : (args.keyword ?? ""), results: [], total: 0, returned: 0, top: args.top, skip: args.skip, error: { code: "upstream_search_failed", message: message.slice(0, 300) } };
+  }
   const results: Record<string, unknown>[] = [];
   const referenceId = args.ticket_id ?? String(referenceTicket?.id ?? "");
   for (const candidateValue of candidates) {
@@ -75,5 +85,5 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
   }
   results.sort((a, b) => Number(b.similarityScore) - Number(a.similarityScore));
   const limited = results.slice(0, args.top);
-  return { reference: args.ticket_id ? (referenceTicket?.protocol ?? args.ticket_id) : (args.keyword ?? ""), results: limited, total: limited.length };
+  return { reference: args.ticket_id ? (referenceTicket?.protocol ?? args.ticket_id) : (args.keyword ?? ""), results: limited, total: limited.length, returned: limited.length, top: args.top, skip: args.skip };
 }

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   if (!client.requiresPkce && (row.code_challenge || row.code_challenge_method)) return json({ error: "invalid_grant" }, { status: 400 });
   await env.DB.prepare("DELETE FROM oauth_codes WHERE code_hash = ?").bind(await hash(code)).run();
   const access = randomToken();
-  const expires = Date.now() + 3600000;
+  const expires = Date.now() + 2592000000;
   await env.DB.prepare("INSERT INTO oauth_tokens (token_hash, client_id, user_id, user_email, scope, resource, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(await hash(access), requestedClient, row.user_id, row.user_email ?? null, row.scope, row.resource ?? resource, expires).run();
-  return json({ access_token: access, token_type: "Bearer", expires_in: 3600, scope: row.scope, resource: row.resource ?? resource });
+  return json({ access_token: access, token_type: "Bearer", expires_in: 2592000, scope: row.scope, resource: row.resource ?? resource });
 }

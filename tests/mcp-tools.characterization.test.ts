@@ -31,14 +31,14 @@ test("find_similar_tickets compares full content and exposes explainable signals
     ["6290", { id: 6290, protocol: "P-6290", subject: "Máquina parada", category: "Hardware", service: "Suporte", ownerTeam: "N1", actions: [{ description: "Equipamento inoperante e sem energia" }] }],
     ["6291", { id: 6291, protocol: "P-6291", subject: "Máquina parada", category: "Financeiro", service: "Faturamento", actions: [{ description: "Boleto vencido" }] }],
   ]);
-  let searchParams: Record<string, unknown> | undefined;
+  const searchParams: Record<string, unknown>[] = [];
   const tools = setup({
     getTicket: async (id) => tickets.get(id),
-    searchTickets: async (params) => { searchParams = params; return [{ id: 6290 }, { id: 6291 }, { id: 6280 }]; },
+    searchTickets: async (params) => { searchParams.push(params); return [{ id: 6290 }, { id: 6291 }, { id: 6280 }]; },
   });
   const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "6280", top: 10, skip: 0 }) as { structuredContent: { results: Array<{ id: number; similarityScore: number; matchedSignals: string[] }> } };
-  assert.match(String(searchParams?.keyword), /Máquina inoperante/);
-  assert.ok(String(searchParams?.keyword).length <= 180);
+  assert.ok(searchParams.length >= 1);
+  assert.ok(searchParams.every((params) => String(params.keyword).length <= 180));
   assert.deepEqual(result.structuredContent.results.map((item) => item.id), [6290]);
   assert.ok(result.structuredContent.results[0].similarityScore > 0.2);
   assert.ok(result.structuredContent.results[0].matchedSignals.some((signal) => signal.includes("termos compartilhados")));
@@ -69,6 +69,19 @@ test("find_similar_tickets accepts text-only references and preserves scope", as
   assert.equal(received?.skip, 2);
   assert.equal(result.structuredContent.reference, "erro de login");
   assert.equal(result.structuredContent.results.length, 1);
+});
+
+test("find_similar_tickets uses relevant terms from an ID reference", async () => {
+  const origin = { id: 5871, protocol: "20260704000000052", subject: "Redefinição de senha", description: "Usuário não consegue acessar" };
+  const similar = { id: 6069, protocol: "20260706000000069", subject: "Redefinição senha", description: "Solicitação de redefinição de senha" };
+  const queries: string[] = [];
+  const tools = setup({
+    getTicket: async (id) => id === "5871" ? origin : similar,
+    searchTickets: async (params) => { queries.push(String(params.keyword)); return params.keyword === "senha" ? [{ id: 6069 }] : []; },
+  });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "5871", top: 5, skip: 0 }) as { structuredContent: { results: Array<{ id: number }> } };
+  assert.ok(queries.includes("senha"));
+  assert.deepEqual(result.structuredContent.results.map((item) => item.id), [6069]);
 });
 
 test("new timeline tool preserves event order and returns analysis fields", async () => {

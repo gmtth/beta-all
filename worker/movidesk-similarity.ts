@@ -44,15 +44,28 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
   // Never send the full ticket transcript in the candidate query. Movidesk
   // serializes keyword into the OData URL and long descriptions can produce 414.
   // Full content is still fetched below for the actual similarity comparison.
-  const queryText = args.keyword ? clean(args.keyword).slice(0, 180) : (field(referenceTicket ?? {}, "subject", "assunto").slice(0, 180) || [...referenceTerms].slice(0, 8).join(" "));
-  const params: Record<string, string | number | undefined> = {
-    keyword: queryText || undefined, from_date: args.from_date, to_date: args.to_date,
-    date_field: args.date_field, owner_team: args.owner_team, category: args.category,
-    service: args.service, client_id: args.client_id, top: Math.min(args.top + 1, 100), skip: args.skip,
+  const referenceSearchText = args.keyword || [
+    field(referenceTicket ?? {}, "subject", "assunto"),
+    field(referenceTicket ?? {}, "initialDescription", "description", "descricao"),
+  ].filter(Boolean).join(" ");
+  const queryTerms = args.ticket_id ? [...terms(referenceSearchText)].slice(0, 6) : [clean(args.keyword ?? "").slice(0, 180)];
+  const baseParams: Record<string, string | number | undefined> = {
+    from_date: args.from_date, to_date: args.to_date, date_field: args.date_field,
+    owner_team: args.owner_team, category: args.category, service: args.service,
+    client_id: args.client_id, top: Math.min(args.top + 1, 100), skip: args.skip,
   };
-  let candidates: unknown[];
+  let candidates: unknown[] = [];
   try {
-    candidates = asArray(await client.searchTickets(params, accessToken));
+    const uniqueCandidates = new Map<string, unknown>();
+    for (const queryTerm of queryTerms) {
+      const page = asArray(await client.searchTickets({ ...baseParams, keyword: queryTerm || undefined }, accessToken));
+      for (const candidate of page) {
+        const object = objectOf(candidate);
+        const id = object.id ?? object.ticket_id ?? object.protocol;
+        if (id !== undefined) uniqueCandidates.set(String(id), candidate);
+      }
+    }
+    candidates = [...uniqueCandidates.values()];
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { reference: args.ticket_id ? (referenceTicket?.protocol ?? args.ticket_id) : (args.keyword ?? ""), results: [], total: 0, returned: 0, top: args.top, skip: args.skip, error: { code: "upstream_search_failed", message: message.slice(0, 300) } };

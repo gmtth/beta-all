@@ -38,10 +38,26 @@ test("find_similar_tickets compares full content and exposes explainable signals
   });
   const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "6280", top: 10, skip: 0 }) as { structuredContent: { results: Array<{ id: number; similarityScore: number; matchedSignals: string[] }> } };
   assert.match(String(searchParams?.keyword), /Máquina inoperante/);
-  assert.match(String(searchParams?.keyword), /Máquina não liga/);
+  assert.ok(String(searchParams?.keyword).length <= 180);
   assert.deepEqual(result.structuredContent.results.map((item) => item.id), [6290]);
   assert.ok(result.structuredContent.results[0].similarityScore > 0.2);
   assert.ok(result.structuredContent.results[0].matchedSignals.some((signal) => signal.includes("termos compartilhados")));
+});
+
+test("find_similar_tickets does not send a full transcript and structures upstream errors", async () => {
+  const huge = "ação extensa ".repeat(5000);
+  let query = "";
+  const tools = setup({
+    getTicket: async () => ({ id: 5871, protocol: "5871", subject: "Redefinição de senha", actions: [{ description: huge }] }),
+    searchTickets: async (params) => { query = String(params.keyword); throw new Error("HTTP 414: Movidesk returned a non-JSON response"); },
+  });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "5871", top: 5, skip: 0 }) as { structuredContent: { results: unknown[]; error?: { code: string }; returned: number; top: number; skip: number } };
+  assert.ok(query.length <= 180);
+  assert.deepEqual(result.structuredContent.results, []);
+  assert.equal(result.structuredContent.error?.code, "upstream_search_failed");
+  assert.equal(result.structuredContent.returned, 0);
+  assert.equal(result.structuredContent.top, 5);
+  assert.equal(result.structuredContent.skip, 0);
 });
 
 test("find_similar_tickets accepts text-only references and preserves scope", async () => {

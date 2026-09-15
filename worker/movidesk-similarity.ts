@@ -14,12 +14,13 @@ type SimilarityArgs = {
   skip: number;
 };
 
-const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema erro sistema".split(" "));
+const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema erro sistema fechado fechada closed resolved resolvido cencicia cencihub suporte atendimento equipe atendente service bot".split(" "));
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results : value && typeof value === "object" ? [value] : [];
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Record<string, unknown> : {};
 const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
 const comparable = (value: string) => clean(value).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const terms = (value: string) => new Set(comparable(value).split(/[^a-z0-9]+/).filter((term) => term.length >= 4 && !stopWords.has(term)));
+const terms = (value: string) => new Set(comparable(value).split(/[^a-z0-9]+/).filter((term) => term.length >= 4 && !stopWords.has(term) && !/^\d+$/.test(term) && !/^20\d{2}$/.test(term)));
+const weighted = (value: string, weight: number, output = new Map<string, number>()) => { for (const term of terms(value)) output.set(term, Math.max(output.get(term) ?? 0, weight)); return output; };
 
 function textOf(value: unknown): string {
   if (typeof value === "string") return clean(value);
@@ -37,7 +38,11 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
   let referenceTicket: Record<string, unknown> | undefined;
   if (args.ticket_id) referenceTicket = objectOf(asArray(await client.getTicket(args.ticket_id, accessToken))[0]);
   const referenceText = args.keyword || textOf(referenceTicket);
-  const referenceTerms = terms(referenceText);
+  const referenceSubject = field(referenceTicket ?? {}, "subject", "assunto");
+  const referenceDescription = field(referenceTicket ?? {}, "initialDescription", "description", "descricao");
+  const referenceActions = field(referenceTicket ?? {}, "actions", "acoes", "interactions", "interacoes");
+  const referenceWeights = args.keyword ? weighted(args.keyword, 3) : weighted(referenceSubject, 4, weighted(referenceDescription, 3, weighted(referenceActions, 1)));
+  const referenceTerms = new Set(referenceWeights.keys());
   const referenceCategory = field(referenceTicket ?? {}, "category", "categoria");
   const referenceService = field(referenceTicket ?? {}, "service", "servico", "serviço");
   const referenceTeam = field(referenceTicket ?? {}, "ownerTeam", "owner_team", "team", "equipe");
@@ -45,8 +50,8 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
   // serializes keyword into the OData URL and long descriptions can produce 414.
   // Full content is still fetched below for the actual similarity comparison.
   const referenceSearchText = args.keyword || [
-    field(referenceTicket ?? {}, "subject", "assunto"),
-    field(referenceTicket ?? {}, "initialDescription", "description", "descricao"),
+    referenceSubject,
+    referenceDescription,
   ].filter(Boolean).join(" ");
   const queryTerms = args.ticket_id ? [...terms(referenceSearchText)].slice(0, 6) : [clean(args.keyword ?? "").slice(0, 180)];
   const baseParams: Record<string, string | number | undefined> = {
@@ -77,8 +82,11 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     const candidateId = candidateSummary.id ?? candidateSummary.ticket_id ?? candidateSummary.protocol;
     if (candidateId === undefined || String(candidateId) === referenceId) continue;
     const detail = objectOf(asArray(await client.getTicket(String(candidateId), accessToken))[0] ?? candidateSummary);
-    const candidateText = textOf(detail);
-    const candidateTerms = terms(candidateText);
+    const candidateSubject = field(detail, "subject", "assunto");
+    const candidateDescription = field(detail, "initialDescription", "description", "descricao");
+    const candidateActions = field(detail, "actions", "acoes", "interactions", "interacoes");
+    const candidateWeights = weighted(candidateSubject, 4, weighted(candidateDescription, 3, weighted(candidateActions, 1)));
+    const candidateTerms = new Set(candidateWeights.keys());
     const shared = [...referenceTerms].filter((term) => candidateTerms.has(term));
     const candidateCategory = field(detail, "category", "categoria");
     const candidateService = field(detail, "service", "servico", "serviço");
@@ -88,9 +96,14 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     if (referenceCategory && candidateCategory && comparable(referenceCategory) === comparable(candidateCategory)) signals.push("categoria compatível");
     if (referenceService && candidateService && comparable(referenceService) === comparable(candidateService)) signals.push("serviço compatível");
     if (referenceTeam && candidateTeam && comparable(referenceTeam) === comparable(candidateTeam)) signals.push("equipe compatível");
-    const lexical = referenceTerms.size ? shared.length / referenceTerms.size : 0;
+    const sharedWeight = shared.reduce((sum, term) => sum + (referenceWeights.get(term) ?? 0) * (candidateWeights.get(term) ?? 1), 0);
+    const referenceWeight = [...referenceWeights.values()].reduce((sum, weight) => sum + weight, 0);
+    const lexical = referenceWeight ? Math.min(1, sharedWeight / referenceWeight) : 0;
     const structural = (signals.filter((signal) => /compatível$/.test(signal)).length) / 3;
-    const score = Math.min(1, lexical * 0.7 + structural * 0.3);
+    const score = Math.min(1, lexical * 0.88 + structural * 0.12);
+    // An ID reference needs at least two meaningful shared terms unless
+    // multiple independent structured signals corroborate the match.
+    if (args.ticket_id && shared.length < 2 && structural < 0.66) continue;
     if (!shared.length && !structural) continue;
     if (score < 0.2) continue;
     const similarityScore = Math.round(score * 100) / 100;

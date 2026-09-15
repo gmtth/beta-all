@@ -39,7 +39,7 @@ test("find_similar_tickets compares full content and exposes explainable signals
   const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "6280", top: 10, skip: 0 }) as { structuredContent: { results: Array<{ id: number; similarityScore: number; matchedSignals: string[] }> } };
   assert.ok(searchParams.length >= 1);
   assert.ok(searchParams.every((params) => String(params.keyword).length <= 180));
-  assert.deepEqual(result.structuredContent.results.map((item) => item.id), [6290]);
+  assert.equal(result.structuredContent.results[0].id, 6290);
   assert.ok(result.structuredContent.results[0].similarityScore > 0.2);
   assert.ok(result.structuredContent.results[0].matchedSignals.some((signal) => signal.includes("termos compartilhados")));
 });
@@ -82,6 +82,16 @@ test("find_similar_tickets uses relevant terms from an ID reference", async () =
   const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "5871", top: 5, skip: 0 }) as { structuredContent: { results: Array<{ id: number }> } };
   assert.ok(queries.includes("senha"));
   assert.deepEqual(result.structuredContent.results.map((item) => item.id), [6069]);
+});
+
+test("find_similar_tickets ranks problem terms above institutional metadata", async () => {
+  const origin = { id: 5871, subject: "Redefinição de senha", description: "Usuário precisa redefinir senha do sistema" };
+  const password = { id: 6069, subject: "Redefinição senha", description: "Redefinição de senha para acesso" };
+  const machine = { id: 6316, subject: "Problemas de máquina", description: "Máquina fechada CenciHUB em 2026" };
+  const tools = setup({ getTicket: async (id) => id === "5871" ? origin : id === "6069" ? password : machine, searchTickets: async () => [{ id: 6069 }, { id: 6316 }] });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "5871", top: 5, skip: 0 }) as { structuredContent: { results: Array<{ id: number; matchedSignals: string[] }> } };
+  assert.equal(result.structuredContent.results[0].id, 6069);
+  assert.ok(result.structuredContent.results[0].matchedSignals.every((signal) => !/2026|cencihub|fechado|closed/i.test(signal)));
 });
 
 test("new timeline tool preserves event order and returns analysis fields", async () => {

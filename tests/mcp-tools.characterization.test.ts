@@ -129,6 +129,20 @@ test("find_similar_tickets ignores operational actions for scoring", async () =>
   assert.deepEqual(result.structuredContent.results, []);
 });
 
+test("find_similar_tickets excludes generic dialogue and names from technical action signals", async () => {
+  const tools = setup({
+    searchTickets: async () => [{ id: 7400 }],
+    getTicket: async (id) => id === "7400"
+      ? { id: 7400, subject: "Sensor offline", actions: [{ description: "Sensor offline após reiniciando o equipamento. Você pode falar com Eric Ribeiro e os analistas." }] }
+      : { id: 7399, subject: "Sensor offline", actions: [{ description: "Sensor offline após reiniciando o equipamento. Você pode falar com Eric Ribeiro e os analistas." }] },
+  });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "7399", top: 5, skip: 0 }) as { structuredContent: { results: Array<{ signalDetails: Array<{ term: string; field: string }> }> } };
+  const terms = result.structuredContent.results[0].signalDetails.map((signal) => signal.term);
+  assert.ok(terms.includes("sensor"));
+  assert.ok(terms.includes("offline"));
+  assert.ok(!terms.some((term) => /voce|sera|pode|precisa|junto|essa|eric|ribeiro|analistas/.test(term)));
+});
+
 test("new timeline tool preserves event order and returns analysis fields", async () => {
   const tools = setup({ getTicket: async () => ({ status: "Aguardando", actions: [
     { createdDate: "2026-08-16T10:00:00Z", origin: "team", description: "resposta" },

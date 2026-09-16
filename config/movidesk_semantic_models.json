@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "ruleset_version": "2026.08.16.1",
+  "ruleset_version": "2026.09.16.1",
   "name": "movidesk_semantic_models",
   "phase": "3A",
   "parser": {
@@ -198,7 +198,7 @@
   },
   "semantic_policy": {
     "purpose": "Vocabulário compartilhado para pontuação e limpeza de ações; não valida a estrutura do catálogo.",
-    "stopwords": ["a", "ao", "aos", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "entre", "o", "os", "ou", "para", "por", "que", "se", "sem", "uma", "um", "no", "na", "nas", "nos", "sua", "seu", "suas", "seus", "sobre", "foi", "são", "ser", "está", "este", "esta", "isso", "como", "mais", "menos", "muito", "pelo", "pela", "pelos", "pelas", "ticket", "chamado", "problema", "sistema", "suporte", "atendimento", "equipe", "cliente", "tudo", "novo", "hoje", "pessoal", "durante", "criar", "realizar", "somente", "cada", "relatado", "técnico", "segue", "demanda", "análise", "horário", "contatos", "fechado", "fechada", "closed", "resolved", "resolvido", "cenci", "cencicia", "cencihub", "service", "bot", "whatsapp", "telefone", "ramal", "favor", "obrigado", "obrigada", "atenciosamente", "confidential", "confidencial", "disclosure", "recipient", "copying", "distribution", "delete", "transmission"],
+    "stopwords": ["a", "ao", "aos", "as", "com", "da", "das", "de", "do", "dos", "e", "em", "entre", "o", "os", "ou", "para", "por", "que", "se", "sem", "uma", "um", "no", "na", "nas", "nos", "sua", "seu", "suas", "seus", "sobre", "foi", "são", "ser", "está", "este", "esta", "isso", "como", "mais", "menos", "muito", "pelo", "pela", "pelos", "pelas", "ticket", "chamado", "problema", "sistema", "suporte", "atendimento", "equipe", "cliente", "tudo", "novo", "hoje", "pessoal", "durante", "criar", "realizar", "somente", "cada", "relatado", "técnico", "segue", "demanda", "análise", "horário", "contatos", "fechado", "fechada", "closed", "resolved", "resolvido", "cenci", "cencicia", "cencihub", "service", "bot", "whatsapp", "telefone", "ramal", "favor", "obrigado", "obrigada", "atenciosamente", "confidential", "confidencial", "disclosure", "recipient", "copying", "distribution", "delete", "transmission", "atendente", "mail", "voce", "você", "sera", "será", "pode", "podem", "poderia", "precisa", "precisam", "junto", "essa", "esse", "essas", "esses", "seja", "tenha", "certo", "estamos", "analistas", "nome", "nomes", "dados", "eric", "ribeiro"],
     "action_classes": {
       "noise_patterns": ["confidential", "confidencial", "disclosure", "recipient", "copying", "distribution", "delete", "transmission", "atenciosamente", "regards"],
       "operational_patterns": ["^(ola|olá|bom dia|boa tarde|boa noite|obrigad|agradecemos|seja bem|favor|informe seus dados)", "estamos a disposicao", "horario de atendimento"],

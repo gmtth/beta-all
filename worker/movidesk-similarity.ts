@@ -1,4 +1,5 @@
 import type { MovideskReader } from "./mcp-tools";
+import { semanticCatalog } from "./semantic-catalog";
 
 type SimilarityArgs = {
   ticket_id?: string;
@@ -14,12 +15,13 @@ type SimilarityArgs = {
   skip: number;
 };
 
-const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema sistema fechado fechada closed resolved resolvido cencicia cencihub cenci suporte atendimento equipe atendente service bot tudo novo hoje pessoal durante cliente mail whatsapp telefone ramal criar realizar somente cada relatado técnico segue demanda análise horário contatos voce você sera será pode podem poderia precisa precisam junto essa esse essas esses seja tenha certo estamos analistas nome nomes dados eric ribeiro".split(" "));
+const policy = semanticCatalog.semantic_policy!;
+const stopWords = new Set(policy.stopwords);
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results : value && typeof value === "object" ? [value] : [];
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Record<string, unknown> : {};
 const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/https?:\/\/\S+/gi, " ").replace(/[\w.+-]+@[\w.-]+\.\w+/gi, " ").replace(/\+?\d[\d\s().-]{7,}\d/g, " ").replace(/\b[0-9a-f]{8}-[0-9a-f-]{27,}\b/gi, " ").replace(/\bservice\d+\b/gi, " ").replace(/\bimage\d*\b/gi, " ").replace(/\b\d{1,4}[\/:.-]\d{1,2}[\/:.-]\d{1,4}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?\b/g, " ").replace(/\s+/g, " ").trim();
 const comparable = (value: string) => clean(value).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-const terms = (value: string) => new Set(comparable(value).split(/[^a-z0-9]+/).filter((term) => term.length >= 4 && !stopWords.has(term) && !/^\d+$/.test(term) && !/^20\d{2}$/.test(term)));
+const terms = (value: string) => { const normalized = comparable(value); const protectedTerms = policy.protected_numeric_patterns.flatMap((pattern) => [...normalized.matchAll(new RegExp(pattern, "gi"))].map((match) => match[0].replace(/\s+/g, " "))); return new Set([...normalized.split(/[^a-z0-9]+/).filter((term) => term.length >= 4 && !stopWords.has(term) && !/^\d+$/.test(term) && !/^20\d{2}$/.test(term)), ...protectedTerms]); };
 const weighted = (value: string, weight: number, output = new Map<string, number>()) => { for (const term of terms(value)) output.set(term, Math.max(output.get(term) ?? 0, weight)); return output; };
 
 function textOf(value: unknown): string {
@@ -34,28 +36,28 @@ function actionText(value: unknown): string {
   if (!value || typeof value !== "object") return typeof value === "string" ? clean(value) : "";
   const object = value as Record<string, unknown>;
   const raw = ["description", "summary", "text", "justification", "observation", "note", "content", "descricao", "resumo", "texto"].map((key) => typeof object[key] === "string" ? String(object[key]) : "").filter(Boolean).join("\n");
-  return raw.split(/\r?\n+/).map(clean).filter((line) => line && !/^(?:att(?:entiously)?|atenciosamente|regards|confidential|confidencial|disclosure|recipient|copying|distribution|delete|transmission)/i.test(line) && !/(?:service\d+|uuid|cencicia|cencihub|hor[aá]rio de atendimento|estamos [àa] disposi[cç][aã]o)/i.test(line) && !/^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|agradecemos|favor|seja bem-vindo|informe seus dados|nome[:\s])/i.test(line)).join(" ");
+  return raw.split(/\r?\n+/).map(clean).filter((line) => line && !policy.line_noise_patterns.some((pattern) => new RegExp(pattern, "i").test(line))).join(" ");
 }
 
 type ActionClass = "technical" | "operational" | "noise";
 function classifyAction(value: string): ActionClass {
   const text = comparable(value);
-  if (!text || /confidential|confidencial|disclosure|recipient|copying|distribution|delete|transmission|atenciosamente|regards/.test(text)) return "noise";
-  if (/^(ola|olá|bom dia|boa tarde|boa noite|obrigad|agradecemos|seja bem|favor|informe seus dados)/.test(text) || /estamos a disposicao|horario de atendimento/.test(text)) return "operational";
-  if (/(erro|falha|problema|indispon|offline|reinici|sensor|maquina|senha|acesso|produto|venc|integra|cadastro|relat|entrega|duplic|configur|impress|biometr|500|502|503|504|validar|verificar|corrigir|ajustar|testar)/.test(text)) return "technical";
+  if (policy.action_classes.noise_patterns.some((pattern) => text.includes(pattern))) return "noise";
+  if (policy.action_classes.operational_patterns.some((pattern) => new RegExp(pattern, "i").test(text))) return "operational";
+  if (policy.action_classes.technical_patterns.some((pattern) => new RegExp(pattern, "i").test(text))) return "technical";
   return "operational";
 }
 
 function featureWeights(ticket: Record<string, unknown>) {
   const weights = new Map<string, { weight: number; field: string }>();
   const add = (value: string, weight: number, fieldName: string) => { for (const term of terms(value)) { const previous = weights.get(term); if (!previous || weight > previous.weight) weights.set(term, { weight, field: fieldName }); } };
-  add(field(ticket, "subject", "assunto"), 12, "subject");
-  add(field(ticket, "initialDescription", "description", "descricao"), 12, "description");
+  add(field(ticket, "subject", "assunto"), policy.scoring_weights.subject ?? 12, "subject");
+  add(field(ticket, "initialDescription", "description", "descricao"), policy.scoring_weights.description ?? 12, "description");
   const actions = field(ticket, "actions", "acoes", "interactions", "interacoes");
-  for (const action of actions.split(/(?<=[.!?])\s+/)) { const kind = classifyAction(action); if (kind === "technical") add(action, 14, "actions.technical"); }
-  add(field(ticket, "category", "categoria"), 6, "category");
-  add(field(ticket, "service", "servico", "serviço"), 6, "service");
-  add(field(ticket, "ownerTeam", "owner_team", "team", "equipe"), 3, "team");
+  for (const action of actions.split(/(?<=[.!?])\s+/)) { const kind = classifyAction(action); if (kind === "technical") add(action, policy.scoring_weights.actions_technical ?? 14, "actions.technical"); }
+  add(field(ticket, "category", "categoria"), policy.scoring_weights.category ?? 6, "category");
+  add(field(ticket, "service", "servico", "serviço"), policy.scoring_weights.service ?? 6, "service");
+  add(field(ticket, "ownerTeam", "owner_team", "team", "equipe"), policy.scoring_weights.team ?? 3, "team");
   return weights;
 }
 

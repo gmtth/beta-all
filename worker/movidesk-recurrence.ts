@@ -1,14 +1,15 @@
 import type { MovideskReader } from "./mcp-tools";
+import { semanticCatalog } from "./semantic-catalog";
 
 type RecurrenceArgs = { from_date?: string; to_date?: string; date_field?: string; owner_team?: string; category?: string; service?: string; status?: string; min_occurrences: number; top: number; skip: number };
 type Ticket = Record<string, unknown>;
 
-const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso como mais menos muito pelo pela pelos pelas ticket chamado problema sistema suporte atendimento equipe cliente usuário usuario tudo novo hoje pessoal durante criar realizar somente cada relatado técnico tecnico segue demanda análise analise horário horario contatos fechado fechada closed resolved resolvido cenci cencicia cencihub service bot whatsapp telefone ramal favor obrigado obrigada atenciosamente confidential confidencial disclosure recipient copying distribution delete transmission".split(" "));
+const stopWords = new Set(semanticCatalog.semantic_policy!.stopwords);
 const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/https?:\/\/\S+/gi, " ").replace(/[\w.+-]+@[\w.-]+\.\w+/gi, " ").replace(/\+?\d[\d\s().-]{7,}\d/g, " ").replace(/\s+/g, " ").trim();
 const normalize = (value: string) => clean(value).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const terms = (value: string) => {
   const normalized = normalize(value);
-  const errorCodes = [...normalized.matchAll(/\b(?:erro|error)\s+([45]\d{2})\b/g)].map((match) => `erro ${match[1]}`);
+  const errorCodes = semanticCatalog.semantic_policy!.protected_numeric_patterns.flatMap((pattern) => [...normalized.matchAll(new RegExp(pattern, "gi"))].map((match) => match[0].replace(/\s+/g, " ")));
   const words = normalized.split(/[^a-z0-9]+/).filter((term) => term.length >= 4 && !stopWords.has(term) && !/^\d+$/.test(term) && !/^20\d{2}$/.test(term));
   return [...new Set([...words, ...errorCodes])];
 };

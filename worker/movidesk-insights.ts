@@ -19,7 +19,17 @@ const unique = (values: Array<string | null>) => [...new Set(values.filter((valu
 const ticketIdentity = (ticket: InsightTicket) => ({ id: firstValue(ticket, ["id", "ticketId"]), protocol: firstValue(ticket, ["protocol", "protocolo"]) });
 const stripHtml = (value: string) => decodeHtml(value).replace(/<br\s*\/?>/gi, "\n").replace(/<\/p\s*>/gi, "\n").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 const cleanForAnalysis = (value: string) => value.replace(/https?:\/\/\S+/gi, " ").replace(/\b(?:telefone|whatsapp|e-mail|email)\s*[:=-]?\s*\S+/gi, " ").replace(/\s+/g, " ").trim();
-const boilerplate = (value: string) => /^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|att\.?|atenciosamente|entrou na conversa|finalizou a conversa|estamos encerrando este chat|estamos analisando|estamos verificando|aguardamos retorno|caso encaminhado para desenvolvimento)\b/i.test(value.trim()) || /(?:canais oficiais|horário de atendimento|horario de atendimento|e-mail sac|whatsapp)/i.test(value);
+const catalogFilters = semanticCatalog.filters as Record<string, any>;
+const configuredBoilerplate = [
+  ...(((catalogFilters.automatic_messages?.contains ?? []) as unknown[]).filter((item): item is string => typeof item === "string")),
+  ...(((catalogFilters.greetings_and_smalltalk?.patterns ?? []) as unknown[]).filter((item): item is string => typeof item === "string")),
+  ...(((catalogFilters.signatures?.start_markers ?? []) as unknown[]).filter((item): item is string => typeof item === "string")),
+];
+const boilerplate = (value: string) => {
+  const normalized = value.trim();
+  if (configuredBoilerplate.some((pattern) => normalized.toLocaleLowerCase().includes(pattern.toLocaleLowerCase()))) return true;
+  return /^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|att\.?|atenciosamente|entrou na conversa|finalizou a conversa|estamos encerrando este chat|estamos analisando|estamos verificando|aguardamos retorno|caso encaminhado para desenvolvimento)\b/i.test(normalized) || /(?:canais oficiais|horário de atendimento|horario de atendimento|e-mail sac|whatsapp)/i.test(value);
+};
 
 const actorFrom = (action: Record<string, unknown>, role?: string): Actor => {
   const author = objectOf(firstValue(action, ["createdBy", "author", "user", "usuario"]));

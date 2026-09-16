@@ -282,6 +282,180 @@ filters:
     rule: Quando uma resposta contém o histórico de e-mail citado, preservar apenas o novo conteúdo anterior 
       ao bloco citado. Disclaimers, alertas de e-mail externo, links mailto e referências cid não podem gerar 
       relato, ação, evidência, pendência ou hipótese.
+semantic_policy:
+  purpose: "Vocabulário compartilhado para pontuação e limpeza de ações; não valida a estrutura do catálogo."
+  stopwords:
+    - a
+    - ao
+    - aos
+    - as
+    - com
+    - da
+    - das
+    - de
+    - do
+    - dos
+    - e
+    - em
+    - entre
+    - o
+    - os
+    - ou
+    - para
+    - por
+    - que
+    - se
+    - sem
+    - uma
+    - um
+    - no
+    - na
+    - nas
+    - nos
+    - sua
+    - seu
+    - suas
+    - seus
+    - sobre
+    - foi
+    - são
+    - ser
+    - está
+    - este
+    - esta
+    - isso
+    - como
+    - mais
+    - menos
+    - muito
+    - pelo
+    - pela
+    - pelos
+    - pelas
+    - ticket
+    - chamado
+    - problema
+    - sistema
+    - suporte
+    - atendimento
+    - equipe
+    - cliente
+    - tudo
+    - novo
+    - hoje
+    - pessoal
+    - durante
+    - criar
+    - realizar
+    - somente
+    - cada
+    - relatado
+    - técnico
+    - segue
+    - demanda
+    - análise
+    - horário
+    - contatos
+    - fechado
+    - fechada
+    - closed
+    - resolved
+    - resolvido
+    - cenci
+    - cencicia
+    - cencihub
+    - service
+    - bot
+    - whatsapp
+    - telefone
+    - ramal
+    - favor
+    - obrigado
+    - obrigada
+    - atenciosamente
+    - confidential
+    - confidencial
+    - disclosure
+    - recipient
+    - copying
+    - distribution
+    - delete
+    - transmission
+  action_classes:
+    noise_patterns:
+      - confidential
+      - confidencial
+      - disclosure
+      - recipient
+      - copying
+      - distribution
+      - delete
+      - transmission
+      - atenciosamente
+      - regards
+    operational_patterns:
+      - "^(ola|olá|bom dia|boa tarde|boa noite|obrigad|agradecemos|seja bem|favor|informe seus dados)"
+      - "estamos a disposicao"
+      - "horario de atendimento"
+    technical_patterns:
+      - erro
+      - falha
+      - problema
+      - indispon
+      - offline
+      - reinici
+      - sensor
+      - maquina
+      - senha
+      - acesso
+      - produto
+      - venc
+      - integra
+      - cadastro
+      - relat
+      - entrega
+      - duplic
+      - configur
+      - impress
+      - biometr
+      - "\\b(?:500|502|503|504)\\b"
+      - validar
+      - verificar
+      - corrigir
+      - ajustar
+      - testar
+  line_noise_patterns:
+    - "^(?:att(?:entiously)?|atenciosamente|regards|confidential|confidencial|disclosure|recipient|copying|distribution|delete|transmission)"
+    - "(?:service\\d+|uuid|cencicia|cencihub|hor[aá]rio de atendimento|estamos [àa] disposi[cç][aã]o)"
+    - "^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|agradecemos|favor|seja bem-vindo|informe seus dados|nome[:\\s])"
+  scoring_weights:
+    subject: 12
+    description: 12
+    actions_technical: 14
+    category: 6
+    service: 6
+    team: 3
+  protected_numeric_patterns:
+    - "\\b(?:erro|error)\\s+[45]\\d{2}\\b"
+  fallback:
+    policy: "minimal_safe_subset"
+    maximum_ratio: 0.1
+    stopwords:
+      - a
+      - e
+      - de
+      - do
+      - da
+      - em
+      - para
+      - com
+      - que
+      - uma
+      - um
+    noise_patterns:
+      - confidential
+      - atenciosamente
+
 semantic_types:
 
   reported_problem:

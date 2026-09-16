@@ -7,6 +7,12 @@ const isRecord = (value) => value && typeof value === "object" && !Array.isArray
 if (!isRecord(catalog)) throw new Error("semantic_catalog_invalid_root");
 for (const field of ["schema_version", "ruleset_version", "name", "phase"]) if (typeof catalog[field] !== "string" || !catalog[field].trim()) throw new Error(`semantic_catalog_missing_${field}`);
 if (!isRecord(catalog.classification) || !isRecord(catalog.classification.categories)) throw new Error("semantic_catalog_missing_categories");
+if (catalog.semantic_policy !== undefined) {
+  const policy = catalog.semantic_policy;
+  if (!isRecord(policy) || !Array.isArray(policy.stopwords) || !isRecord(policy.action_classes) || !Array.isArray(policy.line_noise_patterns) || !isRecord(policy.scoring_weights)) throw new Error("semantic_catalog_invalid_semantic_policy");
+  for (const field of ["stopwords", "line_noise_patterns"]) if (policy[field].some((item) => typeof item !== "string" || !item.trim())) throw new Error(`semantic_catalog_invalid_semantic_policy_${field}`);
+  for (const field of ["noise_patterns", "operational_patterns", "technical_patterns"]) if (!Array.isArray(policy.action_classes[field]) || policy.action_classes[field].some((item) => typeof item !== "string" || !item.trim())) throw new Error(`semantic_catalog_invalid_semantic_policy_${field}`);
+}
 const categories = catalog.classification.categories;
 for (const [id, category] of Object.entries(categories)) {
   if (!isRecord(category) || typeof category.label !== "string" || !category.label.trim()) throw new Error(`semantic_catalog_invalid_category_${id}`);

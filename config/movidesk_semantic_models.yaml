@@ -1,5 +1,5 @@
 schema_version: "1.1"
-ruleset_version: "2026.08.16.1"
+ruleset_version: "2026.09.16.1"
 name: "movidesk_semantic_models"
 language: "pt-BR"
 phase: "3A"
@@ -381,6 +381,32 @@ semantic_policy:
     - distribution
     - delete
     - transmission
+    - atendente
+    - mail
+    - voce
+    - você
+    - sera
+    - será
+    - pode
+    - podem
+    - poderia
+    - precisa
+    - precisam
+    - junto
+    - essa
+    - esse
+    - essas
+    - esses
+    - seja
+    - tenha
+    - certo
+    - estamos
+    - analistas
+    - nome
+    - nomes
+    - dados
+    - eric
+    - ribeiro
   action_classes:
     noise_patterns:
       - confidential

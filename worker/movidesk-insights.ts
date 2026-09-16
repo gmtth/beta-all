@@ -25,10 +25,19 @@ const configuredBoilerplate = [
   ...(((catalogFilters.greetings_and_smalltalk?.patterns ?? []) as unknown[]).filter((item): item is string => typeof item === "string")),
   ...(((catalogFilters.signatures?.start_markers ?? []) as unknown[]).filter((item): item is string => typeof item === "string")),
 ];
+const configuredSignatureMarkers = (((catalogFilters.signatures?.start_markers ?? []) as unknown[]).filter((item): item is string => typeof item === "string"));
+const stripTrailingConfiguredNoise = (value: string) => {
+  const lower = value.toLocaleLowerCase();
+  const positions = configuredSignatureMarkers.map((marker) => lower.indexOf(marker.toLocaleLowerCase())).filter((position) => position > 20);
+  const start = positions.length ? Math.min(...positions) : -1;
+  return start >= 0 ? value.slice(0, start).trim() : value.trim();
+};
 const boilerplate = (value: string) => {
   const normalized = value.trim();
-  if (configuredBoilerplate.some((pattern) => normalized.toLocaleLowerCase().includes(pattern.toLocaleLowerCase()))) return true;
-  return /^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|att\.?|atenciosamente|entrou na conversa|finalizou a conversa|estamos encerrando este chat|estamos analisando|estamos verificando|aguardamos retorno|caso encaminhado para desenvolvimento)\b/i.test(normalized) || /(?:canais oficiais|horário de atendimento|horario de atendimento|e-mail sac|whatsapp)/i.test(value);
+  const lower = normalized.toLocaleLowerCase();
+  const hasTechnicalContent = /\b(?:erro|falha|problema|offline|reinici|sensor|máquina|maquina|senha|acesso|produto|venc|integra|cadastro|relat|entrega|duplic|biometr|500|502|503|504)\b/i.test(normalized);
+  if (!hasTechnicalContent && configuredBoilerplate.some((pattern) => lower === pattern.toLocaleLowerCase() || lower.startsWith(`${pattern.toLocaleLowerCase()} `))) return true;
+  return !hasTechnicalContent && (/^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|att\.?|atenciosamente|entrou na conversa|finalizou a conversa|estamos encerrando este chat|estamos analisando|estamos verificando|aguardamos retorno|caso encaminhado para desenvolvimento)\b/i.test(normalized) || /(?:canais oficiais|horário de atendimento|horario de atendimento|e-mail sac|whatsapp)/i.test(value));
 };
 
 const actorFrom = (action: Record<string, unknown>, role?: string): Actor => {
@@ -59,7 +68,7 @@ const messagesFromAction = (action: Record<string, unknown>, sourceIndex: number
     markers.forEach((marker, index) => { const markerStart = decodedHtml.lastIndexOf("<", marker.index ?? 0); const nextMarker = markers[index + 1]?.index; const next = nextMarker === undefined ? decodedHtml.length : Math.max(0, decodedHtml.lastIndexOf("<", nextMarker)); const chunk = stripHtml(decodedHtml.slice(markerStart >= 0 ? markerStart : (marker.index ?? 0), next)); if (chunk) chunks.push({ role: marker[1], text: chunk }); });
   }
   if (!chunks.length) chunks.push({ text: stripHtml(raw) });
-  return chunks.map((chunk) => { const normalized = cleanForAnalysis(chunk.text); return { text: normalized, actor: actorFrom(action, chunk.role), visibility: visibilityOf(action), timestamp: actionDateOf(action), sourceIndex, actionId: text(firstValue(action, ["id", "actionId"])), boilerplate: boilerplate(normalized) }; }).filter((message) => Boolean(message.text));
+  return chunks.map((chunk) => { const normalized = stripTrailingConfiguredNoise(cleanForAnalysis(chunk.text)); return { text: normalized, actor: actorFrom(action, chunk.role), visibility: visibilityOf(action), timestamp: actionDateOf(action), sourceIndex, actionId: text(firstValue(action, ["id", "actionId"])), boilerplate: boilerplate(normalized) }; }).filter((message) => Boolean(message.text));
 };
 
 const normalizeTicket = (ticketValue: unknown): AnalysisContext => {
@@ -128,5 +137,8 @@ export function classifyTicketIssue(ticketValue: unknown) {
   const match = negated ? undefined : contextualMatch ?? explicitCategories.find((candidate) => candidate.pattern.test(factualText));
   const subject = valueText(ticket, ["subject", "assunto", "title", "titulo"]);
   const evidence = match ? unique([subject && match.pattern.test(subject) ? `Assunto: ${subject}` : null, summary.reportedProblem, ...summary.evidence].filter((value) => value && match.pattern.test(value))) : [];
-  return { ...ticketIdentity(ticket), category: match?.category ?? "não classificado", categories: match ? [match.category] : [], officialCategory: valueText(ticket, ["category", "categoria"]), evidence, confidence: match ? (evidence.length > 1 ? "high" : "medium") : "low" };
+  const evidenceSources = new Set(evidence.map((item) => item.split(":", 1)[0]));
+  const strongEvidence = evidence.filter((item) => /\b(?:não|nao|incorreta|falha|erro|offline|inoperante|não reconhece|não aparece|retornou erro|reproduzido|constatado|identificado)\b/i.test(item)).length;
+  const confidence = !match ? "low" : strongEvidence >= 2 && evidenceSources.size >= 2 ? "high" : "medium";
+  return { ...ticketIdentity(ticket), category: match?.category ?? "não classificado", categories: match ? [match.category] : [], officialCategory: valueText(ticket, ["category", "categoria"]), evidence, confidence };
 }

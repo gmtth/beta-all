@@ -4,7 +4,7 @@ import { semanticCatalog, semanticRulesetVersion, validateSemanticCatalog } from
 
 test("semantic catalog loads a validated immutable ruleset snapshot", () => {
   assert.equal(semanticCatalog.schema_version, "1.1");
-  assert.equal(semanticRulesetVersion, "2026.08.16.1");
+  assert.equal(semanticRulesetVersion, "2026.09.16.1");
   assert.ok(Object.keys(semanticCatalog.classification.categories).length >= 10);
   assert.ok(semanticCatalog.semantic_policy);
   assert.equal(semanticCatalog.semantic_policy?.fallback?.maximum_ratio, 0.1);

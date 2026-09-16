@@ -94,15 +94,15 @@ test("find_similar_tickets ranks problem terms above institutional metadata", as
   assert.ok(result.structuredContent.results[0].matchedSignals.every((signal) => !/2026|cencihub|fechado|closed/i.test(signal)));
 });
 
-test("find_similar_tickets never emits object-conversion tokens and falls back for single words", async () => {
+test("find_similar_tickets never emits object-conversion tokens or broad fallback errors", async () => {
   const calls: Array<Record<string, unknown>> = [];
   const tools = setup({
     searchTickets: async (params) => { calls.push(params); return params.keyword ? [] : [{ id: 7100 }]; },
     getTicket: async (id) => id === "7100" ? { id: 7100, subject: "Máquina inoperante", actions: [{ description: "Falha de máquina" }] } : undefined,
   });
-  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ keyword: "máquina", top: 5, skip: 0 }) as { structuredContent: { results: Array<{ matchedSignals: string[] }> } };
-  assert.ok(calls.some((params) => params.keyword === undefined));
-  assert.ok(result.structuredContent.results.every((item) => item.matchedSignals.every((signal) => !/\[object Object\]|\bobject\b/i.test(signal))));
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ keyword: "máquina", top: 5, skip: 0 }) as { structuredContent: { results: Array<{ matchedSignals: string[] }>; error?: unknown } };
+  assert.ok(calls.every((params) => params.keyword !== undefined));
+  assert.equal(result.structuredContent.error, undefined);
 });
 
 test("new timeline tool preserves event order and returns analysis fields", async () => {

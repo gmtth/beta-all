@@ -1,100 +1,66 @@
-# vinext-starter
+# MCP Movidesk
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+Servidor MCP somente leitura para consulta e análise factual de tickets do Movidesk, protegido por OAuth 2.0 Authorization Code com PKCE S256.
 
-## Prerequisites
+## Conexão
 
-- Node.js `>=22.13.0`
+- Endpoint MCP: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`
+- Discovery OAuth: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server`
+- Client ID: `movidesk-mcp-app`
+- Scope: `movidesk:read`
+- PKCE: `S256` obrigatório
 
-## Quick Start
+Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status, atribui responsáveis ou publica comentários.
+
+## Ferramentas
+
+### Consulta e busca
+
+- `movidesk_get_ticket`: consulta um ticket por `ticket_id` numérico.
+- `movidesk_search_tickets`: busca por `id`, `keyword`, período, `date_field`, equipe, status, categoria, serviço, cliente, responsável, urgência e filtros OData. Aceita `top` e `skip`.
+- `movidesk_list_open_tickets`: lista tickets não resolvidos para `created_date`, com filtro, ordenação e paginação.
+- `movidesk_search_ticket_content`: pesquisa `keyword` no assunto, descrição inicial e ações/interações. Use escopo temporal ou outro filtro. `matchedIn` distingue `subject`, `initialDescription` e `interactions`.
+- `movidesk_search_people`: pesquisa pessoas autorizadas. Para nome, prefira `filter` OData, como `contains(businessName, 'Gedore')`.
+- `movidesk_list_services`: lista serviços autorizados; informe `id`, `category`, `status`, `owner_team` ou `filter`.
+
+### Análise de um ticket
+
+- `movidesk_get_ticket_timeline`: organiza ações em eventos cronológicos, preservando `sourceIndex`, autor, origem, tipo, status, anexos, `firstClientManifestation`, `lastTeamResponse` e `terminalStatus`. Aceita exatamente um entre `ticket_id` e `protocol`.
+- `movidesk_summarize_ticket`: retorna relato, ações concluídas, pendências abertas, evidências, hipóteses explícitas, confiança e histórico incompleto. Aceita `ticket_id` ou `protocol`.
+- `movidesk_classify_ticket_issue`: classifica o problema por sinais explícitos e contexto causal, preservando `officialCategory`. Não infere causa raiz. Aceita `ticket_id` ou `protocol`.
+
+### Análise comparativa
+
+- `movidesk_find_similar_tickets`: encontra tickets semelhantes por `ticket_id` ou `keyword`, usando assunto, descrição, ações técnicas e sinais estruturados. Retorna `similarityScore`, `confidence`, `matchedSignals` e `signalDetails`; exclui a referência.
+- `movidesk_detect_recurrent_issues`: agrupa problemas recorrentes em uma janela temporal. Retorna termos, evidências por campo, tendência mensal e direção, status, urgência, categoria, serviço, equipe, clientes distintos, concentração por cliente, exemplos e metadados da amostra. Não afirma causa raiz.
+
+## Regras de uso
+
+- Todas as operações são somente leitura.
+- Informe escopo temporal em buscas amplas; o detector de recorrências usa o ano corrente por padrão.
+- `ticket_id` e `protocol` são alternativas: não envie ambos nas ferramentas de análise.
+- `top` e `skip` controlam paginação; em análises agrupadas, `total` representa grupos, não tickets brutos.
+- Ausência de correspondência retorna lista vazia. Falhas de autenticação, validação e indisponibilidade são diferenciadas.
+- `config/movidesk_semantic_models.yaml` define normalização, aliases, exclusões, desambiguações, pesos e regras de segurança. O snapshot JSON é carregado pelo runtime.
+
+## Desenvolvimento local
+
+Requisito: Node.js `>=22.13.0`.
 
 ```bash
 npm install
 npm run dev
 npm run build
+npm run validate:semantic-catalog
+node_modules/.bin/tsx.cmd --test tests/semantic-catalog.test.ts tests/mcp-tools.characterization.test.ts tests/movidesk-analysis.test.ts tests/movidesk-timeline.test.ts tests/movidesk-insights.test.ts tests/rendered-html.test.mjs
 ```
 
-This starter does not use `wrangler.jsonc`.
+Alterações no catálogo devem atualizar o YAML e o snapshot JSON correspondente, mantendo `schema_version` e `ruleset_version`. Toda regra nova deve ter caso positivo e, quando aplicável, caso negativo.
 
-## Included Shape
+## Estado do projeto
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+- Phases 0, 1, 2 e 3A: concluídas.
+- Phase 3B: busca semelhante e detecção de recorrências.
+- Phase 3C: explicabilidade, evidências rastreáveis, tendências e qualidade da amostra.
 
-## Workspace Auth Headers
-
-Signed-in visitors receive both `oai-authenticated-user-id` and `oai-authenticated-user-email`. Private Sites require every visitor to sign in; public Sites may also have anonymous visitors, for whom neither header is present.
-
-The user ID is stable for the same user on the same Site and different across Sites. Email and name are intended for display or contact purposes.
-
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
-
-Treat the full name as optional and fall back to email when it is absent:
-
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const userId = requestHeaders.get("oai-authenticated-user-id");
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
-```
-
-## Optional Dispatch-Owned ChatGPT Sign-In
-
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
-
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
-
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
-
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
-
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
-
-## Useful Commands
-
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
-
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+As ferramentas analíticas são determinísticas e conservadoras: fatos explícitos têm prioridade, textos administrativos são filtrados e nenhuma causa raiz é inventada.

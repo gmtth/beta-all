@@ -37,6 +37,28 @@ function actionText(value: unknown): string {
   return raw.split(/\r?\n+/).map(clean).filter((line) => line && !/^(?:att(?:entiously)?|atenciosamente|regards|confidential|confidencial|disclosure|recipient|copying|distribution|delete|transmission)/i.test(line) && !/(?:service\d+|uuid|cencicia|cencihub|hor[aá]rio de atendimento|estamos [àa] disposi[cç][aã]o)/i.test(line) && !/^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|agradecemos|favor|seja bem-vindo|informe seus dados|nome[:\s])/i.test(line)).join(" ");
 }
 
+type ActionClass = "technical" | "operational" | "noise";
+function classifyAction(value: string): ActionClass {
+  const text = comparable(value);
+  if (!text || /confidential|confidencial|disclosure|recipient|copying|distribution|delete|transmission|atenciosamente|regards/.test(text)) return "noise";
+  if (/^(ola|olá|bom dia|boa tarde|boa noite|obrigad|agradecemos|seja bem|favor|informe seus dados)/.test(text) || /estamos a disposicao|horario de atendimento/.test(text)) return "operational";
+  if (/(erro|falha|problema|indispon|offline|reinici|sensor|maquina|senha|acesso|produto|venc|integra|cadastro|relat|entrega|duplic|configur|impress|biometr|500|502|503|504|validar|verificar|corrigir|ajustar|testar)/.test(text)) return "technical";
+  return "operational";
+}
+
+function featureWeights(ticket: Record<string, unknown>) {
+  const weights = new Map<string, { weight: number; field: string }>();
+  const add = (value: string, weight: number, fieldName: string) => { for (const term of terms(value)) { const previous = weights.get(term); if (!previous || weight > previous.weight) weights.set(term, { weight, field: fieldName }); } };
+  add(field(ticket, "subject", "assunto"), 12, "subject");
+  add(field(ticket, "initialDescription", "description", "descricao"), 12, "description");
+  const actions = field(ticket, "actions", "acoes", "interactions", "interacoes");
+  for (const action of actions.split(/(?<=[.!?])\s+/)) { const kind = classifyAction(action); if (kind === "technical") add(action, 14, "actions.technical"); }
+  add(field(ticket, "category", "categoria"), 6, "category");
+  add(field(ticket, "service", "servico", "serviço"), 6, "service");
+  add(field(ticket, "ownerTeam", "owner_team", "team", "equipe"), 3, "team");
+  return weights;
+}
+
 function field(object: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
     const value = object[key];
@@ -52,8 +74,7 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
   const referenceText = args.keyword || textOf(referenceTicket);
   const referenceSubject = field(referenceTicket ?? {}, "subject", "assunto");
   const referenceDescription = field(referenceTicket ?? {}, "initialDescription", "description", "descricao");
-  const referenceActions = field(referenceTicket ?? {}, "actions", "acoes", "interactions", "interacoes");
-  const referenceWeights = args.keyword ? weighted(args.keyword, 4) : weighted(referenceSubject, 4, weighted(referenceDescription, 4, weighted(referenceActions, 4)));
+  const referenceWeights = args.keyword ? new Map([...terms(args.keyword)].map((term) => [term, { weight: 12, field: "keyword" }])) : featureWeights(referenceTicket ?? {});
   const referenceTerms = new Set(referenceWeights.keys());
   const referenceCategory = field(referenceTicket ?? {}, "category", "categoria");
   const referenceService = field(referenceTicket ?? {}, "service", "servico", "serviço");
@@ -99,8 +120,7 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     const detail = objectOf(asArray(await client.getTicket(String(candidateId), accessToken))[0] ?? candidateSummary);
     const candidateSubject = field(detail, "subject", "assunto");
     const candidateDescription = field(detail, "initialDescription", "description", "descricao");
-    const candidateActions = field(detail, "actions", "acoes", "interactions", "interacoes");
-    const candidateWeights = weighted(candidateSubject, 4, weighted(candidateDescription, 4, weighted(candidateActions, 4)));
+    const candidateWeights = featureWeights(detail);
     const candidateTerms = new Set(candidateWeights.keys());
     const shared = [...referenceTerms].filter((term) => candidateTerms.has(term));
     const candidateCategory = field(detail, "category", "categoria");
@@ -112,8 +132,9 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     if (referenceService && candidateService && comparable(referenceService) === comparable(candidateService)) signals.push("serviço compatível");
     if (referenceTeam && candidateTeam && comparable(referenceTeam) === comparable(candidateTeam)) signals.push("equipe compatível");
     const signalDetails = shared.map((term) => {
-      const candidateField = candidateSubject && terms(candidateSubject).has(term) ? "subject" : candidateDescription && terms(candidateDescription).has(term) ? "description" : "actions.technical";
-      return { term, field: candidateField, weight: Math.round(((referenceWeights.get(term) ?? 0) * (candidateWeights.get(term) ?? 1)) * 100) / 100 };
+      const candidateSignal = candidateWeights.get(term);
+      const referenceSignal = referenceWeights.get(term);
+      return { term, field: candidateSignal?.field ?? "actions.technical", weight: candidateSignal && referenceSignal ? Math.max(candidateSignal.weight, referenceSignal.weight) : 0 };
     }).sort((a, b) => b.weight - a.weight).slice(0, 10);
     if (signalDetails.length) {
       signals.splice(0, 1, ...["subject", "description", "actions.technical"].flatMap((fieldName) => {
@@ -121,8 +142,8 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
         return values.length ? [`termos do ${fieldName}: ${values.slice(0, 8).join(", ")}`] : [];
       }));
     }
-    const sharedWeight = shared.reduce((sum, term) => sum + (referenceWeights.get(term) ?? 0) * (candidateWeights.get(term) ?? 1), 0);
-    const referenceWeight = [...referenceWeights.values()].reduce((sum, weight) => sum + weight, 0);
+    const sharedWeight = shared.reduce((sum, term) => sum + Math.min(referenceWeights.get(term)?.weight ?? 0, candidateWeights.get(term)?.weight ?? 0), 0);
+    const referenceWeight = [...referenceWeights.values()].reduce((sum, signal) => sum + signal.weight, 0);
     const lexical = referenceWeight ? Math.min(1, sharedWeight / referenceWeight) : 0;
     const structural = (signals.filter((signal) => /compatível$/.test(signal)).length) / 3;
     const score = Math.min(1, lexical * 0.88 + structural * 0.12);

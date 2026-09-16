@@ -118,6 +118,17 @@ test("find_similar_tickets keeps technical action terms and removes contact/sign
   assert.ok(details.every((signal) => !/example|cencicia|service|telefone|atenciosamente/i.test(signal.term)));
 });
 
+test("find_similar_tickets ignores operational actions for scoring", async () => {
+  const tools = setup({
+    searchTickets: async () => [{ id: 7300 }],
+    getTicket: async (id) => id === "7300"
+      ? { id: 7300, subject: "Outro assunto", actions: [{ description: "Olá, favor informe seus dados. Estamos à disposição." }] }
+      : { id: 7299, subject: "Falha técnica", actions: [{ description: "Olá, favor informe seus dados. Estamos à disposição." }] },
+  });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "7299", top: 5, skip: 0 }) as { structuredContent: { results: unknown[] } };
+  assert.deepEqual(result.structuredContent.results, []);
+});
+
 test("new timeline tool preserves event order and returns analysis fields", async () => {
   const tools = setup({ getTicket: async () => ({ status: "Aguardando", actions: [
     { createdDate: "2026-08-16T10:00:00Z", origin: "team", description: "resposta" },

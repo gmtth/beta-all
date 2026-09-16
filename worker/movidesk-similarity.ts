@@ -14,7 +14,7 @@ type SimilarityArgs = {
   skip: number;
 };
 
-const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema erro sistema fechado fechada closed resolved resolvido cencicia cencihub cenci suporte atendimento equipe atendente service bot tudo novo hoje pessoal durante cliente mail".split(" "));
+const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema sistema fechado fechada closed resolved resolvido cencicia cencihub cenci suporte atendimento equipe atendente service bot tudo novo hoje pessoal durante cliente mail criar realizar somente cada relatado técnico segue demanda análise horário contatos".split(" "));
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results : value && typeof value === "object" ? [value] : [];
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Record<string, unknown> : {};
 const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
@@ -103,6 +103,16 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     if (referenceCategory && candidateCategory && comparable(referenceCategory) === comparable(candidateCategory)) signals.push("categoria compatível");
     if (referenceService && candidateService && comparable(referenceService) === comparable(candidateService)) signals.push("serviço compatível");
     if (referenceTeam && candidateTeam && comparable(referenceTeam) === comparable(candidateTeam)) signals.push("equipe compatível");
+    const signalDetails = shared.map((term) => {
+      const candidateField = candidateSubject && terms(candidateSubject).has(term) ? "subject" : candidateDescription && terms(candidateDescription).has(term) ? "description" : "actions";
+      return { term, field: candidateField, weight: Math.round(((referenceWeights.get(term) ?? 0) * (candidateWeights.get(term) ?? 1)) * 100) / 100 };
+    });
+    if (signalDetails.length) {
+      signals.splice(0, 1, ...["subject", "description", "actions"].flatMap((fieldName) => {
+        const values = signalDetails.filter((signal) => signal.field === fieldName).map((signal) => signal.term);
+        return values.length ? [`termos do ${fieldName}: ${values.slice(0, 8).join(", ")}`] : [];
+      }));
+    }
     const sharedWeight = shared.reduce((sum, term) => sum + (referenceWeights.get(term) ?? 0) * (candidateWeights.get(term) ?? 1), 0);
     const referenceWeight = [...referenceWeights.values()].reduce((sum, weight) => sum + weight, 0);
     const lexical = referenceWeight ? Math.min(1, sharedWeight / referenceWeight) : 0;
@@ -114,7 +124,8 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     if (!shared.length && !structural) continue;
     if (score < 0.2) continue;
     const similarityScore = Math.round(score * 100) / 100;
-    results.push({ id: detail.id ?? candidateSummary.id, protocol: detail.protocol ?? candidateSummary.protocol, subject: field(detail, "subject", "assunto") || undefined, similarityScore, matchedSignals: signals, confidence: similarityScore >= 0.75 ? "high" : similarityScore >= 0.45 ? "medium" : "low" });
+    const strongEvidence = signalDetails.some((signal) => signal.field === "subject") || structural >= 0.33;
+    results.push({ id: detail.id ?? candidateSummary.id, protocol: detail.protocol ?? candidateSummary.protocol, subject: field(detail, "subject", "assunto") || undefined, similarityScore, matchedSignals: signals, signalDetails, confidence: similarityScore >= 0.75 && strongEvidence ? "high" : similarityScore >= 0.45 ? "medium" : "low" });
   }
   results.sort((a, b) => Number(b.similarityScore) - Number(a.similarityScore));
   const limited = results.slice(0, args.top);

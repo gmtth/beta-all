@@ -41,7 +41,7 @@ test("find_similar_tickets compares full content and exposes explainable signals
   assert.ok(searchParams.every((params) => String(params.keyword).length <= 180));
   assert.equal(result.structuredContent.results[0].id, 6290);
   assert.ok(result.structuredContent.results[0].similarityScore > 0.2);
-  assert.ok(result.structuredContent.results[0].matchedSignals.some((signal) => signal.includes("termos compartilhados")));
+  assert.ok(result.structuredContent.results[0].matchedSignals.some((signal) => signal.includes("termos do subject")));
 });
 
 test("find_similar_tickets does not send a full transcript and structures upstream errors", async () => {

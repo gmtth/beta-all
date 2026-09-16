@@ -14,7 +14,7 @@ type SimilarityArgs = {
   skip: number;
 };
 
-const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema erro sistema fechado fechada closed resolved resolvido cencicia cencihub suporte atendimento equipe atendente service bot".split(" "));
+const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema erro sistema fechado fechada closed resolved resolvido cencicia cencihub cenci suporte atendimento equipe atendente service bot tudo novo hoje pessoal durante cliente mail".split(" "));
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results : value && typeof value === "object" ? [value] : [];
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Record<string, unknown> : {};
 const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
@@ -57,7 +57,9 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     referenceSubject,
     referenceDescription,
   ].filter(Boolean).join(" ");
-  const queryTerms = args.ticket_id ? [...terms(referenceSearchText)].slice(0, 6) : [clean(args.keyword ?? "").slice(0, 180)];
+  const queryTerms = args.ticket_id
+    ? [...terms(referenceSearchText)].slice(0, 6)
+    : [...new Set([clean(args.keyword ?? "").slice(0, 180), comparable(args.keyword ?? "").slice(0, 180)].filter(Boolean))];
   const baseParams: Record<string, string | number | undefined> = {
     from_date: args.from_date, to_date: args.to_date, date_field: args.date_field,
     owner_team: args.owner_team, category: args.category, service: args.service,
@@ -75,21 +77,10 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
       }
     }
     candidates = [...uniqueCandidates.values()];
-    // Some Movidesk indexes miss a single-word query (notably accented
-    // terms). Fetch a bounded page without keyword and let the local matcher
-    // decide, avoiding dependence on that index quirk.
-    if (!candidates.length && args.keyword && !/\s/.test(args.keyword.trim())) {
-      const fallback = asArray(await client.searchTickets({ ...baseParams, keyword: undefined, top: Math.min(100, Math.max(args.top, 50)), skip: 0 }, accessToken));
-      for (const candidate of fallback) {
-        const object = objectOf(candidate);
-        const id = object.id ?? object.ticket_id ?? object.protocol;
-        if (id !== undefined) uniqueCandidates.set(String(id), candidate);
-      }
-      candidates = [...uniqueCandidates.values()];
-    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { reference: args.ticket_id ? (referenceTicket?.protocol ?? args.ticket_id) : (args.keyword ?? ""), results: [], total: 0, returned: 0, top: args.top, skip: args.skip, error: { code: "upstream_search_failed", message: message.slice(0, 300) } };
+    const status = /HTTP\s+(\d{3})/i.exec(message)?.[1];
+    return { reference: args.ticket_id ? (referenceTicket?.protocol ?? args.ticket_id) : (args.keyword ?? ""), results: [], total: 0, returned: 0, top: args.top, skip: args.skip, error: { code: "upstream_search_failed", ...(status ? { status: Number(status) } : {}), message: message.slice(0, 300) } };
   }
   const results: Record<string, unknown>[] = [];
   const referenceId = args.ticket_id ?? String(referenceTicket?.id ?? "");

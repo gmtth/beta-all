@@ -14,7 +14,7 @@ type SimilarityArgs = {
   skip: number;
 };
 
-const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema sistema fechado fechada closed resolved resolvido cencicia cencihub cenci suporte atendimento equipe atendente service bot tudo novo hoje pessoal durante cliente mail criar realizar somente cada relatado técnico segue demanda análise horário contatos".split(" "));
+const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema sistema fechado fechada closed resolved resolvido cencicia cencihub cenci suporte atendimento equipe atendente service bot tudo novo hoje pessoal durante cliente mail whatsapp telefone ramal criar realizar somente cada relatado técnico segue demanda análise horário contatos".split(" "));
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results : value && typeof value === "object" ? [value] : [];
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Record<string, unknown> : {};
 const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/https?:\/\/\S+/gi, " ").replace(/[\w.+-]+@[\w.-]+\.\w+/gi, " ").replace(/\+?\d[\d\s().-]{7,}\d/g, " ").replace(/\b[0-9a-f]{8}-[0-9a-f-]{27,}\b/gi, " ").replace(/\bservice\d+\b/gi, " ").replace(/\bimage\d*\b/gi, " ").replace(/\b\d{1,4}[\/:.-]\d{1,2}[\/:.-]\d{1,4}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?\b/g, " ").replace(/\s+/g, " ").trim();
@@ -33,7 +33,8 @@ function actionText(value: unknown): string {
   if (Array.isArray(value)) return value.map(actionText).filter(Boolean).join(" ");
   if (!value || typeof value !== "object") return typeof value === "string" ? clean(value) : "";
   const object = value as Record<string, unknown>;
-  return ["description", "summary", "text", "justification", "observation", "note", "content", "descricao", "resumo", "texto"].map((key) => typeof object[key] === "string" ? clean(object[key] as string) : "").filter(Boolean).join(" ");
+  const raw = ["description", "summary", "text", "justification", "observation", "note", "content", "descricao", "resumo", "texto"].map((key) => typeof object[key] === "string" ? String(object[key]) : "").filter(Boolean).join("\n");
+  return raw.split(/\r?\n+/).map(clean).filter((line) => line && !/^(?:att(?:entiously)?|atenciosamente|regards|confidential|confidencial|disclosure|recipient|copying|distribution|delete|transmission)/i.test(line) && !/(?:service\d+|uuid|cencicia|cencihub|hor[aá]rio de atendimento|estamos [àa] disposi[cç][aã]o)/i.test(line) && !/^(?:ol[aá]|bom dia|boa tarde|boa noite|obrigad[oa]|agradecemos|favor|seja bem-vindo|informe seus dados|nome[:\s])/i.test(line)).join(" ");
 }
 
 function field(object: Record<string, unknown>, ...keys: string[]) {
@@ -113,7 +114,7 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     const signalDetails = shared.map((term) => {
       const candidateField = candidateSubject && terms(candidateSubject).has(term) ? "subject" : candidateDescription && terms(candidateDescription).has(term) ? "description" : "actions.technical";
       return { term, field: candidateField, weight: Math.round(((referenceWeights.get(term) ?? 0) * (candidateWeights.get(term) ?? 1)) * 100) / 100 };
-    });
+    }).sort((a, b) => b.weight - a.weight).slice(0, 10);
     if (signalDetails.length) {
       signals.splice(0, 1, ...["subject", "description", "actions.technical"].flatMap((fieldName) => {
         const values = signalDetails.filter((signal) => signal.field === fieldName).map((signal) => signal.term);
@@ -131,7 +132,7 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     if (!shared.length && !structural) continue;
     if (score < 0.2) continue;
     const similarityScore = Math.round(score * 100) / 100;
-    const strongEvidence = signalDetails.some((signal) => signal.field === "subject") || structural >= 0.33;
+    const strongEvidence = signalDetails.some((signal) => signal.field === "subject") || signals.some((signal) => signal === "categoria compatível" || signal === "serviço compatível");
     results.push({ id: detail.id ?? candidateSummary.id, protocol: detail.protocol ?? candidateSummary.protocol, subject: field(detail, "subject", "assunto") || undefined, similarityScore, matchedSignals: signals, signalDetails, confidence: similarityScore >= 0.75 && strongEvidence ? "high" : similarityScore >= 0.45 ? "medium" : "low" });
   }
   results.sort((a, b) => Number(b.similarityScore) - Number(a.similarityScore));

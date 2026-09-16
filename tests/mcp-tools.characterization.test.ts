@@ -105,6 +105,19 @@ test("find_similar_tickets never emits object-conversion tokens or broad fallbac
   assert.equal(result.structuredContent.error, undefined);
 });
 
+test("find_similar_tickets keeps technical action terms and removes contact/signature noise", async () => {
+  const tools = setup({
+    searchTickets: async () => [{ id: 7200 }],
+    getTicket: async (id) => id === "7200"
+      ? { id: 7200, subject: "Falha de autenticação", actions: [{ description: "Validar biometria do usuário. https://example.invalid contato service25@cencicia.com.br\nAtenciosamente, Cenci" }] }
+      : { id: 7199, subject: "Falha de autenticação", actions: [{ description: "Validar biometria do usuário. telefone 5511999999999" }] },
+  });
+  const result = await tools.get("movidesk_find_similar_tickets")!.handler({ ticket_id: "7199", top: 5, skip: 0 }) as { structuredContent: { results: Array<{ signalDetails: Array<{ term: string; field: string }> }> } };
+  const details = result.structuredContent.results[0].signalDetails;
+  assert.ok(details.some((signal) => signal.term === "biometria" && signal.field === "actions.technical"));
+  assert.ok(details.every((signal) => !/example|cencicia|service|telefone|atenciosamente/i.test(signal.term)));
+});
+
 test("new timeline tool preserves event order and returns analysis fields", async () => {
   const tools = setup({ getTicket: async () => ({ status: "Aguardando", actions: [
     { createdDate: "2026-08-16T10:00:00Z", origin: "team", description: "resposta" },

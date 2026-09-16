@@ -17,7 +17,7 @@ type SimilarityArgs = {
 const stopWords = new Set("a ao aos as com da das de do dos e em entre o os ou para por que se sem uma um no na nas nos sua seu suas seus sobre foi são ser está este esta isso isso como mais menos muito muito pelo pela pelos pelas ticket chamado problema sistema fechado fechada closed resolved resolvido cencicia cencihub cenci suporte atendimento equipe atendente service bot tudo novo hoje pessoal durante cliente mail criar realizar somente cada relatado técnico segue demanda análise horário contatos".split(" "));
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results : value && typeof value === "object" ? [value] : [];
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Record<string, unknown> : {};
-const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
+const clean = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/https?:\/\/\S+/gi, " ").replace(/[\w.+-]+@[\w.-]+\.\w+/gi, " ").replace(/\+?\d[\d\s().-]{7,}\d/g, " ").replace(/\b[0-9a-f]{8}-[0-9a-f-]{27,}\b/gi, " ").replace(/\bservice\d+\b/gi, " ").replace(/\bimage\d*\b/gi, " ").replace(/\b\d{1,4}[\/:.-]\d{1,2}[\/:.-]\d{1,4}(?:[ T]\d{1,2}:\d{2}(?::\d{2})?)?\b/g, " ").replace(/\s+/g, " ").trim();
 const comparable = (value: string) => clean(value).toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const terms = (value: string) => new Set(comparable(value).split(/[^a-z0-9]+/).filter((term) => term.length >= 4 && !stopWords.has(term) && !/^\d+$/.test(term) && !/^20\d{2}$/.test(term)));
 const weighted = (value: string, weight: number, output = new Map<string, number>()) => { for (const term of terms(value)) output.set(term, Math.max(output.get(term) ?? 0, weight)); return output; };
@@ -29,10 +29,17 @@ function textOf(value: unknown): string {
   return Object.entries(value as Record<string, unknown>).map(([key, item]) => key.toLowerCase().includes("url") ? "" : textOf(item)).filter(Boolean).join(" ");
 }
 
+function actionText(value: unknown): string {
+  if (Array.isArray(value)) return value.map(actionText).filter(Boolean).join(" ");
+  if (!value || typeof value !== "object") return typeof value === "string" ? clean(value) : "";
+  const object = value as Record<string, unknown>;
+  return ["description", "summary", "text", "justification", "observation", "note", "content", "descricao", "resumo", "texto"].map((key) => typeof object[key] === "string" ? clean(object[key] as string) : "").filter(Boolean).join(" ");
+}
+
 function field(object: Record<string, unknown>, ...keys: string[]) {
   for (const key of keys) {
     const value = object[key];
-    const text = typeof value === "string" ? clean(value) : textOf(value);
+    const text = key === "actions" || key === "acoes" || key === "interactions" || key === "interacoes" ? actionText(value) : typeof value === "string" ? clean(value) : textOf(value);
     if (text) return text;
   }
   return "";
@@ -45,7 +52,7 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
   const referenceSubject = field(referenceTicket ?? {}, "subject", "assunto");
   const referenceDescription = field(referenceTicket ?? {}, "initialDescription", "description", "descricao");
   const referenceActions = field(referenceTicket ?? {}, "actions", "acoes", "interactions", "interacoes");
-  const referenceWeights = args.keyword ? weighted(args.keyword, 3) : weighted(referenceSubject, 4, weighted(referenceDescription, 3, weighted(referenceActions, 1)));
+  const referenceWeights = args.keyword ? weighted(args.keyword, 4) : weighted(referenceSubject, 4, weighted(referenceDescription, 4, weighted(referenceActions, 4)));
   const referenceTerms = new Set(referenceWeights.keys());
   const referenceCategory = field(referenceTicket ?? {}, "category", "categoria");
   const referenceService = field(referenceTicket ?? {}, "service", "servico", "serviço");
@@ -92,7 +99,7 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     const candidateSubject = field(detail, "subject", "assunto");
     const candidateDescription = field(detail, "initialDescription", "description", "descricao");
     const candidateActions = field(detail, "actions", "acoes", "interactions", "interacoes");
-    const candidateWeights = weighted(candidateSubject, 4, weighted(candidateDescription, 3, weighted(candidateActions, 1)));
+    const candidateWeights = weighted(candidateSubject, 4, weighted(candidateDescription, 4, weighted(candidateActions, 4)));
     const candidateTerms = new Set(candidateWeights.keys());
     const shared = [...referenceTerms].filter((term) => candidateTerms.has(term));
     const candidateCategory = field(detail, "category", "categoria");
@@ -104,11 +111,11 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
     if (referenceService && candidateService && comparable(referenceService) === comparable(candidateService)) signals.push("serviço compatível");
     if (referenceTeam && candidateTeam && comparable(referenceTeam) === comparable(candidateTeam)) signals.push("equipe compatível");
     const signalDetails = shared.map((term) => {
-      const candidateField = candidateSubject && terms(candidateSubject).has(term) ? "subject" : candidateDescription && terms(candidateDescription).has(term) ? "description" : "actions";
+      const candidateField = candidateSubject && terms(candidateSubject).has(term) ? "subject" : candidateDescription && terms(candidateDescription).has(term) ? "description" : "actions.technical";
       return { term, field: candidateField, weight: Math.round(((referenceWeights.get(term) ?? 0) * (candidateWeights.get(term) ?? 1)) * 100) / 100 };
     });
     if (signalDetails.length) {
-      signals.splice(0, 1, ...["subject", "description", "actions"].flatMap((fieldName) => {
+      signals.splice(0, 1, ...["subject", "description", "actions.technical"].flatMap((fieldName) => {
         const values = signalDetails.filter((signal) => signal.field === fieldName).map((signal) => signal.term);
         return values.length ? [`termos do ${fieldName}: ${values.slice(0, 8).join(", ")}`] : [];
       }));

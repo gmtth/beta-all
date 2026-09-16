@@ -34,13 +34,17 @@ test("detect_recurrent_issues groups problem terms with trend, status and client
     ["4", { id: 4, protocol: "p4", subject: "Relatório vencido", description: "Relatório obrigatório vencido", status: "Resolvido", clientId: "C", createdDate: "2026-09-02" }],
   ]);
   const tools = setup({ searchTickets: async (params) => { assert.equal(params.top, 100); return [...data.values()].map(({ id, subject, createdDate, status, clientId }) => ({ id, subject, createdDate, status, clientId })); }, getTicket: async (id) => data.get(id) });
-  const result = await tools.get("movidesk_detect_recurrent_issues")!.handler({ from_date: "2026-01-01", to_date: "2026-09-16", min_occurrences: 3, top: 10, skip: 0 }) as { structuredContent: { groups: Array<{ issue: string; occurrences: number; uniqueClients: number; trendByMonth: Record<string, number>; statusCounts: Record<string, number>; confidence: string }> } };
+  const result = await tools.get("movidesk_detect_recurrent_issues")!.handler({ from_date: "2026-01-01", to_date: "2026-09-16", min_occurrences: 3, top: 10, skip: 0 }) as { structuredContent: { groups: Array<{ issue: string; occurrences: number; uniqueClients: number; sameClientDominant: boolean; trendByMonth: Record<string, number>; trendDirection: string; trend: { deltaPercentage: number | null }; statusCounts: Record<string, number>; signalDetails: Array<{ term: string; fields: Record<string, number>; examples: string[] }>; confidence: string }> } };
   const group = result.structuredContent.groups[0];
   assert.match(group.issue, /sensor|offline/);
   assert.equal(group.occurrences, 3);
   assert.equal(group.uniqueClients, 2);
   assert.deepEqual(group.trendByMonth, { "2026-08": 2, "2026-09": 1 });
+  assert.equal(group.trendDirection, "falling");
+  assert.equal(group.trend.deltaPercentage, -50);
   assert.equal(group.statusCounts.Resolvido, 1);
+  assert.equal(group.sameClientDominant, true);
+  assert.ok(group.signalDetails.some((signal) => signal.fields.subject >= 3 && signal.examples.length === 3));
 });
 
 test("detect_recurrent_issues preserves HTTP error codes as meaningful problem terms", async () => {

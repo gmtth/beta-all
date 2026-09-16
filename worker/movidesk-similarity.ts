@@ -30,7 +30,11 @@ function textOf(value: unknown): string {
 }
 
 function field(object: Record<string, unknown>, ...keys: string[]) {
-  for (const key of keys) if (object[key] !== undefined && object[key] !== null && String(object[key]).trim()) return String(object[key]);
+  for (const key of keys) {
+    const value = object[key];
+    const text = typeof value === "string" ? clean(value) : textOf(value);
+    if (text) return text;
+  }
   return "";
 }
 
@@ -71,6 +75,18 @@ export async function findSimilarTickets(client: MovideskReader, args: Similarit
       }
     }
     candidates = [...uniqueCandidates.values()];
+    // Some Movidesk indexes miss a single-word query (notably accented
+    // terms). Fetch a bounded page without keyword and let the local matcher
+    // decide, avoiding dependence on that index quirk.
+    if (!candidates.length && args.keyword && !/\s/.test(args.keyword.trim())) {
+      const fallback = asArray(await client.searchTickets({ ...baseParams, keyword: undefined, top: Math.min(100, Math.max(args.top, 50)), skip: 0 }, accessToken));
+      for (const candidate of fallback) {
+        const object = objectOf(candidate);
+        const id = object.id ?? object.ticket_id ?? object.protocol;
+        if (id !== undefined) uniqueCandidates.set(String(id), candidate);
+      }
+      candidates = [...uniqueCandidates.values()];
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     return { reference: args.ticket_id ? (referenceTicket?.protocol ?? args.ticket_id) : (args.keyword ?? ""), results: [], total: 0, returned: 0, top: args.top, skip: args.skip, error: { code: "upstream_search_failed", message: message.slice(0, 300) } };

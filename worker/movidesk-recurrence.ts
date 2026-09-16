@@ -41,6 +41,14 @@ const monthOf = (ticket: Ticket, dateField = "createdDate") => {
   return date && !Number.isNaN(date.valueOf()) ? date.toISOString().slice(0, 7) : null;
 };
 
+async function mapWithConcurrency<T, R>(items: T[], limit: number, worker: (item: T) => Promise<R>) {
+  const output: R[] = new Array(items.length);
+  let cursor = 0;
+  const run = async () => { while (true) { const index = cursor++; if (index >= items.length) return; output[index] = await worker(items[index]); } };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, run));
+  return output;
+}
+
 export async function detectRecurrentIssues(client: MovideskReader, args: RecurrenceArgs, accessToken: string) {
   const today = new Date().toISOString().slice(0, 10);
   const fromDate = args.from_date ?? `${today.slice(0, 4)}-01-01`;
@@ -51,8 +59,12 @@ export async function detectRecurrentIssues(client: MovideskReader, args: Recurr
     const message = error instanceof Error ? error.message : String(error); const status = /HTTP\s+(\d{3})/i.exec(message)?.[1];
     return { groups: [], total: 0, returned: 0, top: args.top, skip: args.skip, error: { code: "upstream_search_failed", ...(status ? { status: Number(status) } : {}), message: message.slice(0, 300) } };
   }
-  const tickets: Ticket[] = [];
-  for (const summary of summaries) { const id = value(summary, "id", "ticket_id", "protocol"); if (id === undefined) continue; const detail = objectOf(asArray(await client.getTicket(String(id), accessToken))[0] ?? summary); tickets.push(detail); }
+  const details = await mapWithConcurrency(summaries, 8, async (summary) => {
+    const id = value(summary, "id", "ticket_id", "protocol");
+    if (id === undefined) return null;
+    try { return objectOf(asArray(await client.getTicket(String(id), accessToken))[0] ?? summary); } catch { return objectOf(summary); }
+  });
+  const tickets: Ticket[] = details.filter((ticket): ticket is Ticket => Boolean(ticket));
   const clusters: { tickets: Ticket[]; terms: Set<string> }[] = [];
   for (const ticket of tickets) {
     const ticketTerms = new Set(problemTerms(ticket)); if (!ticketTerms.size) continue;

@@ -19,10 +19,40 @@ test("characterization: stable Movidesk tools remain registered", () => {
     "movidesk_list_open_tickets",
     "movidesk_search_ticket_content",
     "movidesk_find_similar_tickets",
+    "movidesk_detect_recurrent_issues",
     "movidesk_search_people",
     "movidesk_list_services",
   ]) assert.equal(tools.has(name), true, name);
   assert.equal(tools.has("movidesk_get_ticket_timeline"), true);
+});
+
+test("detect_recurrent_issues groups problem terms with trend, status and client counts", async () => {
+  const data = new Map<string, unknown>([
+    ["1", { id: 1, protocol: "p1", subject: "Sensor offline", description: "Sensor da gaveta offline", status: "Resolvido", clientId: "A", createdDate: "2026-08-01" }],
+    ["2", { id: 2, protocol: "p2", subject: "Sensor offline", description: "Sensor da gaveta offline", status: "Fechado", clientId: "B", createdDate: "2026-08-02" }],
+    ["3", { id: 3, protocol: "p3", subject: "Sensor offline", description: "Sensor da gaveta offline", status: "Aguardando", clientId: "A", createdDate: "2026-09-01" }],
+    ["4", { id: 4, protocol: "p4", subject: "Relatório vencido", description: "Relatório obrigatório vencido", status: "Resolvido", clientId: "C", createdDate: "2026-09-02" }],
+  ]);
+  const tools = setup({ searchTickets: async (params) => { assert.equal(params.top, 100); return [...data.values()].map(({ id, subject, createdDate, status, clientId }) => ({ id, subject, createdDate, status, clientId })); }, getTicket: async (id) => data.get(id) });
+  const result = await tools.get("movidesk_detect_recurrent_issues")!.handler({ from_date: "2026-01-01", to_date: "2026-09-16", min_occurrences: 3, top: 10, skip: 0 }) as { structuredContent: { groups: Array<{ issue: string; occurrences: number; uniqueClients: number; trendByMonth: Record<string, number>; statusCounts: Record<string, number>; confidence: string }> } };
+  const group = result.structuredContent.groups[0];
+  assert.match(group.issue, /sensor|offline/);
+  assert.equal(group.occurrences, 3);
+  assert.equal(group.uniqueClients, 2);
+  assert.deepEqual(group.trendByMonth, { "2026-08": 2, "2026-09": 1 });
+  assert.equal(group.statusCounts.Resolvido, 1);
+});
+
+test("detect_recurrent_issues preserves HTTP error codes as meaningful problem terms", async () => {
+  const data = new Map<string, unknown>([
+    ["1", { id: 1, subject: "Erro 500 no relatório", description: "Falha ao gerar relatório", createdDate: "2026-09-01" }],
+    ["2", { id: 2, subject: "Erro 500 no sistema", description: "Erro ao abrir relatório", createdDate: "2026-09-02" }],
+    ["3", { id: 3, subject: "Erro 500 recorrente", description: "Falha no relatório", createdDate: "2026-09-03" }],
+  ]);
+  const tools = setup({ searchTickets: async () => [...data.values()].map(({ id, subject, createdDate }) => ({ id, subject, createdDate })), getTicket: async (id) => data.get(id) });
+  const result = await tools.get("movidesk_detect_recurrent_issues")!.handler({ min_occurrences: 3, top: 10, skip: 0 }) as { structuredContent: { groups: Array<{ issue: string; occurrences: number }> } };
+  assert.equal(result.structuredContent.groups[0].occurrences, 3);
+  assert.match(result.structuredContent.groups[0].issue, /erro 500/);
 });
 
 test("find_similar_tickets compares full content and exposes explainable signals", async () => {

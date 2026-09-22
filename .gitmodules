@@ -37,3 +37,6 @@
 [submodule "plugins/plugin-beta-mov"]
 	path = plugins/plugin-beta-mov
 	url = https://github.com/gmtth/plugin-beta-mov.git
+[submodule "skills/skill-beta-clk-checklist"]
+	path = skills/skill-beta-clk-checklist
+	url = https://github.com/gmtth/skill-beta-clk-checklist.git

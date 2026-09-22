@@ -24,6 +24,28 @@ Usar, conforme disponíveis:
 
 Ler [references/fontes-e-fidelidade.md](references/fontes-e-fidelidade.md) antes de interpretar conflito, lacuna, HTML/CSS ou HAR.
 
+## Precedência e contexto próprio
+
+Aplicar esta ordem quando houver conflito entre fontes:
+
+1. decisão explícita mais recente do usuário;
+2. `DOSSIE_CONTEXTO_MODELAGEM.md` vigente;
+3. regras funcionais confirmadas;
+4. HTML/CSS e demais referências visuais;
+5. HAR, somente como evidência auxiliar;
+6. dados fictícios usados para demonstração.
+
+Manter, no projeto do clone, um arquivo próprio chamado `BETA_SITES_CONTEXTO.md`. Esse arquivo é memória de implementação e deve ser lido antes de alterar o clone e atualizado após cada mudança material. Registrar nele, de forma curta e rastreável:
+
+- telas, rotas e componentes já implementados;
+- comportamentos preservados e regressões evitadas;
+- decisões de implementação visível e sua fonte;
+- referências visuais utilizadas;
+- lacunas, divergências e validações pendentes;
+- data ou prompt de origem quando isso ajudar a identificar a decisão.
+
+O contexto próprio não substitui o Dossiê, não cria regra de negócio e não vence uma nova decisão explícita do usuário. Ele também não congela o produto: uma nova tela ou fluxo deve ser criado quando solicitado, aproveitando o que já existe e preservando somente os comportamentos anteriores que não foram substituídos.
+
 ## Fluxo obrigatório
 
 Executar na ordem abaixo.
@@ -99,6 +121,8 @@ Agrupar dúvidas relacionadas e indicar objetivamente o impacto de cada uma.
 
 Não interromper por preferência técnica que possa ser resolvida localmente sem alterar o comportamento visível.
 
+Quando uma lacuna identificada puder alterar a implementação solicitada, pedir ativamente ao usuário a decisão necessária. Não apenas listar a lacuna no final. Agrupar perguntas relacionadas, explicar o impacto de cada uma e, quando possível, apresentar alternativas objetivas. Continuar as partes seguras e independentes enquanto aguarda a decisão.
+
 ### 6. Implementar o clone isolado
 
 - Produzir uma aplicação web executável e navegável.
@@ -110,6 +134,8 @@ Não interromper por preferência técnica que possa ser resolvida localmente se
 - Preservar a stack e os arquivos fornecidos quando houver uma base existente.
 - Quando não houver base técnica, escolher a solução local mais simples que permita executar o clone no ambiente disponível, sem criar dependências externas desnecessárias.
 - Não adicionar telas, ações ou recursos “úteis” que não tenham fonte.
+- Para uma nova tela ou fluxo solicitado, estender a aplicação existente mesmo que a tela ainda não esteja descrita no `BETA_SITES_CONTEXTO.md`; usar o contexto para preservar o que já funciona, não para impedir evolução.
+- Não apagar ou substituir uma tela existente somente porque ela não participa da nova solicitação.
 
 ### 7. Validar antes de concluir
 
@@ -126,6 +152,12 @@ Validar, no mínimo:
 - ausência de segredos provenientes de HAR;
 - ausência de conteúdo `CONTEXTO — NÃO PUBLICAR` transformado em funcionalidade;
 - fidelidade visual contra HTML/CSS fornecidos.
+- aplicação iniciada com sucesso;
+- rotas principais acessíveis diretamente e após refresh;
+- console sem erros relevantes;
+- ausência de chamadas externas, integração real ou segredos;
+- rastreabilidade mínima `fonte → tela/ação → regra → resultado esperado → evidência`;
+- atualização do `BETA_SITES_CONTEXTO.md` com o que foi implementado, preservado e ainda pendente.
 
 Não declarar o clone “exatamente igual” quando existirem partes sem evidência visual ou funcional suficiente. Informar somente as lacunas que realmente afetarem a validação.
 
@@ -156,3 +188,11 @@ Não gerar automaticamente:
 - credenciais ou configuração de ambiente real.
 
 Quando houver bloqueio por falta de regra ou referência necessária, entregar o que estiver seguro e listar apenas as decisões que impedem concluir a parte restante.
+
+Informar também:
+
+- arquivos ou telas alterados;
+- comando usado para executar o clone;
+- fluxos e estados validados;
+- limitações conhecidas;
+- integrações deliberadamente não realizadas.

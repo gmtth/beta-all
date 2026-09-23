@@ -1,0 +1,54 @@
+name: Release with submodules
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Atualizar submodules para os commits mais recentes
+        shell: bash
+        run: |
+          git submodule foreach --recursive '
+            git fetch --prune origin
+            branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD || true)
+
+            if [ -z "$branch" ]; then
+              name=$(git remote show origin | sed -n "/HEAD branch/s/.*: //p")
+              branch="origin/$name"
+            fi
+
+            git checkout --detach "$branch"
+          '
+
+      - name: Registrar commits incorporados
+        run: git submodule status --recursive > SUBMODULES.txt
+
+      - name: Empacotar projeto com submodules
+        shell: bash
+        run: |
+          mkdir -p dist/suite-beta
+          cp -a . dist/suite-beta/
+          find dist/suite-beta -type d -name .git -prune -exec rm -rf {} +
+          cp SUBMODULES.txt dist/suite-beta/
+          tar -czf "dist/suite-beta-${{ github.event.release.tag_name }}-with-submodules.tar.gz" -C dist suite-beta
+
+      - name: Publicar artefato na release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: |
+            dist/suite-beta-${{ github.event.release.tag_name }}-with-submodules.tar.gz

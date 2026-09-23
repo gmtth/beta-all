@@ -3,7 +3,13 @@ name: Release with submodules
 on:
   release:
     types: [published]
+
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag da release a empacotar"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -16,37 +22,56 @@ jobs:
       - name: Checkout com submodules
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name || github.ref_name }}
+          ref: ${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
           fetch-depth: 0
           submodules: recursive
 
-      - name: Atualizar submodules
+      - name: Sincronizar submodules
+        shell: bash
+        run: |
+          git submodule sync --recursive
+          git submodule update --init --recursive
+
+      - name: Atualizar submodules para os commits mais recentes
         shell: bash
         run: |
           git submodule foreach --recursive '
             git fetch --prune origin
+
             branch=$(git symbolic-ref --quiet --short refs/remotes/origin/HEAD || true)
 
             if [ -z "$branch" ]; then
-              branch="origin/$(git remote show origin | sed -n "/HEAD branch/s/.*: //p")"
+              default_branch=$(git remote show origin | sed -n "/HEAD branch/s/.*: //p")
+              branch="origin/$default_branch"
             fi
 
             git checkout --detach "$branch"
           '
 
-      - name: Criar pacote incorporado
+      - name: Registrar commits incorporados
         shell: bash
         run: |
-          VERSION="${{ github.event.release.tag_name || github.ref_name }}"
-          mkdir -p package/suite-beta dist
+          git submodule status --recursive > SUBMODULES.txt
+          cat SUBMODULES.txt
 
-          rsync -a --exclude='.git' ./ package/suite-beta/
-          git submodule status --recursive > package/suite-beta/SUBMODULES.txt
+      - name: Empacotar projeto com submodules
+        shell: bash
+        run: |
+          VERSION="${{ inputs.tag || github.event.release.tag_name || github.ref_name }}"
+          SAFE_VERSION="${VERSION//\//-}"
 
-          tar -czf "dist/suite-beta-${VERSION}-with-submodules.tar.gz" -C package suite-beta
+          mkdir -p dist
 
-      - name: Anexar pacote à release
+          tar \
+            --exclude-vcs \
+            --exclude='./dist' \
+            -czf "dist/suite-beta-${SAFE_VERSION}-with-submodules.tar.gz" \
+            .
+
+          test -s "dist/suite-beta-${SAFE_VERSION}-with-submodules.tar.gz"
+
+      - name: Publicar artefato na release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.release.tag_name || github.ref_name }}
+          tag_name: ${{ inputs.tag || github.event.release.tag_name || github.ref_name }}
           files: dist/*-with-submodules.tar.gz

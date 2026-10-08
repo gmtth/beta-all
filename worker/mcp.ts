@@ -9,10 +9,10 @@ const bearerToken = (authorization: string | null) => authorization?.match(/^Bea
 const json = (data: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
 
 class LocalMovideskClient implements MovideskReader {
-  private async get(resource: "tickets" | "persons" | "services", params: Record<string, string | number | boolean | undefined>, accessToken: string) {
+  private async get(resource: "tickets" | "persons" | "services", params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal) {
     const url = new URL(`https://movidesk-local.invalid/api/${resource}`);
     for (const [key, value] of Object.entries(params)) if (value !== undefined) url.searchParams.set(key, String(value));
-    const request = new Request(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" } });
+    const request = new Request(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" }, signal });
     const response = resource === "tickets" ? await getTickets(request) : resource === "persons" ? await getPersons(request) : await getServices(request);
     if (!response) throw new Error("Movidesk route returned no response");
     const text = await response.text();
@@ -20,8 +20,8 @@ class LocalMovideskClient implements MovideskReader {
     if (!response.ok) throw new Error(`Movidesk request failed with HTTP ${response.status}: ${text.slice(0, 500)}`);
     return data;
   }
-  getTicket(id: string, accessToken: string) { return this.get("tickets", { id }, accessToken); }
-  searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string) { return this.get("tickets", params, accessToken); }
+  getTicket(id: string, accessToken: string, signal?: AbortSignal) { return this.get("tickets", { id }, accessToken, signal); }
+  searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal) { return this.get("tickets", params, accessToken, signal); }
   searchPeople(params: Record<string, string | number | boolean | undefined>, accessToken: string) { return this.get("persons", params, accessToken); }
   listServices(params: Record<string, string | number | boolean | undefined>, accessToken: string) { return this.get("services", params, accessToken); }
 }

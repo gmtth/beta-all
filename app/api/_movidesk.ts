@@ -1,6 +1,39 @@
 import { env } from "cloudflare:workers";
 import { ensureSchema, getUserRole, hash, json } from "../oauth/_lib";
 
+const UPSTREAM_TIMEOUT_MS = 15_000;
+
+export class MovideskTimeoutError extends Error {
+  constructor() {
+    super("Movidesk request timed out.");
+    this.name = "MovideskTimeoutError";
+  }
+}
+
+export async function fetchMovideskText(input: RequestInfo | URL, init: RequestInit = {}, operationSignal?: AbortSignal) {
+  const controller = new AbortController();
+  let upstreamTimedOut = false;
+  const abortWithOperation = () => controller.abort(operationSignal?.reason);
+  if (operationSignal?.aborted) abortWithOperation();
+  else operationSignal?.addEventListener("abort", abortWithOperation, { once: true });
+  const timeout = setTimeout(() => {
+    upstreamTimedOut = true;
+    controller.abort(new DOMException("Movidesk request timed out.", "TimeoutError"));
+  }, UPSTREAM_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(input, { ...init, signal: controller.signal });
+    const text = await response.text();
+    return { response, text };
+  } catch (error) {
+    if (upstreamTimedOut || operationSignal?.aborted) throw new MovideskTimeoutError();
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+    operationSignal?.removeEventListener("abort", abortWithOperation);
+  }
+}
+
 export async function authorizeMovidesk(request: Request) {
   const access = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   if (!access) return { response: json({ error: "unauthorized" }, { status: 401 }) } as const;
@@ -44,12 +77,12 @@ export async function fetchMovidesk(resource: string, request: Request, token: s
   target.searchParams.set("$skip", String(skip));
   target.searchParams.set("token", token);
   try {
-    const upstream = await fetch(target, { headers: { Accept: "application/json" } });
-    const text = await upstream.text();
+    const { response: upstream, text } = await fetchMovideskText(target, { headers: { Accept: "application/json" } }, request.signal);
     let data: unknown;
     try { data = text ? JSON.parse(text) : null; } catch { data = { error: "Movidesk returned a non-JSON response." }; }
     return json(data, { status: upstream.status });
-  } catch {
+  } catch (error) {
+    if (error instanceof MovideskTimeoutError) return json({ error: "Movidesk indisponível." }, { status: 504 });
     return json({ error: "Movidesk indisponível." }, { status: 502 });
   }
 }

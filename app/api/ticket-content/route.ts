@@ -1,5 +1,7 @@
-import { authorizeMovidesk } from "../_movidesk";
+import { authorizeMovidesk, fetchMovideskText, MovideskTimeoutError } from "../_movidesk";
 import { json } from "../../oauth/_lib";
+
+const CONTENT_SEARCH_TIMEOUT_MS = 60_000;
 
 const escapeOData = (value: string) => value.replace(/'/g, "''");
 const stripHtml = (value: string) => value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/gi, " ").replace(/&amp;/gi, "&").replace(/\s+/g, " ").trim();
@@ -57,9 +59,10 @@ export async function GET(request: Request) {
   target.searchParams.set("$top", String(top));
   target.searchParams.set("$skip", String(skip));
   target.searchParams.set("token", auth.token);
+  const operationController = new AbortController();
+  const operationTimeout = setTimeout(() => operationController.abort(new DOMException("Content search timed out.", "TimeoutError")), CONTENT_SEARCH_TIMEOUT_MS);
   try {
-    const upstream = await fetch(target, { headers: { Accept: "application/json" } });
-    const body = await upstream.text();
+    const { response: upstream, text: body } = await fetchMovideskText(target, { headers: { Accept: "application/json" } }, operationController.signal);
     let data: unknown;
     try { data = body ? JSON.parse(body) : null; } catch { data = { error: "Movidesk returned a non-JSON response." }; }
     if (!upstream.ok) return json(data, { status: upstream.status });
@@ -76,9 +79,8 @@ export async function GET(request: Request) {
       detailUrl.searchParams.set("$select", "id,protocol,subject,status,category,urgency,baseStatus,createdDate,lastUpdate,ownerTeam");
       detailUrl.searchParams.set("$expand", "actions($select=id,description,createdDate,type,origin)");
       detailUrl.searchParams.set("token", auth.token);
-      const detailResponse = await fetch(detailUrl, { headers: { Accept: "application/json" } });
+      const { response: detailResponse, text: detailBody } = await fetchMovideskText(detailUrl, { headers: { Accept: "application/json" } }, operationController.signal);
       if (!detailResponse.ok) continue;
-      const detailBody = await detailResponse.text();
       let detailData: unknown;
       try { detailData = detailBody ? JSON.parse(detailBody) : null; } catch { continue; }
       const detail = Array.isArray(detailData) ? detailData[0] : detailData;
@@ -87,6 +89,12 @@ export async function GET(request: Request) {
       const item = detail && typeof detail === "object" ? detail as Record<string, unknown> : candidate;
       results.push({ id: item.id ?? candidate.id, protocol: item.protocol ?? candidate.protocol, subject: item.subject ?? item.assunto ?? candidate.subject, status: item.status ?? candidate.status, category: item.category ?? candidate.category, urgency: item.urgency ?? candidate.urgency, ownerTeam: item.ownerTeam ?? candidate.ownerTeam, createdDate: item.createdDate ?? candidate.createdDate, lastUpdate: item.lastUpdate ?? candidate.lastUpdate, matchedIn: [...new Set(matches.map((match) => match.matchedIn))], matchedActionIds: matches.map((match) => match.actionId).filter((id) => id !== undefined), matchedText: matches.map((match) => match.matchedText).join(" … ").slice(0, 1000) });
     }
+    if (operationController.signal.aborted) throw new MovideskTimeoutError();
     return json({ keyword: keywordInput, results, total: results.length });
-  } catch { return json({ error: "Movidesk indisponível." }, { status: 502 }); }
+  } catch (error) {
+    if (error instanceof MovideskTimeoutError) return json({ error: "A busca de conteúdo excedeu o limite de tempo." }, { status: 504 });
+    return json({ error: "Movidesk indisponível." }, { status: 502 });
+  } finally {
+    clearTimeout(operationTimeout);
+  }
 }

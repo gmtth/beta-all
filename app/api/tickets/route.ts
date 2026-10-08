@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { ensureSchema, getUserRole, hash, json } from "../../oauth/_lib";
+import { fetchMovideskText, MovideskTimeoutError } from "../_movidesk";
 
 export async function GET(request: Request) {
   const access = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
@@ -57,19 +58,15 @@ export async function GET(request: Request) {
   for (const key of ["expand", "orderby"]) { const value = incoming.searchParams.get(key); if (value) target.searchParams.set(`$${key}`, value); }
   if (!individual) { target.searchParams.set("$top", String(top)); target.searchParams.set("$skip", String(skip)); }
   target.searchParams.set("token", token);
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
   try {
-    const upstream = await fetch(target, { headers: { Accept: "application/json" }, signal: controller.signal });
-    const text = await upstream.text();
+    const { response: upstream, text } = await fetchMovideskText(target, { headers: { Accept: "application/json" } }, request.signal);
     let data: unknown;
     try { data = text ? JSON.parse(text) : null; } catch { data = { error: "Movidesk returned a non-JSON response." }; }
     if (upstream.status === 404 || (individual && upstream.ok && Array.isArray(data) && data.length === 0) || (individual && upstream.ok && data === null)) return json({ error: "ticket_not_found" }, { status: 404 });
     return json(data, { status: upstream.status });
-  } catch {
+  } catch (error) {
+    if (error instanceof MovideskTimeoutError) return json({ error: "Movidesk indisponível." }, { status: 504 });
     return json({ error: "Movidesk indisponível." }, { status: 502 });
-  } finally {
-    clearTimeout(timeout);
   }
 }
 

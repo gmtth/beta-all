@@ -6,8 +6,8 @@ import { findSimilarTickets } from "./movidesk-similarity";
 import { detectRecurrentIssues } from "./movidesk-recurrence";
 
 export interface MovideskReader {
-  getTicket(id: string, accessToken: string): Promise<unknown>;
-  searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string): Promise<unknown>;
+  getTicket(id: string, accessToken: string, signal?: AbortSignal): Promise<unknown>;
+  searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal): Promise<unknown>;
   searchPeople(params: Record<string, string | number | boolean | undefined>, accessToken: string): Promise<unknown>;
   listServices(params: Record<string, string | number | boolean | undefined>, accessToken: string): Promise<unknown>;
 }
@@ -87,24 +87,32 @@ const findMatches = (value: unknown, keyword: string, caseSensitive: boolean, pa
 };
 const contentSearch = async (client: MovideskReader, args: z.infer<typeof contentSearchSchema>, accessToken: string) => {
   if (!(args.id || args.protocol || args.filter || args.from_date || args.to_date || args.created_date || args.last_update || args.responsible_id || args.responsible_email || args.owner_team || args.status || args.base_status || args.urgency || args.category || args.service || args.client_id)) throw new Error("Informe ao menos um critério de escopo além de keyword.");
-  const candidates = asArray(await client.searchTickets({ ...apiParams(args), keyword: undefined, top: args.top, skip: args.skip, expand: undefined }, accessToken));
-  const keyword = normalizeText(args.keyword, args.case_sensitive);
-  const results: Record<string, unknown>[] = [];
-  const seen = new Set<string>();
-  for (const candidate of candidates) {
-    const summary = candidate && typeof candidate === "object" ? candidate as Record<string, unknown> : {};
-    const id = summary.id ?? summary.protocol;
-    if (id === undefined || id === null) continue;
-    const key = String(id);
-    if (seen.has(key)) continue;
-    seen.add(key);
-    const ticket = first(await client.getTicket(key, accessToken));
-    const matches = findMatches(ticket, keyword, args.case_sensitive);
-    if (!matches.length) continue;
-    const detail = ticket && typeof ticket === "object" ? ticket as Record<string, unknown> : {};
-    results.push({ id: detail.id ?? summary.id, protocol: detail.protocol ?? summary.protocol, subject: detail.subject ?? detail.assunto ?? summary.subject, status: detail.status ?? summary.status, matchedIn: [...new Set(matches.map((match) => match.matchedIn))], matchedText: matches.map((match) => match.matchedText).join(" … ").slice(0, 1000) });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(new DOMException("Content search timed out.", "TimeoutError")), 60_000);
+  try {
+    const candidates = asArray(await client.searchTickets({ ...apiParams(args), keyword: undefined, top: args.top, skip: args.skip, expand: undefined }, accessToken, controller.signal));
+    const keyword = normalizeText(args.keyword, args.case_sensitive);
+    const results: Record<string, unknown>[] = [];
+    const seen = new Set<string>();
+    for (const candidate of candidates) {
+      if (controller.signal.aborted) throw new Error("A busca de conteúdo excedeu o limite de 60 segundos.");
+      const summary = candidate && typeof candidate === "object" ? candidate as Record<string, unknown> : {};
+      const id = summary.id ?? summary.protocol;
+      if (id === undefined || id === null) continue;
+      const key = String(id);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const ticket = first(await client.getTicket(key, accessToken, controller.signal));
+      const matches = findMatches(ticket, keyword, args.case_sensitive);
+      if (!matches.length) continue;
+      const detail = ticket && typeof ticket === "object" ? ticket as Record<string, unknown> : {};
+      results.push({ id: detail.id ?? summary.id, protocol: detail.protocol ?? summary.protocol, subject: detail.subject ?? detail.assunto ?? summary.subject, status: detail.status ?? summary.status, matchedIn: [...new Set(matches.map((match) => match.matchedIn))], matchedText: matches.map((match) => match.matchedText).join(" … ").slice(0, 1000) });
+    }
+    if (controller.signal.aborted) throw new Error("A busca de conteúdo excedeu o limite de 60 segundos.");
+    return { keyword: args.keyword, results, total: results.length };
+  } finally {
+    clearTimeout(timeout);
   }
-  return { keyword: args.keyword, results, total: results.length };
 };
 const loadAnalysisTicket = async (session: MovideskAnalysisSession, args: z.infer<typeof timelineSchema>) => {
   if (Boolean(args.ticket_id) === Boolean(args.protocol)) throw new Error("Informe exatamente um entre ticket_id e protocol.");

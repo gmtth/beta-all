@@ -19,7 +19,8 @@ export async function GET(request: Request) {
   const scope = url.searchParams.get("scope") ?? "";
   const challenge = url.searchParams.get("code_challenge") ?? "";
   const method = url.searchParams.get("code_challenge_method") ?? "";
-  const permissionLabel = scope.split(" ").includes("knowledge:read") ? "Leitura de tickets e base de conhecimento" : "Leitura de tickets";
+  const requestedScopes = scope.split(" ").filter(Boolean);
+  const permissionLabel = requestedScopes.includes("knowledge:read") && requestedScopes.includes("movidesk:read") ? "Leitura de tickets e base de conhecimento" : requestedScopes.includes("knowledge:read") ? "Consulta à base de conhecimento" : "Leitura de tickets";
   const resource = url.searchParams.get("resource") || canonicalResource(url.origin);
   const client = validate(requestedClient, url.searchParams.get("response_type") ?? "", redirectUri, scope, challenge, method, resource, url.origin);
   if (!client) return bad("Invalid OAuth parameters.");

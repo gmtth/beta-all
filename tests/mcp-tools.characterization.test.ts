@@ -11,6 +11,84 @@ function setup(client: Partial<MovideskReader>) {
   return tools;
 }
 
+async function recurrenceResult(client: Partial<MovideskReader>, args: Record<string, unknown>) {
+  const tools = setup(client);
+  return (await tools.get("movidesk_detect_recurrent_issues")!.handler({ min_occurrences: 2, top: 10, skip: 0, ...args })) as { structuredContent: { groups: Array<Record<string, any>>; total: number; returned: number; top: number; skip: number; meta?: Record<string, any> } };
+}
+
+test("detect_recurrent_issues derives rising, falling, stable and insufficient trends from delta", async () => {
+  const rows = [
+    { id: "r1", subject: "Sensoralpha offline", description: "Sensoralpha offline", createdDate: "2026-01-01" },
+    { id: "r2", subject: "Sensoralpha offline", description: "Sensoralpha offline", createdDate: "2026-02-01" },
+    { id: "r3", subject: "Sensoralpha offline", description: "Sensoralpha offline", createdDate: "2026-02-02" },
+    { id: "f1", subject: "Accessbeta denied", description: "Accessbeta denied", createdDate: "2026-01-01" },
+    { id: "f2", subject: "Accessbeta denied", description: "Accessbeta denied", createdDate: "2026-01-02" },
+    { id: "f3", subject: "Accessbeta denied", description: "Accessbeta denied", createdDate: "2026-02-01" },
+    { id: "s1", subject: "Printergamma jammed", description: "Printergamma jammed", createdDate: "2026-01-01" },
+    { id: "s2", subject: "Printergamma jammed", description: "Printergamma jammed", createdDate: "2026-02-01" },
+    { id: "i1", subject: "Queueomega delayed", description: "Queueomega delayed", createdDate: "2026-01-03" },
+    { id: "i2", subject: "Queueomega delayed", description: "Queueomega delayed", createdDate: "2026-01-04" },
+  ];
+  const result = await recurrenceResult({ searchTickets: async () => rows.map(({ id, subject, createdDate }) => ({ id, subject, createdDate })), getTicket: async (id) => rows.find((row) => row.id === id) }, {});
+  const byKey = Object.fromEntries(result.structuredContent.groups.map((group) => [String(group.key), group]));
+  const rising = Object.values(byKey).find((group) => String(group.key).includes("sensoralpha"))!;
+  const falling = Object.values(byKey).find((group) => String(group.key).includes("accessbeta"))!;
+  const stable = Object.values(byKey).find((group) => String(group.key).includes("printergamma"))!;
+  const insufficient = Object.values(byKey).find((group) => String(group.key).includes("queueomega"))!;
+  for (const group of [rising, falling, stable]) {
+    const trend = group.trend;
+    assert.equal(trend.direction, trend.deltaPercentage > 0 ? "rising" : trend.deltaPercentage < 0 ? "falling" : "stable");
+    assert.equal(group.trendDirection, trend.direction);
+    assert.equal(trend.lastCount > trend.firstCount, trend.direction === "rising");
+    assert.equal(trend.lastCount < trend.firstCount, trend.direction === "falling");
+  }
+  assert.equal(rising.trend.deltaPercentage, 100);
+  assert.equal(rising.trend.direction, "rising");
+  assert.equal(falling.trend.deltaPercentage, -50);
+  assert.equal(falling.trend.direction, "falling");
+  assert.equal(stable.trend.deltaPercentage, 0);
+  assert.equal(stable.trend.direction, "stable");
+  assert.equal(insufficient.trend.deltaPercentage, null);
+  assert.equal(insufficient.trend.direction, "insufficient_data");
+});
+
+test("detect_recurrent_issues preserves filtering, pagination, truncation and partial enrichment metadata", async () => {
+  const rows = Array.from({ length: 100 }, (_, index) => ({ id: String(index + 1), subject: "Falha paginada", description: "Falha paginada", createdDate: `2026-${String((index % 3) + 1).padStart(2, "0")}-01` }));
+  let received: Record<string, unknown> | undefined;
+  const result = await recurrenceResult({
+    searchTickets: async (params) => { received = params; return rows.map(({ id, subject, createdDate }) => ({ id, subject, createdDate })); },
+    getTicket: async (id) => id === "2" ? Promise.reject(new Error("HTTP 502")) : rows.find((row) => row.id === id),
+  }, { from_date: "2026-01-01", to_date: "2026-03-31", date_field: "createdDate", min_occurrences: 2, top: 2, skip: 1 });
+  assert.equal(received?.from_date, "2026-01-01");
+  assert.equal(received?.to_date, "2026-03-31");
+  assert.equal(received?.date_field, "createdDate");
+  assert.equal(received?.top, 100);
+  assert.equal(result.structuredContent.top, 2);
+  assert.equal(result.structuredContent.skip, 1);
+  assert.equal(result.structuredContent.returned, result.structuredContent.groups.length);
+  assert.equal(result.structuredContent.meta?.candidateCount, 100);
+  assert.equal(result.structuredContent.meta?.enrichmentFailures, 1);
+  assert.equal(result.structuredContent.meta?.enrichedCount, 99);
+  assert.equal(result.structuredContent.meta?.maxCandidates, 100);
+  assert.equal(result.structuredContent.meta?.truncated, true);
+  assert.match(String(result.structuredContent.meta?.truncationNote), /limitada aos 100 candidatos/);
+});
+
+test("detect_recurrent_issues applies min_occurrences before pagination and handles empty results", async () => {
+  const rows = [
+    { id: "1", subject: "Falha recorrente", description: "Falha recorrente", createdDate: "2026-01-01" },
+    { id: "2", subject: "Falha recorrente", description: "Falha recorrente", createdDate: "2026-02-01" },
+    { id: "3", subject: "Caso isolado", description: "Caso isolado", createdDate: "2026-03-01" },
+  ];
+  const result = await recurrenceResult({ searchTickets: async () => rows, getTicket: async (id) => rows.find((row) => row.id === id) }, { min_occurrences: 2, top: 1, skip: 1 });
+  assert.equal(result.structuredContent.total, 1);
+  assert.equal(result.structuredContent.returned, 0);
+  const empty = await recurrenceResult({ searchTickets: async () => [], getTicket: async () => undefined }, { min_occurrences: 2 });
+  assert.deepEqual(empty.structuredContent.groups, []);
+  assert.equal(empty.structuredContent.total, 0);
+  assert.equal(empty.structuredContent.returned, 0);
+});
+
 test("characterization: stable Movidesk tools remain registered", () => {
   const tools = setup({});
   for (const name of [

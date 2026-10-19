@@ -15,6 +15,7 @@ const terms = (value: string) => {
   return [...new Set([...words, ...errorCodes])];
 };
 const asArray = (value: unknown): unknown[] => Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results : [];
+const firstRecord = (value: unknown): unknown => Array.isArray(value) ? value[0] : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results) ? (value as { results: unknown[] }).results[0] : value;
 const objectOf = (value: unknown) => value && typeof value === "object" ? value as Ticket : {};
 const textField = (ticket: Ticket, ...keys: string[]) => keys.map((key) => typeof ticket[key] === "string" ? clean(ticket[key] as string) : "").find(Boolean) ?? "";
 const classifyAction = (value: string) => {
@@ -60,6 +61,24 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, worker: (item
   return output;
 }
 
+function deriveTrend(months: Array<[string, number]>) {
+  const first = months[0];
+  const last = months.at(-1);
+  if (!first || !last || months.length < 2) {
+    return { direction: "insufficient_data", firstMonth: first?.[0] ?? null, lastMonth: last?.[0] ?? null, firstCount: first?.[1] ?? 0, lastCount: last?.[1] ?? 0, deltaPercentage: null as number | null };
+  }
+  const firstCount = first[1];
+  const lastCount = last[1];
+  // A zero baseline has no conventional percentage denominator. Treat the
+  // appearance/disappearance of a recurrence as a bounded +/-100% change so
+  // the published delta and direction remain mutually consistent.
+  const deltaPercentage = firstCount === 0
+    ? lastCount === 0 ? 0 : 100
+    : Math.round(((lastCount - firstCount) / firstCount) * 100);
+  const direction = deltaPercentage > 0 ? "rising" : deltaPercentage < 0 ? "falling" : "stable";
+  return { direction, firstMonth: first[0], lastMonth: last[0], firstCount, lastCount, deltaPercentage };
+}
+
 export async function detectRecurrentIssues(client: MovideskReader, args: RecurrenceArgs, accessToken: string) {
   const today = new Date().toISOString().slice(0, 10);
   const fromDate = args.from_date ?? `${today.slice(0, 4)}-01-01`;
@@ -73,8 +92,12 @@ export async function detectRecurrentIssues(client: MovideskReader, args: Recurr
   let enrichmentFailures = 0;
   const details = await mapWithConcurrency(summaries, 8, async (summary) => {
     const id = value(summary, "id", "ticket_id", "protocol");
-    if (id === undefined) return null;
-    try { return objectOf(asArray(await client.getTicket(String(id), accessToken))[0] ?? summary); } catch { enrichmentFailures += 1; return objectOf(summary); }
+    if (id === undefined) { enrichmentFailures += 1; return null; }
+    try {
+      const enriched = firstRecord(await client.getTicket(String(id), accessToken));
+      if (!enriched) { enrichmentFailures += 1; return null; }
+      return objectOf(enriched);
+    } catch { enrichmentFailures += 1; return null; }
   });
   const tickets: Ticket[] = details.filter((ticket): ticket is Ticket => Boolean(ticket));
   const clusters: { tickets: Ticket[]; terms: Set<string> }[] = [];
@@ -100,11 +123,7 @@ export async function detectRecurrentIssues(client: MovideskReader, args: Recurr
     const cohesion = recurringTerms.length ? recurringTerms.reduce((sum, term) => sum + (counts.get(term) ?? 0), 0) / (cluster.tickets.length * recurringTerms.length) : 0;
     const confidence = cluster.tickets.length >= 5 && cohesion >= 0.55 ? "high" : cluster.tickets.length >= 3 && cohesion >= 0.35 ? "medium" : "low";
     const trendEntries = [...months.entries()].sort();
-    const firstHalf = trendEntries.slice(0, Math.max(1, Math.floor(trendEntries.length / 2))).reduce((sum, [, count]) => sum + count, 0);
-    const secondHalf = trendEntries.slice(Math.max(1, Math.floor(trendEntries.length / 2))).reduce((sum, [, count]) => sum + count, 0);
-    const trendDirection = trendEntries.length < 2 ? "insufficient_data" : secondHalf > firstHalf ? "rising" : secondHalf < firstHalf ? "falling" : "stable";
-    const firstCount = trendEntries[0]?.[1] ?? 0; const lastCount = trendEntries[trendEntries.length - 1]?.[1] ?? 0;
-    const deltaPercentage = firstCount ? Math.round(((lastCount - firstCount) / firstCount) * 100) : null;
+    const trend = deriveTrend(trendEntries);
     const signalDetails = recurringTerms.map((term) => {
       const fieldCounts = new Map<string, number>(); const examples = new Set<string>();
       cluster.tickets.forEach((ticket) => {
@@ -119,8 +138,9 @@ export async function detectRecurrentIssues(client: MovideskReader, args: Recurr
     const fieldBackedSignals = signalDetails.filter((signal) => Object.keys(signal.fields).some((field) => field === "subject" || field === "initialDescription")).length;
     const evidenceCoverage = recurringTerms.length ? Math.round((fieldBackedSignals / recurringTerms.length) * 100) / 100 : 0;
     const adjustedConfidence = confidence === "high" && (sameClientDominant || evidenceCoverage < 0.5) ? "medium" : confidence;
-    return { issue: recurringTerms.join(", "), occurrences: cluster.tickets.length, uniqueClients: clients.size, clientRepeatRatio: clients.size ? Math.round((cluster.tickets.length / clients.size) * 100) / 100 : null, clientDistribution: Object.fromEntries([...clientCounts.entries()].sort((a, b) => b[1] - a[1])), sameClientDominant, trendByMonth: Object.fromEntries(trendEntries), trendDirection, trend: { direction: trendDirection, firstMonth: trendEntries[0]?.[0] ?? null, lastMonth: trendEntries.at(-1)?.[0] ?? null, firstCount, lastCount, deltaPercentage }, statusCounts: Object.fromEntries(statuses), urgencyCounts: Object.fromEntries(urgencies), categoryCounts: Object.fromEntries(categories), serviceCounts: Object.fromEntries(services), ownerTeamCounts: Object.fromEntries(teams), evidenceCoverage, signalDetails, examples: cluster.tickets.slice(0, 3).map((ticket) => ({ id: value(ticket, "id", "ticket_id"), protocol: value(ticket, "protocol"), subject: value(ticket, "subject", "assunto"), category: value(ticket, "category", "categoria"), service: value(ticket, "service", "servico", "serviço") })), confidence: adjustedConfidence };
+    return { key: recurringTerms.join(", "), issue: recurringTerms.join(", "), occurrences: cluster.tickets.length, uniqueClients: clients.size, clientRepeatRatio: clients.size ? Math.round((cluster.tickets.length / clients.size) * 100) / 100 : null, clientDistribution: Object.fromEntries([...clientCounts.entries()].sort((a, b) => b[1] - a[1])), sameClientDominant, trendByMonth: Object.fromEntries(trendEntries), trendDirection: trend.direction, trend, statusCounts: Object.fromEntries(statuses), urgencyCounts: Object.fromEntries(urgencies), categoryCounts: Object.fromEntries(categories), serviceCounts: Object.fromEntries(services), ownerTeamCounts: Object.fromEntries(teams), evidenceCoverage, signalDetails, examples: cluster.tickets.slice(0, 3).map((ticket) => ({ id: value(ticket, "id", "ticket_id"), protocol: value(ticket, "protocol"), subject: value(ticket, "subject", "assunto"), category: value(ticket, "category", "categoria"), service: value(ticket, "service", "servico", "serviço") })), confidence: adjustedConfidence };
   }).sort((a, b) => b.occurrences - a.occurrences || a.issue.localeCompare(b.issue));
   const limited = groups.slice(args.skip, args.skip + args.top);
-  return { groups: limited, total: groups.length, returned: limited.length, top: args.top, skip: args.skip, meta: { fromDate, toDate, dateField: args.date_field ?? "createdDate", candidateCount: summaries.length, enrichedCount: tickets.length, enrichmentFailures, maxCandidates: 100, truncated: summaries.length >= 100 } };
+  const truncated = summaries.length >= 100;
+  return { groups: limited, total: groups.length, returned: limited.length, top: args.top, skip: args.skip, meta: { fromDate, toDate, dateField: args.date_field ?? "createdDate", candidateCount: summaries.length, enrichedCount: tickets.length, enrichmentFailures, maxCandidates: 100, truncated, ...(truncated ? { truncationNote: "Análise limitada aos 100 candidatos disponíveis; não representa necessariamente todos os tickets do período." } : {}) } };
 }

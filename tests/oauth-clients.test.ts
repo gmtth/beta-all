@@ -31,6 +31,11 @@ test("MCP accepts separate Movidesk and knowledge read scopes, while GPT Action 
   assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, combined, "", "", env), false);
 });
 
+test("MCP rejects unsupported or duplicate scopes", () => {
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, "knowledge:write", "challenge", "S256", env), false);
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, `${KNOWLEDGE_READ_SCOPE} ${KNOWLEDGE_READ_SCOPE}`, "challenge", "S256", env), false);
+});
+
 test("unknown clients, scopes, and redirects are rejected", () => {
   assert.equal(validateAuthorizationRequest("unknown", "code", actionRedirect, OAUTH_SCOPE, "", "", env), false);
   assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, "other", "", "", env), false);

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { GPT_ACTION_CLIENT_ID, MCP_CLIENT_ID, OAUTH_SCOPE, validateAuthorizationRequest, validRedirectForClient } from "../app/oauth/clients.js";
+import { GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, MCP_CLIENT_ID, OAUTH_SCOPE, validateAuthorizationRequest, validRedirectForClient } from "../app/oauth/clients.js";
 
 const env = {};
 const actionRedirect = "https://chat.openai.com/aip/action-123/oauth/callback";
@@ -21,6 +21,14 @@ test("MCP requires PKCE S256", () => {
   assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", stableRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
   assert.equal(validateAuthorizationRequest(cimdClient, "code", stableRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
   assert.equal(validateAuthorizationRequest(codexCimdClient, "code", loopbackRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
+});
+
+test("MCP accepts separate Movidesk and knowledge read scopes, while GPT Action remains Movidesk-only", () => {
+  const combined = `${OAUTH_SCOPE} ${KNOWLEDGE_READ_SCOPE}`;
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, KNOWLEDGE_READ_SCOPE, "challenge", "S256", env), true);
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, combined, "challenge", "S256", env), true);
+  assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, KNOWLEDGE_READ_SCOPE, "", "", env), false);
+  assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, combined, "", "", env), false);
 });
 
 test("unknown clients, scopes, and redirects are rejected", () => {

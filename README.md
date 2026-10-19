@@ -7,7 +7,7 @@ Servidor MCP somente leitura para consulta e análise factual de tickets do Movi
 - Endpoint MCP: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`
 - Discovery OAuth: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server`
 - Client ID: `movidesk-mcp-app`
-- Scope: `movidesk:read`
+- Scopes: `movidesk:read` para Movidesk; `knowledge:read` para a base compartilhada. Solicite ambos no cliente MCP para habilitar as duas famílias de ferramentas.
 - PKCE: `S256` obrigatório
 
 Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status, atribui responsáveis ou publica comentários.
@@ -22,6 +22,10 @@ Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status,
 - `movidesk_search_ticket_content`: pesquisa `keyword` no assunto, descrição inicial e ações/interações. Use escopo temporal ou outro filtro. `matchedIn` distingue `subject`, `initialDescription` e `interactions`.
 - `movidesk_search_people`: pesquisa pessoas autorizadas. Para nome, prefira `filter` OData, como `contains(businessName, 'Gedore')`.
 - `movidesk_list_services`: lista serviços autorizados; informe `id`, `category`, `status`, `owner_team` ou `filter`.
+
+### Base de conhecimento
+
+- `knowledge_list_sources`: lista até 10 fontes cadastradas no schema `beta` do Supabase; requer `knowledge:read`.
 
 ### Análise de um ticket
 
@@ -42,6 +46,11 @@ Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status,
 - `top` e `skip` controlam paginação; em análises agrupadas, `total` representa grupos, não tickets brutos.
 - Ausência de correspondência retorna lista vazia. Falhas de autenticação, validação e indisponibilidade são diferenciadas.
 - `config/movidesk_semantic_models.yaml` define normalização, aliases, exclusões, desambiguações, pesos e regras de segurança. O snapshot JSON é carregado pelo runtime.
+
+## Configuração de runtime
+
+- `SUPABASE_URL`: URL do projeto Supabase.
+- `SUPABASE_SECRET_KEY`: chave secreta, armazenada somente como variável secreta do Site. Ela ignora RLS; o backend valida o escopo OAuth e a conta ativa antes de consultar.
 
 ## Desenvolvimento local
 

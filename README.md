@@ -61,7 +61,7 @@ npm install
 npm run dev
 npm run build
 npm run validate:semantic-catalog
-node_modules/.bin/tsx.cmd --test tests/semantic-catalog.test.ts tests/mcp-tools.characterization.test.ts tests/movidesk-analysis.test.ts tests/movidesk-timeline.test.ts tests/movidesk-insights.test.ts tests/rendered-html.test.mjs
+node_modules/.bin/tsx.cmd --test tests/semantic-catalog.test.ts tests/mcp-tools.characterization.test.ts tests/movidesk-analysis.test.ts tests/movidesk-timeline.test.ts tests/movidesk-insights.test.ts tests/rendered-html.test.mjs tests/oauth-clients.test.ts tests/knowledge-tools.test.ts tests/supabase-knowledge.test.ts
 ```
 
 Alterações no catálogo devem atualizar o YAML e o snapshot JSON correspondente, mantendo `schema_version` e `ruleset_version`. Toda regra nova deve ter caso positivo e, quando aplicável, caso negativo.

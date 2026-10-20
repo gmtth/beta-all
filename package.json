@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "sites:sync": "node scripts/sync-sites-checkout.mjs"
+    "sites:sync": "node scripts/sync-sites-checkout.mjs",
+    "sites:workflow": "node scripts/run-sites-workflow.mjs"
   },
   "devDependencies": {
     "supabase": "^2.121.0"

@@ -1,0 +1,7 @@
+interface:
+  display_name: "ClickUp Checklist"
+  short_description: "Compila checklists de QA dos cards do ClickUp"
+  icon_small: "./assets/logo.png"
+  icon_large: "./assets/logo.png"
+  brand_color: "#FF3BA7"
+  default_prompt: "Use $clickup-checklist para compilar os checklists de QA sobre um tema do ClickUp."

@@ -30,10 +30,17 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 
 `docs/migration/` registra repositórios, SHAs, comparação documental, estado local não reconciliado e critérios de corte. A história Git dos componentes deve ser mantida por importação subtree sempre que possível. `mcp/movidesk/DOSSIER.md`, AGENTS dos componentes e versões documentais preservadas continuam como fontes completas, sem substituição por este resumo.
 
-## Pendências de conclusão
+## Estado da consolidação (2026-10-20)
 
-- Preservar e comparar o estado local não enviado do checkout MCP, incorporando apenas diferenças únicas e úteis sem descartar a cópia original.
-- Inventariar todos os repositórios antigos ligados ao `suite-beta`; manter conteúdo histórico que não esteja na versão atual do plugin.
-- Comparar dossiers/AGENTS completos e registrar conflitos e proveniência.
-- Confirmar migrações Supabase reproduzíveis, build e publicação por componente e dependências externas.
-- Só após validação, fazer o corte operacional e arquivar/privatizar os repositórios antigos relacionados.
+- Plugin, MCP, agregador legado e repositórios históricos relacionados foram importados em `plugins/`, `mcp/` e `legacy/`, com proveniência em `docs/migration/SOURCE_IMPORTS.tsv`. Dossiers e instruções completos foram preservados junto aos componentes e em `docs/migration/source-documents/`.
+- O estado local não enviado do checkout MCP original foi preservado como história/patch/snapshot em `legacy/`; o checkout de origem não foi alterado.
+- Os snapshots do Sites e artefatos locais sem Git têm manifestos SHA-256. O Site publicado `Beta MCP` permanece na versão 73; não houve republicação durante a consolidação.
+- Verificações registradas em `AGENTS.md`: validadores do plugin e catálogo semântico passaram; build MCP passou; suíte MCP teve 71 de 72 casos aprovados, com uma expectativa de texto já divergente da página na origem importada. A instalação reportou 35 vulnerabilidades na árvore de dependências, sem correções automáticas.
+- Não há DDL Supabase suficiente no material disponível para reconstruir migrações com segurança. `infra/supabase/migrations/` permanece sem migrações inventadas.
+
+## Pendências para o corte operacional
+
+- Fazer push do histórico consolidado para `gmtth/beta-all` e validar um clone limpo do remoto.
+- Conferir dependências externas e confirmar que o trabalho cotidiano pode ocorrer só pelo monorepo, mantendo publicação independente de plugin, MCP e Sites.
+- Após essa conferência, arquivar os antigos repositórios ativos relacionados e tornar privado `gmtth/plugin-beta`, que ainda está público. Os demais repositórios históricos já estão privados/arquivados conforme o inventário atual.
+- Obter e registrar o DDL/políticas reais do Supabase para criar migrações reproduzíveis em etapa própria; isso não bloqueia a preservação dos fontes, mas é necessário antes de afirmar que a infraestrutura pode ser recriada.

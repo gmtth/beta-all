@@ -20,3 +20,6 @@ skill-beta-clk-checklist	main	07107e92495eb686efeb027e8d58c6a5c28166e5	legacy/so
 legacy-movimcp	main	a235869334a1b4676bd1878e9759d37b56ddccec	legacy/source-archives/legacy-movimcp
 skill-clickup-checklist	main	a80d1b9ec2d8f34296210a975e4ef30737d3455c	legacy/source-archives/skill-clickup-checklist
 skill-clickup-sprint-export	main	13cabd58dc003c348b0835b4d83bc1bba552334e	legacy/source-archives/skill-clickup-sprint-export
+movidesk-site-artifact	main	34a16f81fee751c3e985c2688f86ebfde2746c97	legacy/source-archives/movidesk-site-artifact
+sites-beta-mcp-snapshot-v1	main	9ca61ae64489e9404eb60398fc5f2442c64e3104	legacy/source-archives/sites-beta-mcp-snapshot-v1
+sites-beta-mcp-snapshot-v2	main	e25f25d057de902e9ae79aa68a27b79e9d38b582	legacy/source-archives/sites-beta-mcp-snapshot-v2

@@ -1,5 +1,9 @@
 # Suite Beta — contexto do projeto
 
+## Execução dentro do monorepositório
+
+O repositório Git e o diretório de trabalho únicos são a raiz `beta-all/`; este componente está em `plugins/beta/`. Leia primeiro o `AGENTS.md` da raiz e este arquivo. Para comandos abaixo que usam caminhos relativos (`scripts/`, `.codex-plugin/`, `skills/`), execute-os com o diretório atual em `plugins/beta/`. Faça commits no repositório monorepo, respeitando o escopo da pasta.
+
 ## Objetivo
 
 Este projeto empacota a família Beta em um único plugin do Codex. A entrada principal é a skill `beta`, responsável por escolher e consolidar os modos Beta ANL e Beta MOD.
@@ -51,7 +55,7 @@ Preserve a barra final de `/mcp/`. A integração é somente leitura e não deve
 
 ## Validação local
 
-Na raiz do projeto, execute:
+No diretório `plugins/beta/`, execute:
 
 ```text
 python scripts/validate_beta_anl_skills.py

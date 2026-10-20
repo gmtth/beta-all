@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta MOD Permissões"
+  short_description: "Analisa permissões, autorização e segurança funcional."
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

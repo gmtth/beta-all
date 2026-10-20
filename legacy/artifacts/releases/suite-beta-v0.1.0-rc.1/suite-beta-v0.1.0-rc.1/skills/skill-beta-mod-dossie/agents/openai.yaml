@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta MOD Dossiê"
+  short_description: "Mantém o contexto vigente, estados, destinos e persistência do Dossiê."
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

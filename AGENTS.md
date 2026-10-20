@@ -137,15 +137,18 @@ beta-all/                              # único clone/repos de trabalho após a 
 │   └── supabase/
 │       ├── README.md                  # projeto, Data API, ambientes e limites
 │       └── migrations/               # SQL versionado, sem credenciais/dados reais
-└── legacy/                            # material útil sem função ativa, após auditoria
-    ├── README.md                     # proveniência, origem e condição de recuperação
-    └── artifacts/                    # releases/archives necessários para recuperar histórico
+└── legacy/                            # fontes antigas e recuperação, sem papel ativo
+    ├── README.md                     # proveniência e regras para recuperar conteúdo
+    ├── suite-beta/                    # agregador histórico sem submódulos ativos
+    ├── source-archives/               # repositórios antigos importados com Git subtree
+    ├── local-snapshots/                # patch e conteúdo local MCP ainda não reconciliado
+    └── artifacts/releases/            # ZIPs/pacotes originais e manifesto SHA-256
 ```
 
 - Esta hierarquia foi revisada para um monorepo de verdade: runtime/Sites em `mcp/movidesk`; plugin e skills em `plugins/beta`; migrações e documentação Supabase em `infra/supabase` e `docs/`.
 - Não criar cópias concorrentes de Sites ou skills. Importar cada implementação uma única vez para seu diretório canônico; documentar build/deploy e publicar a partir desses caminhos no monorepo.
 - `infra/supabase/migrations` guarda apenas migrações SQL reproduzíveis, revisadas e sem credenciais/dados reais. Migrações do banco OAuth/runtime que pertencem ao MCP continuam no repositório MCP; não misturar os ciclos de banco.
-- A pasta `legacy/` recebe somente material histórico ou artefatos não ativos cuja preservação não fique garantida pela história Git ou pelos documentos vivos. Arquivos compactados de release/recuperação podem ser preservados em `legacy/artifacts/` com origem, commit/data e hash; excluir caches e dependências geradas somente após comprovar que não são fontes únicas. Não colocar submódulos que mantenham dependência de checkout/remoto antigo.
+- A pasta `legacy/` recebe apenas conteúdo não ativo necessário para auditoria e recuperação. Snapshots de projetos preservam arquivos e história por `git subtree`; não devem conter gitlinks/submódulos ativos. Arquivos compactados locais ficam em `legacy/artifacts/releases/` com origem, data e hash. Não apagar as origens locais como parte da importação.
 - Não criar scripts na primeira versão. Depois de observar tarefas repetidas e definir comportamento seguro, scripts de bootstrap/verificação podem ser adicionados com escopo explícito; nenhum script deve publicar, apagar ou migrar dados implicitamente.
 - Documentos locais sem histórico Git (incluindo os documentos atuais do workspace Beta) recebem snapshot identificado por origem/data/hash em `docs/migration/source-documents/` antes de qualquer síntese. Os originais locais e remotos permanecem intactos.
 - Antes de colocar snapshots no Git, verificar se contêm credenciais, dados pessoais ou conteúdo operacional restrito. Segredos não entram no agregador; se forem encontrados, registrar a ocorrência sem revelar o valor e escolher um meio restrito de preservação/rotação.

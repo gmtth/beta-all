@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta SIT"
+  short_description: "Cria clones web visuais e funcionais do CENCIHUB a partir do Dossiê e referências fornecidas."
+  icon_small: "./assets/beta-sit.png"
+  icon_large: "./assets/beta-sit.png"

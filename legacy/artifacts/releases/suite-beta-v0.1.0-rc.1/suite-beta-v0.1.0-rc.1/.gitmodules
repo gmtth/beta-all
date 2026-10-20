@@ -1,0 +1,39 @@
+[submodule "skills/skill-beta-sites"]
+	path = skills/skill-beta-sites
+	url = https://github.com/gmtth/skill-beta-sites.git
+[submodule "skills/skill-beta-mod-dossie"]
+	path = skills/skill-beta-mod-dossie
+	url = https://github.com/gmtth/skill-beta-mod-dossie.git
+[submodule "skills/skill-beta-mod-regras"]
+	path = skills/skill-beta-mod-regras
+	url = https://github.com/gmtth/skill-beta-mod-regras.git
+[submodule "skills/skill-beta-mod-fontes"]
+	path = skills/skill-beta-mod-fontes
+	url = https://github.com/gmtth/skill-beta-mod-fontes.git
+[submodule "skills/skill-beta-mod-relatorios"]
+	path = skills/skill-beta-mod-relatorios
+	url = https://github.com/gmtth/skill-beta-mod-relatorios.git
+[submodule "skills/skill-beta-mod-fluxos"]
+	path = skills/skill-beta-mod-fluxos
+	url = https://github.com/gmtth/skill-beta-mod-fluxos.git
+[submodule "skills/skill-beta-mod-figma"]
+	path = skills/skill-beta-mod-figma
+	url = https://github.com/gmtth/skill-beta-mod-figma.git
+[submodule "skills/skill-beta-mod-processamento"]
+	path = skills/skill-beta-mod-processamento
+	url = https://github.com/gmtth/skill-beta-mod-processamento.git
+[submodule "skills/skill-beta-mod-permissoes"]
+	path = skills/skill-beta-mod-permissoes
+	url = https://github.com/gmtth/skill-beta-mod-permissoes.git
+[submodule "skills/skill-beta-mod-qa"]
+	path = skills/skill-beta-mod-qa
+	url = https://github.com/gmtth/skill-beta-mod-qa.git
+[submodule "skills/skill-beta-mod-artefatos"]
+	path = skills/skill-beta-mod-artefatos
+	url = https://github.com/gmtth/skill-beta-mod-artefatos.git
+[submodule "skills/skill-beta-mod"]
+	path = skills/skill-beta-mod
+	url = https://github.com/gmtth/skill-beta-mod.git
+[submodule "plugins/plugin-beta-mov"]
+	path = plugins/plugin-beta-mov
+	url = https://github.com/gmtth/plugin-beta-mov.git

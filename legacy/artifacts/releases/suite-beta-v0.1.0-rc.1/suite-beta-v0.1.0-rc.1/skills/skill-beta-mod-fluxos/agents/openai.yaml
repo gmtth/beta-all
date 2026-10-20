@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta MOD Fluxos"
+  short_description: "Analisa fluxos de telas, navegação e estados funcionais."
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

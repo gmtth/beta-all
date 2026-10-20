@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta MOD Figma"
+  short_description: "Revisa Figma, views e consistência visual funcional."
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

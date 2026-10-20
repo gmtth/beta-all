@@ -1,5 +1,9 @@
 # Instruções obrigatórias do projeto MCP Movidesk
 
+## Execução dentro do monorepositório
+
+O repositório Git e o diretório de trabalho únicos são a raiz `beta-all/`; este componente está em `mcp/movidesk/`. Leia primeiro o `AGENTS.md` da raiz, este arquivo e `DOSSIER.md`. Execute os comandos relativos documentados abaixo a partir de `mcp/movidesk/`. Faça commits na raiz do monorepo e mantenha as alterações limitadas ao componente e à documentação compartilhada necessária.
+
 Este arquivo é a fonte operacional obrigatória para qualquer trabalho neste repositório. Antes de analisar, editar, testar, commitar, abrir PR, mesclar ou publicar, leia este arquivo e o [`DOSSIER.md`](./DOSSIER.md).
 
 O [`CONVERSA_LEGADA.md`](./CONVERSA_LEGADA.md) é um arquivo histórico opcional. Ele não precisa ser lido no fluxo normal e nunca substitui este arquivo ou o dossiê; consulte-o apenas para recuperar contexto conversacional antigo.

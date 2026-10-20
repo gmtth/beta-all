@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta MOD Artefatos"
+  short_description: "Gera DOCX e outros artefatos no padrão documental CENCIHUB."
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

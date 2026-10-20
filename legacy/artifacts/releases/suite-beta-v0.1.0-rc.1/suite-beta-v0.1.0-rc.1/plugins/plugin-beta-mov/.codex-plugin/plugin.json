@@ -1,0 +1,28 @@
+{
+  "name": "beta-movidesk",
+  "version": "1.0.4",
+  "description": "Consulta dados autorizados do Movidesk por meio de um servidor MCP somente leitura.",
+  "author": {
+    "name": "thngrns",
+    "email": "39179366+gmtth@users.noreply.github.com"
+  },
+  "keywords": ["movidesk", "mcp", "tickets", "suporte", "oauth"],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Beta MOV",
+    "shortDescription": "Consulte tickets e dados do Movidesk",
+    "longDescription": "Conecta o Codex ao servidor MCP Movidesk somente leitura, com consultas de tickets, pessoas e serviços e suporte a OAuth com PKCE.",
+    "developerName": "thngrns",
+    "category": "Productivity",
+    "capabilities": ["Read", "Search"],
+    "defaultPrompt": [
+      "Consulte um ticket do Movidesk para mim.",
+      "Liste os tickets abertos em uma data.",
+      "Resuma o histórico de um ticket."
+    ],
+    "brandColor": "#FF2A28",
+    "composerIcon": "./skills/beta-movidesk/assets/fundo.png",
+    "logo": "./skills/beta-movidesk/assets/fundo.png"
+  }
+}

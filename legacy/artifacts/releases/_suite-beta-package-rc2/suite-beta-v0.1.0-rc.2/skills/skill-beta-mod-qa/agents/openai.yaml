@@ -1,0 +1,6 @@
+interface:
+  display_name: "Beta MOD QA"
+  short_description: "Revisa modelagens e classifica bloqueios, riscos e ambiguidades."
+  brand_color: "#E3DB0B"
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

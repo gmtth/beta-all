@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta MOD"
+  short_description: "Orquestra modelagens funcionais da família Beta MOD."
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

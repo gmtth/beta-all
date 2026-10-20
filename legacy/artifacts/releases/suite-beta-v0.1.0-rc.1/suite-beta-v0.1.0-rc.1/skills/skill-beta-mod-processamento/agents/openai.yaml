@@ -1,0 +1,5 @@
+interface:
+  display_name: "Beta MOD Processamento"
+  short_description: "Analisa ciclo de vida, estados e processamento funcional."
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"

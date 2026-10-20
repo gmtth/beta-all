@@ -30,7 +30,7 @@ const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(request.url);
 
-    const mcpResponse = await handleMcp(request);
+    const mcpResponse = await handleMcp(request, ctx);
     if (mcpResponse) return mcpResponse;
 
     if (url.pathname === "/_vinext/image") {

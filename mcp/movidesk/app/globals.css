@@ -62,3 +62,30 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .diagnostic-ok { color: #65e4ad; }
 .diagnostic-attention { color: #ffbd8c; }
 @media (max-width: 600px) { .diagnostic-row { flex-direction: column; gap: 6px; }.diagnostic-row strong { max-width: 100%; text-align: left; } }
+
+/* MCP usage telemetry (stored in the Sites D1 database) */
+.telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.telemetry-card { min-width: 0; }
+.telemetry-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.telemetry-heading h3 { margin: 0 0 5px; font-size: 16px; }
+.telemetry-heading span { color: var(--muted); font-size: 12px; }
+.telemetry-heading > strong { color: var(--hot); font-size: 22px; }
+.usage-chart { display: grid; gap: 13px; }
+.usage-bar-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) minmax(50px, 2fr) auto auto; align-items: center; gap: 10px; font-size: 12px; }
+.usage-tool-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.usage-bar-track { display: block; height: 9px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.08); }
+.usage-bar-fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--hot)); }
+.usage-bar-row > strong { min-width: 34px; text-align: right; }
+.usage-bar-row small { min-width: 48px; color: var(--muted); text-align: right; }
+.error-chart { display: grid; grid-template-columns: repeat(30, minmax(2px, 1fr)); align-items: end; gap: 3px; height: 150px; padding: 10px 0 0; border-bottom: 1px solid var(--line); }
+.error-chart-column { display: flex; height: 100%; align-items: end; }
+.error-chart-bar { width: 100%; min-height: 2px; border-radius: 3px 3px 0 0; background: linear-gradient(0deg, #db5f52, #ff9b66); }
+.chart-axis-labels { display: flex; justify-content: space-between; margin-top: 8px; color: var(--muted); font-size: 11px; }
+.recent-errors-card { grid-column: 1 / -1; }
+.recent-error-list { display: grid; }
+.recent-error-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 0; border-top: 1px solid var(--line); }
+.recent-error-row > div { display: grid; gap: 4px; min-width: 0; }
+.recent-error-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.recent-error-row span, .recent-error-row time { color: var(--muted); font-size: 11px; }
+.recent-error-row time { white-space: nowrap; }
+@media (max-width: 700px) { .telemetry-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(90px, 1fr) minmax(40px, 1.3fr) auto; } .usage-bar-row small { display: none; } }

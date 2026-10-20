@@ -28,6 +28,13 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - `movidesk:read`, `knowledge:read` e `knowledge:write` são capacidades separadas. O usuário autorizou importar para a base interna apenas chamados explicitamente indicados; alterações em tickets do Movidesk e ingestão em massa continuam fora do escopo.
 - `beta-all` é o repositório de trabalho ativo. As origens relacionadas foram preservadas e arquivadas conforme o inventário; não presumir que Sites ou integrações externas já publiquem a partir do monorepo.
 
+### Telemetria do painel no Sites (2026-10-20)
+
+- Decisão do usuário: gráficos e métricas de uso/erros devem contabilizar chamadas das ferramentas MCP no ambiente Sites; não usar Supabase para esse fim.
+- Implementação local em `mcp/movidesk/`: eventos mínimos no D1 do Sites, endpoint administrativo separado dos indicadores Supabase, gráfico de chamadas por ferramenta, erros diários em 30 dias e lista dos dez erros mais recentes. Retenção de até 90 dias.
+- Os eventos não contêm identidade, argumentos, conteúdo de retorno nem mensagens brutas de erro. A tabela é declarada em Drizzle e possui migration própria; o Worker também garante criação idempotente.
+- Estado: implementação local nesta branch; build, publicação e confirmação de métricas reais ainda pendentes. Ver `mcp/movidesk/DOSSIER.md` para detalhes.
+
 ## Migração e rastreabilidade
 
 `docs/migration/` registra repositórios, SHAs, comparação documental, estado local não reconciliado e critérios de corte. A tabela acima encaminha para cada fonte operacional canônica. `legacy/` e `docs/migration/source-documents/` são evidência histórica, não instruções atuais. O dossier do plugin foi reconstruído retroativamente com base no snapshot importado, nas instruções e nos arquivos históricos disponíveis; não é uma transcrição integral das conversas originais.

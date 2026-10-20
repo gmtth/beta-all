@@ -3,6 +3,29 @@ import { clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_
 
 const encoder = new TextEncoder();
 export const db = () => env.DB as D1Database;
+let toolUsageSchemaPromise: Promise<void> | undefined;
+export async function ensureToolUsageSchema() {
+  if (!toolUsageSchemaPromise) {
+    toolUsageSchemaPromise = db().batch([
+      db().prepare("CREATE TABLE IF NOT EXISTS mcp_tool_events (id INTEGER PRIMARY KEY AUTOINCREMENT, tool_name TEXT NOT NULL, outcome TEXT NOT NULL CHECK (outcome IN ('success', 'error')), error_code TEXT, created_at INTEGER NOT NULL)"),
+      db().prepare("CREATE INDEX IF NOT EXISTS mcp_tool_events_created_at_idx ON mcp_tool_events(created_at DESC)"),
+      db().prepare("CREATE INDEX IF NOT EXISTS mcp_tool_events_tool_created_at_idx ON mcp_tool_events(tool_name, created_at DESC)"),
+    ]).then(() => undefined).catch((error) => { toolUsageSchemaPromise = undefined; throw error; });
+  }
+  await toolUsageSchemaPromise;
+}
+export async function recordMcpToolEvent(toolName: string, outcome: "success" | "error", errorCode: string | null) {
+  try {
+    await ensureToolUsageSchema();
+    const now = Date.now();
+    await db().batch([
+      db().prepare("INSERT INTO mcp_tool_events (tool_name, outcome, error_code, created_at) VALUES (?, ?, ?, ?)").bind(toolName, outcome, errorCode, now),
+      db().prepare("DELETE FROM mcp_tool_events WHERE created_at < ?").bind(now - 90 * 24 * 60 * 60 * 1000),
+    ]);
+  } catch {
+    // Telemetry must never make an otherwise successful MCP tool call fail.
+  }
+}
 export async function hash(value: string) { const digest = await crypto.subtle.digest("SHA-256", encoder.encode(value)); return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join(""); }
 export function randomToken() { const bytes = new Uint8Array(32); crypto.getRandomValues(bytes); return btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, ""); }
 export function masterEmails() { return (process.env.OAUTH_MASTER_EMAILS ?? "").split(",").map((value) => value.trim().toLowerCase()).filter(Boolean); }

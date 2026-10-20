@@ -293,7 +293,8 @@ async function main() {
   const environment = { ...process.env };
   if (bashPath) {
     const bashDirectory = path.dirname(bashPath);
-    environment.PATH = `${bashDirectory}${path.delimiter}${environment.PATH || ""}`;
+    const nodeDirectory = path.dirname(process.execPath);
+    environment.PATH = `${bashDirectory}${path.delimiter}${nodeDirectory}${path.delimiter}${environment.PATH || ""}`;
   }
 
   const child = spawn(process.execPath, [selected.helperPath, "--project-id", selected.projectId], {

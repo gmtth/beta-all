@@ -87,8 +87,8 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 
 - A fonte canônica é `mcp/movidesk/` no monorepo. O checkout remoto do Sites é separado do `origin` GitHub.
 - Depois de abrir um checkout limpo pelo helper oficial do Sites, sincronize-o a partir da raiz `beta-all` com `npm run sites:sync -- "<checkout_path>"`. Use `--dry-run` antes quando quiser conferir a contagem de cópias e remoções.
-- O comando valida o ID do projeto em `.openai/hosting.json`, exige o remote de origem do Sites e recusa alterações rastreadas locais no checkout. Preserva `.git`, `.openai/`, arquivos ignorados e arquivos locais não rastreados; remove arquivos rastreados obsoletos e copia os arquivos rastreados do componente.
-- O sincronizador exclui arquivos de documentação/histórico, testes e cópias em `work/` e `legado/`. Nunca copie `.env` ou credenciais.
+- O comando valida o ID do projeto em `.openai/hosting.json`, exige um checkout Git limpo de alterações rastreadas e recusa checkout dentro da fonte canônica. O helper do Sites pode criar o clone sem remote Git configurado. Preserva `.git`, `.openai/`, arquivos ignorados e arquivos locais não rastreados; sincroniza apenas caminhos usados pelo runtime/build (`app/`, `worker/`, `config/`, `public/`, `db/`, `drizzle/`, `build/` e manifests), removendo obsoletos somente nesses caminhos.
+- Documentação, testes, históricos e cópias em `work/`/`legado/` no checkout Sites são preservados sem sincronização. Nunca copie `.env` ou credenciais.
 - Após sincronizar, use o helper oficial com o build `node <plugin-root>/scripts/build-site.mjs`, `archivePath` absoluto e `source` da abertura. O helper faz o commit/push e empacota o mesmo estado. Em seguida use as ferramentas nativas Sites para salvar e implantar a versão; o sincronizador não publica nem guarda credenciais.
 
 ## Contratos das ferramentas

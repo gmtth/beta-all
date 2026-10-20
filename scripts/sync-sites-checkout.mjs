@@ -9,13 +9,19 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "..");
 const componentRoot = path.join(repoRoot, "mcp", "movidesk");
 const componentPrefix = "mcp/movidesk/";
-const excludedPrefixes = ["work/", "legado/", "docs/", "tests/", "scripts/"];
-const excludedFiles = new Set([
-  "AGENTS.md",
-  "DOSSIER.md",
-  "CONVERSA_LEGADA.md",
-  "arquitetura-base-compartilhada-beta.md",
-  ".openai/hosting.json",
+const managedPrefixes = ["app/", "worker/", "config/", "public/", "db/", "drizzle/", "build/"];
+const managedRootFiles = new Set([
+  ".gitignore",
+  "README.md",
+  "drizzle.config.ts",
+  "eslint.config.mjs",
+  "next-env.d.ts",
+  "next.config.ts",
+  "package.json",
+  "package-lock.json",
+  "postcss.config.mjs",
+  "tsconfig.json",
+  "vite.config.ts",
 ]);
 
 function usage() {
@@ -55,11 +61,11 @@ function isWithin(parent, candidate) {
 }
 
 function isExcluded(relativePath) {
-  return (
-    excludedFiles.has(relativePath) ||
-    excludedPrefixes.some((prefix) => relativePath.startsWith(prefix)) ||
-    /^\.env(?:\.|$)/i.test(relativePath)
-  );
+  return /^\.env(?:\.|$)/i.test(relativePath) || relativePath === ".openai/hosting.json";
+}
+
+function isManagedPath(relativePath) {
+  return managedRootFiles.has(relativePath) || managedPrefixes.some((prefix) => relativePath.startsWith(prefix));
 }
 
 function main() {
@@ -97,12 +103,6 @@ function main() {
     throw new Error("O caminho informado precisa ser a raiz do checkout Git do Sites.");
   }
 
-  const targetRemote = git(targetRoot, ["remote", "get-url", "origin"]).trim();
-  const canonicalRemote = git(repoRoot, ["remote", "get-url", "origin"]).trim();
-  if (!targetRemote || targetRemote === canonicalRemote || /github\.com[:/]gmtth\/beta-all(?:\.git)?$/i.test(targetRemote)) {
-    throw new Error("O remote do checkout não parece ser a origem gerenciada do Sites.");
-  }
-
   const targetStatus = git(targetRoot, ["status", "--porcelain", "--untracked-files=no"]).trim();
   if (targetStatus) {
     throw new Error("O checkout Sites tem alterações rastreadas locais. Preserve-as e abra um checkout limpo antes de sincronizar.");
@@ -113,6 +113,7 @@ function main() {
     .split("\0")
     .filter(Boolean)
     .map((repoPath) => repoPath.slice(componentPrefix.length))
+    .filter(isManagedPath)
     .filter((relativePath) => !isExcluded(relativePath));
 
   const sensitivePaths = sourcePaths.filter((relativePath) => /^\.env(?:\.|$)/i.test(relativePath));
@@ -134,7 +135,7 @@ function main() {
     .filter(Boolean)
     .map((relativePath) => relativePath.replaceAll("\\", "/"));
   const stalePaths = targetTracked.filter(
-    (relativePath) => !relativePath.startsWith(".openai/") && relativePath !== ".openai" && !sourceSet.has(relativePath),
+    (relativePath) => isManagedPath(relativePath) && !sourceSet.has(relativePath),
   );
   const actions = [
     ...sourcePaths.map((relativePath) => ({ type: "copy", relativePath })),

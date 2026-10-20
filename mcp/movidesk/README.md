@@ -77,7 +77,7 @@ npm run sites:sync -- "<checkout_path>" --dry-run
 npm run sites:sync -- "<checkout_path>"
 ```
 
-O sincronizador valida se o checkout pertence ao mesmo projeto Sites, copia os arquivos rastreados do MCP e remove arquivos rastreados obsoletos. Preserva a identidade `.openai/hosting.json`, Git e arquivos locais ignorados/não rastreados. Depois, o helper oficial executa o build, faz commit/push e empacota; a versão ainda precisa ser salva e implantada pelas ferramentas Sites. O sincronizador não lê nem armazena tokens.
+O sincronizador valida se o checkout Git pertence ao mesmo projeto Sites, sincroniza somente os caminhos de runtime/build e remove obsoletos dentro deles. Preserva `.openai/hosting.json`, Git, arquivos locais ignorados/não rastreados e documentos, testes e históricos existentes no checkout. Depois, o helper oficial executa o build, faz commit/push e empacota; a versão ainda precisa ser salva e implantada pelas ferramentas Sites. O sincronizador não lê nem armazena tokens.
 
 Alterações no catálogo devem atualizar o YAML e o snapshot JSON correspondente, mantendo `schema_version` e `ruleset_version`. Toda regra nova deve ter caso positivo e, quando aplicável, caso negativo.
 

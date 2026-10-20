@@ -1,5 +1,5 @@
 interface:
-  display_name: "Beta ANL — Movidesk"
+  display_name: "Movidesk"
   short_description: "Consulta direta, somente leitura, do Movidesk."
   icon_small: "./assets/fundo.png"
   icon_large: "./assets/fundo.png"

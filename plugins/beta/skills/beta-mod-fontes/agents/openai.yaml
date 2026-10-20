@@ -1,5 +1,5 @@
 interface:
-  display_name: "Beta MOD — Fontes"
+  display_name: "Fontes"
   short_description: "Prioriza e compara fontes, versões, ClickUp e documentos sem decidir regra funcional."
   brand_color: "#E3DB0B"
   icon_small: "./assets/beta-mod.png"

@@ -1,5 +1,5 @@
 interface:
-  display_name: "Beta MOD — Relatórios"
+  display_name: "Relatórios"
   short_description: "Analisa relatórios, períodos e cálculos funcionais."
   brand_color: "#E3DB0B"
   icon_small: "./assets/beta-mod.png"

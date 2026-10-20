@@ -2,6 +2,37 @@
 
 Este arquivo preserva decisões e fatos do projeto para orientar futuras alterações neste workspace. Para a arquitetura detalhada, consulte [`arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md).
 
+## Roteamento de contexto e manutenção documental
+
+Este `AGENTS.md` é a entrada e o roteador do monorepositório: estabelece regras transversais, localiza componentes e encaminha para as instruções e o estado canônicos da tarefa. Não substitui os `AGENTS.md` nem os `DOSSIER.md` dos componentes.
+
+### Leitura por tarefa
+
+1. Em toda tarefa, leia este arquivo e [`DOSSIER.md`](DOSSIER.md) para obter regras globais, decisões compartilhadas e estado geral.
+2. Identifique os componentes afetados pelo pedido, arquivos alterados e dependências necessárias. Leia o `AGENTS.md` e o `DOSSIER.md` ativos de cada componente antes de editar; se um componente ainda não tiver dossier, use o documento indicado na tabela abaixo e registre essa lacuna.
+3. Em tarefas que atravessam componentes, leia também a arquitetura compartilhada e os documentos de integração relevantes. Limite a leitura a fontes que possam mudar a decisão ou a implementação.
+4. Se a demanda for apenas histórica, de proveniência ou migração, consulte os inventários e snapshots indicados; não carregue todo o arquivo histórico como instruções atuais.
+
+| Demanda | Instruções e estado a consultar |
+|---|---|
+| Plugin, skills, roteamento e empacotamento | [`plugins/beta/AGENTS.md`](plugins/beta/AGENTS.md) e [`plugins/beta/DOSSIER.md`](plugins/beta/DOSSIER.md) |
+| MCP, OAuth, ferramentas Movidesk ou integração de conhecimento | [`mcp/movidesk/AGENTS.md`](mcp/movidesk/AGENTS.md) e [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md) |
+| Schema, migrations, chaves e API Supabase | [`infra/supabase/README.md`](infra/supabase/README.md) e [`infra/supabase/DOSSIER.md`](infra/supabase/DOSSIER.md), além das instruções do MCP quando o runtime for afetado |
+| Publicação, domínio e snapshots do Sites | [`docs/components/sites.md`](docs/components/sites.md) e instruções do MCP quando houver alteração no runtime publicado |
+| Arquitetura ou fluxo entre componentes | [`docs/architecture/arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md), dossier raiz e dossiers dos componentes envolvidos |
+| Consolidação, proveniência e conteúdo antigo | [`docs/migration/source-inventory.md`](docs/migration/source-inventory.md), [`docs/migration/document-reconciliation.md`](docs/migration/document-reconciliation.md) e snapshots explicitamente relevantes |
+
+### Autoridade e atualização
+
+- Para regras de trabalho, prevalecem este arquivo e o `AGENTS.md` ativo mais específico do componente, respeitada a precedência documentada nele. Um `DOSSIER.md` registra fatos, decisões, evidências, estado e pendências; não cria por si só uma regra normativa.
+- Os caminhos canônicos em `plugins/`, `mcp/` e `infra/` são a fonte atual. `legacy/` e `docs/migration/source-documents/` preservam proveniência e estados anteriores; seu conteúdo é evidência histórica, nunca instrução automaticamente vigente.
+- Ao concluir trabalho com informação durável, atualize o dossier do componente afetado com decisão/estado, data, evidência e pendências. Atualize o dossier raiz somente se o estado compartilhado, uma decisão transversal, um marco ou uma dependência entre componentes mudou. Atualize a arquitetura compartilhada apenas quando uma decisão arquitetural mudar ou for formalizada.
+- Não propague mecanicamente a mesma cópia para todos os dossiers. Use links para a fonte canônica e resumos nos índices; registre divergências e sua proveniência em vez de as apagar silenciosamente.
+- Não reescreva snapshots, exports de conversa, arquivos em `legacy/` nem fontes de rastreabilidade para fazer parecer que sempre refletiram a decisão atual. Novas decisões entram nos documentos ativos e apontam para a evidência pertinente.
+- Se documentos ativos discordarem, identifique data, escopo e evidência; aplique a precedência explícita. Se ela não resolver conflito material, registre-o como divergente e não o transforme em fato confirmado.
+
+O roteiro de consolidação mais abaixo é mantido como registro de execução e proveniência. O estado posterior da consolidação no dossier raiz e no inventário de migração informa o que foi concluído; etapas históricas não devem ser repetidas sem necessidade.
+
 ## Objetivo
 
 Construir a Beta como assistente compartilhada por quatro analistas, com uma base de conhecimento comum, rápida, rastreável e atualizável. A Beta deve ajudar principalmente a diagnosticar problemas de máquinas a partir de sintomas e contexto em linguagem natural, além de erros do programa e dúvidas sobre processos administrativos.
@@ -39,10 +70,11 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 - Supabase foi escolhido para hospedar PostgreSQL e `pgvector`, começando no plano Free como piloto. Reavaliar limites, pausa por inatividade, backup, disponibilidade e custo antes de produção; manter exportação independente.
 - Projeto Supabase: `https://ywqoanfqcbcdecmkguze.supabase.co`. O endereço não é segredo; chaves e credenciais são.
 - Extensão vetorial habilitada. Schema `beta` e tabelas `source_system`, `source_record` e `record_chunk` criados.
-- RLS está habilitado nessas três tabelas. Foi concedido `USAGE` no schema `beta` e `SELECT` nas tabelas para `service_role`.
+- Inspeção do catálogo feita em 2026-10-20: RLS está habilitado nas três tabelas, sem políticas; `beta` concede `USAGE` a `service_role` (não a `anon`/`authenticated`); `service_role` tem todos os privilégios DML nas três tabelas. `anon` e `authenticated` também têm ACLs DML nas tabelas, mas sem `USAGE` no schema não devem conseguir acessá-las pela Data API. Revisar e reduzir essas ACLs antes de abrir acesso a outros papéis.
+- `pgvector` está instalado, mas a inspeção não encontrou coluna `vector`, índice vetorial, RPC/função ou trigger; a busca existente é lexical por `tsvector` com índice GIN. Ainda não existe busca semântica/híbrida implementada no banco.
 - As três tabelas do schema `beta` foram expostas na Data API. A exposição da Data API não concede, por si só, privilégio SQL; manter privilégios mínimos. `service_role`/chave secreta ignora RLS, então a autorização OAuth e os filtros de classificação precisam ser aplicados server-side antes da consulta e da resposta.
 - Teste feito pelo usuário no SQL Editor (`select id, name from beta.source_system limit 10`) retornou três linhas: Movidesk, ClickUp e Documentos administrativos. Isso confirma leitura pelo SQL Editor e catálogo preenchido; não confirma uma chamada end-to-end pela Data API nem pelo MCP.
-- Uma chave secreta Supabase foi compartilhada anteriormente na conversa e deve ser considerada comprometida. Foi orientada sua rotação; não copiar, recuperar nem armazenar seu valor. O runtime deve usar somente uma chave atual guardada como segredo do servidor, por exemplo `SUPABASE_SECRET_KEY`.
+- Uma chave secreta Supabase foi compartilhada anteriormente na conversa e deve ser considerada comprometida. O usuário confirmou em 2026-10-20 que a substituiu e atualizou `SUPABASE_SECRET_KEY` no Sites. O inventário do Sites confirma o nome da variável na revisão 13, mas mascara seu valor; não copiar, recuperar nem armazenar nenhum valor. O runtime deve usar somente a chave atual guardada como segredo do servidor.
 
 ## Runtime e integração
 
@@ -50,16 +82,14 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 - Não colocar connection string/chave no navegador nem enviar ao modelo. A configuração esperada no servidor usa `SUPABASE_URL` e `SUPABASE_SECRET_KEY`.
 - Expor somente operações estreitas necessárias. Preferir RPCs/views ou consultas server-side com colunas e limites explícitos; limitar resultados e sanitizar erros.
 
-## Implementação em GitHub e teste
+## Implementação Supabase no MCP — estado consolidado
 
-- Repositório: [`gmtth/movidesk-mcp-oauth`](https://github.com/gmtth/movidesk-mcp-oauth), privado.
-- Branch criada a pedido do usuário: [`feat/supabase-knowledge-read-scope`](https://github.com/gmtth/movidesk-mcp-oauth/tree/feat/supabase-knowledge-read-scope).
-- A branch contém o novo escopo OAuth `knowledge:read` e a primeira ferramenta de leitura `knowledge_list_sources`, que lista até 10 fontes. Esta é uma fatia de conexão/catálogo, não a busca híbrida de chamados nem a ingestão de dados.
-- Na última comparação verificada, a branch estava 14 commits à frente de `main`, 0 atrás. Não foi criado PR, não foi feito merge nem implantação dessa branch.
-- Os testes adicionados/alterados no repositório não foram executados localmente nesta sessão. Não alegar que o código passou testes sem executar checks recentes.
-- A versão publicada do Site não foi confirmada com a ferramenta `knowledge_list_sources`; a funcionalidade permanece não verificada em produção. A consulta SQL acima não é teste de MCP.
-- A API de gestão do Sites informou que a publicação atual não declara um MCP nativo do Sites. Isso, por si só, não prova que a rota `/mcp/` personalizada deixe de funcionar; verificar a forma de publicação do projeto antes de tentar trocar o Site ou presumir que a branch do GitHub já está ligada a ele.
-- Próximo caminho para teste end-to-end: revisar a branch, executar os testes apropriados, publicar a versão correspondente no ambiente previsto, configurar/confirmar os segredos no servidor, reautorizar o cliente MCP com `knowledge:read` e chamar `knowledge_list_sources`. Verificar o retorno esperado com as três fontes. Não confundir publicar no Site com apenas expor tabelas no Supabase.
+- O código canônico em `mcp/movidesk/` inclui o escopo OAuth `knowledge:read` e a ferramenta somente leitura `knowledge_list_sources`, limitada a dez resumos de fonte. A ferramenta lista o catálogo; ainda não ingere nem busca conteúdo diagnóstico.
+- A implementação foi integrada pela PR #42 ao `main` do repositório de origem antes da consolidação. A branch original foi preservada em `legacy/source-archives/mcp-feature-supabase-scope/`; não é branch ativa para desenvolvimento. Detalhes e evidências estão em [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md).
+- A execução histórica registrada para a PR #42 teve 69 testes relevantes aprovados e build aprovado. Esses resultados não substituem a verificação do estado atual após mudanças posteriores.
+- O inventário do Sites registra a revisão 13 das variáveis; o usuário confirmou a rotação da chave e sua atualização. Valores permanecem mascarados. O catálogo SQL foi recebido, mas não comprova o caminho Data API/MCP.
+- Primeiro teste end-to-end da listagem foi bloqueado pelo servidor: o token/conta não passou `knowledge:read`; nenhuma consulta Supabase ocorreu. Reautorizar a conta no ChatGPT para solicitar esse escopo; se persistir, conferir atividade do e-mail OAuth e o deployment. Antes de criar dados reais, revisar e reduzir privilégios amplos. O catálogo SQL não comprova por si só o caminho Data API/MCP.
+- O dossier raiz, `infra/supabase/DOSSIER.md` e `mcp/movidesk/DOSSIER.md` são os índices atuais de prontidão; não usar snapshots temporais abaixo como estado vivo.
 
 ## Planejamento de consolidação em `gmtth/beta-all` como repositório único de trabalho
 

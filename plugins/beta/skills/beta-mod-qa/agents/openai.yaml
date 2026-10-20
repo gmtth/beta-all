@@ -1,5 +1,5 @@
 interface:
-  display_name: "Beta MOD — QA"
+  display_name: "QA"
   short_description: "Revisa modelagens e classifica bloqueios, riscos e ambiguidades."
   brand_color: "#E3DB0B"
   icon_small: "./assets/beta-mod.png"

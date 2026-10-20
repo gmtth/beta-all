@@ -76,13 +76,13 @@ def main(root: Path) -> int:
                     errors.append(f"{label}: invalid transition {transition!r}")
 
     required = {
-        "beta-anl-duvidas-funcionais",
-        "beta-anl-regras-negocio",
-        "beta-anl-triagem-incidentes",
-        "beta-anl-qa-testes",
-        "beta-anl-qa-resultados",
-        "beta-anl-gerador-cards-clickup",
-        "beta-clk-checklist",
+        "beta-anl-duvidasfuncionais",
+        "beta-anl-regrasnegocio",
+        "beta-anl-triagemincidentes",
+        "beta-anl-qatestes",
+        "beta-anl-qaresultados",
+        "beta-anl-clickupgeradorcards",
+        "beta-anl-clickupchecklist",
         "beta-anl-movidesk",
         "beta-mod-regras",
         "beta-mod-dossie",
@@ -94,7 +94,7 @@ def main(root: Path) -> int:
         "beta-mod-relatorios",
         "beta-mod-qa",
         "beta-mod-artefatos",
-        "beta-sites",
+        "beta-mod-sites",
     }
     for skill in sorted(required - primary_skills):
         errors.append(f"missing primary coverage: {skill}")

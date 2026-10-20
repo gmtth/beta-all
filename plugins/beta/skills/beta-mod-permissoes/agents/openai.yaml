@@ -1,5 +1,5 @@
 interface:
-  display_name: "Beta MOD — Permissões"
+  display_name: "Permissões"
   short_description: "Analisa permissões, autorização e segurança funcional."
   brand_color: "#E3DB0B"
   icon_small: "./assets/beta-mod.png"

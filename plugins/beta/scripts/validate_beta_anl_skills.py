@@ -21,9 +21,9 @@ ANL_REVIEW_SECTIONS = (
 )
 
 ANL_REVIEW_SKILLS = {
-    "beta-anl-regras-negocio",
-    "beta-anl-duvidas-funcionais",
-    "beta-anl-triagem-incidentes",
+    "beta-anl-regrasnegocio",
+    "beta-anl-duvidasfuncionais",
+    "beta-anl-triagemincidentes",
 }
 
 

@@ -19,7 +19,7 @@ test("Supabase source listing uses the beta schema and returns only bounded meta
   try {
     const result = await new SupabaseKnowledgeReader().listSources();
     assert.equal(requestUrl?.pathname, "/rest/v1/source_system");
-    assert.equal(requestUrl?.searchParams.get("select"), "*");
+    assert.equal(requestUrl?.searchParams.get("select"), "id,name");
     assert.equal(requestUrl?.searchParams.get("limit"), "10");
     assert.equal(requestHeaders?.get("Accept-Profile"), "beta");
     assert.equal(requestHeaders?.get("apikey"), "unit-test-secret");

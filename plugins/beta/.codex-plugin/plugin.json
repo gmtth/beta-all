@@ -19,7 +19,7 @@
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Beta",
-    "shortDescription": "Orquestre análise funcional e modelagem do CENCIHUB.",
+    "shortDescription": "Análise e modelagem funcional",
     "longDescription": "Une Beta ANL e Beta MOD em uma entrada única, com roteamento controlado entre análise funcional, modelagem, QA, Dossiê, artefatos, ClickUp e consultas somente leitura do Movidesk.",
     "developerName": "thngrns",
     "category": "Productivity",
@@ -29,11 +29,9 @@
       "Analyze"
     ],
     "defaultPrompt": [
-      "Use a Beta para analisar este pedido.",
+      "Analise este pedido ou consulte um ticket do Movidesk.",
       "Modele este comportamento funcional.",
-      "Crie um checklist funcional para esta alteração.",
-      "Consulte um ticket do Movidesk.",
-      "Transforme este cenário em um card do ClickUp."
+      "Crie um checklist ou card no ClickUp."
     ],
     "brandColor": "#C11D26",
     "composerIcon": "./assets/fundo.png",

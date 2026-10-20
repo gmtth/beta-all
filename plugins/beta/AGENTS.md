@@ -12,9 +12,9 @@ Este projeto empacota a família Beta em um único plugin do Codex. A entrada pr
 
 - `skills/beta/`: única orquestradora automática e control plane.
 - `skills/beta-anl-*`: módulos de análise funcional, QA, ClickUp e Movidesk.
-- `skills/beta-clk-checklist/`: sincronização controlada de checklist comentado do ClickUp.
+- `skills/beta-anl-clickupchecklist/`: sincronização controlada de checklist comentado do ClickUp.
 - `skills/beta-mod-*`: módulos especializados de modelagem funcional.
-- `skills/beta-sites/`: materialização de clone web isolado do CENCIHUB.
+- `skills/beta-mod-sites/`: materialização de clone web isolado do CENCIHUB.
 - `skills/beta/references/protocolo-evidencias-e-handoffs.md`: protocolo transversal obrigatório.
 - `references/`: Knowledge Master, integridade e material de apoio compartilhado.
 - `tests/beta-routing-cases.json`: matriz de contratos de roteamento.
@@ -29,6 +29,26 @@ As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pas
 - A `beta` pode encaminhar para uma subskill quando isso for necessário para concluir a intenção primária.
 - Nomes de subskills especializadas não devem ser renomeados sem atualizar referências, metadados, testes e documentação.
 
+## Padrão de nomenclatura
+
+- `beta` sem sufixo é reservado exclusivamente à skill orquestradora.
+- Identificadores técnicos das skills especializadas seguem `beta-[anl|mod]-identificação`: use `anl` para análise e `mod` para modelagem. Quando a skill for ligada a uma ferramenta, escreva primeiro o nome da ferramenta dentro da identificação, por exemplo `beta-anl-movidesk`, `beta-anl-clickupchecklist`, `beta-anl-clickupgeradorcards`, `beta-mod-figma` e `beta-mod-sites`.
+- Mantenha os identificadores técnicos estáveis entre a pasta da skill e o `name` em `SKILL.md`. Se um identificador técnico mudar, atualize no mesmo conjunto o roteamento e os handoffs da orquestradora, referências textuais, `agents/openai.yaml`, testes/fixtures e documentação. Preserve o nome antigo apenas onde for necessário registrar compatibilidade ou histórico.
+- O nome exibido da orquestradora é `Beta`. As demais skills não devem começar com `Beta`, `ANL` ou `MOD`, nem usar travessão no nome exibido. Se forem relacionadas a uma ferramenta, escreva o nome da ferramenta primeiro também no nome exibido, por exemplo `ClickUp Cards` e `ClickUp Checklist`. Prefira nomes curtos e explicativos de duas palavras; use até três quando necessário para clareza.
+- Mudar apenas o nome exibido em `agents/openai.yaml` não altera o identificador técnico nem exige renomear a pasta ou atualizar chamadas. Essa alteração ainda deve ser refletida no dossier e nos artefatos de publicação pertinentes.
+- Uma padronização de nomes existentes deve ser feita como migração coordenada: atualizar identificadores e referências juntos, rodar os validadores de skills e roteamento e revisar o pacote. Não renomear skills como efeito colateral de uma mudança apenas de nomes exibidos.
+
+## Padrão visual e metadados
+
+- Toda skill ativa deve ter metadados completos em `agents/openai.yaml`: `display_name`, `short_description`, `icon_small`, `icon_large`, `brand_color`, `default_prompt` e `policy.allow_implicit_invocation`.
+- Sempre preencher `brand_color`, `icon_small` e `icon_large`. Os dois campos de logo podem apontar para o mesmo asset ou para assets pequeno/grande separados, desde que ambos existam, sejam legíveis e estejam versionados dentro da pasta da skill.
+- Por padrão, as skills ANL reutilizam o logo ANL canônico já existente e as skills MOD reutilizam o logo MOD canônico já existente. Exceções por ferramenta ou produto são permitidas, como Movidesk e Sites; mantenha seus logos/cores próprios quando isso fizer parte da identidade visual aprovada. Registre novas exceções no dossier.
+- Mantenha a paleta padrão consistente dentro de cada família. Use cores em hexadecimal, preserve exceções explícitas e confira contraste/legibilidade antes de introduzir uma cor nova. Não substitua assets existentes sem verificar seu uso e identidade.
+- `display_name` deve seguir o padrão de nomenclatura. `short_description` deve resumir a função específica sem duplicar o nome; `default_prompt` deve ser curto, funcional e usar o identificador técnico vigente quando invocar a skill.
+- `policy.allow_implicit_invocation` deve ser `true` somente para a orquestradora `beta` e `false` para skills especializadas. Sempre declare `dependencies.tools` quando a skill depender de uma ferramenta ou conexão externa que o formato e o runtime suportem. Não invente dependências nem copie configuração de outro conector; se não houver integração suportada/verificada, registre a limitação e não declare uma dependência fictícia.
+- No manifesto do plugin, mantenha também `interface.brandColor`, `interface.composerIcon` e `interface.logo` preenchidos, junto aos metadados descritivos e funcionais exigidos pelo formato de pacote. Verifique limites de tamanho e quantidade definidos pelo formato antes de empacotar.
+- Ao validar metadados, conferir também que todo caminho de logo é relativo, existe dentro da pasta da skill e aponta para o asset correto; que a cor está em hexadecimal; e que prompt, nome e política correspondem à função e ao modo da skill.
+
 ## Regras de comportamento
 
 - Carregar o protocolo transversal antes de rotear ou responder diretamente por uma subskill.
@@ -39,8 +59,8 @@ As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pas
 - Manter Dossiê, QA, filtro de publicação e artefatos conforme as regras do modo MOD.
 - Operar conectores em somente leitura quando assim definido pela skill ou MCP.
 - Não simular acesso a Movidesk, ClickUp, Figma ou qualquer outro conector.
-- `beta-clk-checklist` só pode ser invocada com link explícito de tarefa ou comentário do ClickUp e só pode alterar o comentário de checklist determinado pelo seu contrato.
-- `beta-sites` permanece isolada do backend, API, banco, autenticação e ambientes reais do CENCIHUB.
+- `beta-anl-clickupchecklist` só pode ser invocada com link explícito de tarefa ou comentário do ClickUp e só pode alterar o comentário de checklist determinado pelo seu contrato.
+- `beta-mod-sites` permanece isolada do backend, API, banco, autenticação e ambientes reais do CENCIHUB.
 - Preservar regras específicas de cada subskill; alterações transversais devem ser feitas no protocolo compartilhado e refletidas nos testes.
 
 ## MCP
@@ -66,7 +86,8 @@ Também confira:
 
 - JSON válido em `.codex-plugin/plugin.json`;
 - `SKILL.md` e `agents/openai.yaml` em cada skill ativa;
-- ícones referenciados pelos metadados existentes;
+- nomes, descrições curtas, prompts padrão e políticas de invocação completos e coerentes;
+- `brand_color`, `icon_small` e `icon_large` preenchidos, com assets existentes e corretos;
 - links relativos para referências válidos;
 - ausência de caminhos absolutos, tokens e referências a diretórios externos;
 - cobertura das 19 subskills especializadas na matriz de roteamento.

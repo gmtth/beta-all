@@ -1565,6 +1565,28 @@ O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Bet
 - **Publicação:** não realizada nesta operação. O Site permanece na versão 70 até novo deploy e smoke test.
 - **PR #41:** foi criada a partir do `main` em `46e8a3c`, antes das PRs #42 e #43. A conciliação da branch preserva o comportamento/documentação Supabase e a UI de consentimento por escopo adicionados depois.
 
+## Leitura mínima do catálogo Supabase (2026-10-20)
+
+- **Mudança local:** `SupabaseKnowledgeReader` solicita agora somente as colunas `id,name` de `beta.source_system`, em vez de todas as colunas. A saída continua limitada a identificador e nome, sem alterar o contrato público da ferramenta.
+- **Motivo:** reduzir exposição e transferência desnecessária no backend. A existência de `id` e `name` está registrada no teste SQL anterior feito pelo usuário; a confirmação contra o DDL integral segue pendente.
+- **Verificação local:** `node_modules/.bin/tsx.cmd --test tests/knowledge-tools.test.ts tests/supabase-knowledge.test.ts` — 4 testes aprovados após a mudança.
+- **Estado:** alteração ainda não commitada nem publicada. Não confirma acesso pelo MCP publicado, validade da chave Supabase ou equivalência integral do schema real.
+
+## Catálogo Supabase recebido pelo SQL Editor (2026-10-20)
+
+- **Estado observado:** schema `beta`; três tabelas (`source_system`, `source_record`, `record_chunk`); extensão `vector`; quatro índices, incluindo GIN em `record_chunk.search_vector`. O DDL mostra busca lexical por `tsvector` gerado.
+- **Limites encontrados:** não há coluna vetorial nem índice vetorial, policies RLS, funções/RPCs ou triggers no resultado. Portanto `pgvector` está instalado, mas busca semântica e híbrida ainda não existem no banco.
+- **Permissões:** RLS está habilitado sem policies. `service_role` tem `USAGE` no schema e privilégios DML completos nas tabelas. `anon` e `authenticated` também têm grants DML nas tabelas, mas não têm `USAGE` no schema `beta`; reduzir essas ACLs de tabela por least privilege. A consulta de catálogo não confirma a configuração separada de exposição da Data API.
+- **Segredo:** em resposta de 2026-10-20, o usuário confirmou a rotação da chave exposta e a atualização de `SUPABASE_SECRET_KEY` no Sites. O valor permaneceu mascarado e não foi consultado. A validade efetiva da variável depende de teste via MCP.
+- **Próximo passo:** teste end-to-end de `knowledge_list_sources`; depois, definir e revisar grants mínimos antes de qualquer alteração no Supabase. Não aplicar mudanças de produção apenas com base na inspeção.
+
+## Primeiro teste MCP da consulta de fontes (2026-10-20)
+
+- **Resultado informado pelo usuário:** `knowledge_list_sources` foi chamado, mas retornou a mensagem de que a autorização estava ausente, expirada ou insuficiente para `knowledge:read`; nenhuma fonte foi retornada.
+- **Leitura técnica:** a ferramenta devolve essa mensagem quando `authorizeOAuthScope` não encontra token válido com `knowledge:read` e conta ainda ativa. Isso não indica, por si só, falha da chave Supabase nem consulta ao banco; o reader não segue para a chamada à Data API quando a autorização falha.
+- **Código local:** `worker/mcp.ts` registra a ferramenta protegida por `knowledge:read`; `app/oauth/clients.ts` permite esse escopo ao cliente MCP; `app/oauth/authorize/route.ts` salva o escopo concedido no token. Verificação de fonte local, não confirmação do deployment.
+- **Próxima ação:** desconectar/reconectar a conta MCP no ChatGPT para obter novo consentimento incluindo `knowledge:read`, conferir a conta exibida na autorização e repetir a consulta. Se persistir, verificar se o e-mail continua ativo em `oauth_users` no banco do Site e confirmar que o deployment contém o código com esse escopo. Não solicitar token ou segredo ao usuário.
+
 ## Limpeza do servidor legado `source-bundle` (2026-10-19)
 
 **Pedido:** preparar o projeto para o futuro removendo código e dependências consideradas legadas.
@@ -1639,7 +1661,8 @@ A tela OAuth da PR #42 foi preservada integralmente; a alteração da #41 nesse 
 - **GitHub:** o `main` remoto foi confirmado no commit `e9ad25cebccf0c6a7d4d11e2526fff8b6da7574e`, com as PRs #41, #42 e #43 integradas.
 - **Sites:** a origem do Site usa repositório Cloudflare Artifact separado do GitHub. O commit `5c26eac6ca78b2eb71093b246efc7b9afe0e0efb` contém o código dos arquivos de runtime/documentação do `main` e foi enviado à branch de origem `main` do Site. A versão 73 foi salva a partir desse commit e implantada com sucesso; deployment `appgdep_6ad73a9f28388191bb62480b2b452ec5`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`.
 - **Smoke test HTTP:** metadados OAuth e do recurso protegido retornaram HTTP 200 e anunciaram `movidesk:read` e `knowledge:read`. POST sem autenticação em `/mcp/` retornou HTTP 401 com `WWW-Authenticate` apontando para o metadata protegido e os dois scopes. Isso confirma a rota protegida e os metadados; não confirma manifesto autenticado, chamada de ferramenta ou consulta ao Supabase. O Sites registrou `has_mcp: false` para a integração nativa; a rota customizada do Worker foi verificada separadamente.
-- **Configuração Supabase:** `SUPABASE_URL` está configurada; `SUPABASE_SECRET_KEY` não está configurada. Nenhum valor secreto foi lido ou incluído. A ferramenta `knowledge_list_sources` está no código publicado, mas a leitura permanecerá indisponível até que a chave seja configurada no Sites.
+- **Configuração Supabase naquele registro:** `SUPABASE_URL` estava configurada e `SUPABASE_SECRET_KEY` foi registrada como ausente; nenhum valor secreto foi lido ou incluído. A ferramenta `knowledge_list_sources` estava no código publicado, mas a leitura permaneceria indisponível sem a chave.
+- **Reconciliação posterior no Sites (2026-10-20):** consulta atual do inventário de variáveis da versão publicada encontrou os nomes `SUPABASE_URL` e `SUPABASE_SECRET_KEY`; valores secretos são mascarados pelo serviço. Isso supersede a observação de ausência como estado atual do nome da variável, mas não confirma que o valor esteja definido, seja válido ou use uma chave rotacionada. Não declarar a consulta MCP funcional sem smoke test autenticado.
 - **Verificação:** `npm ci` e `vinext build` concluídos; catálogo semântico válido. A suíte executou 72 testes: 71 passaram e 1 falhou (`the proxy renders its branded access page`) porque a asserção ainda espera o texto antigo da página. Nenhum teste foi enfraquecido. `git diff --check` passou após remover uma linha em branco excedente.
 - **Checkout local:** os arquivos alterados pelas PRs #42/#43 e os documentos README/DOSSIER foram alinhados ao conteúdo do `main`. Cópias dos arquivos substituídos foram preservadas em `C:\Users\mrg78\AppData\Local\Temp\beta-mcp-sync-e9ad25\local-before-sync`. O ponteiro local ainda está na branch `codex/phase3b-similarity`, HEAD `392c2f8`; não foi possível fazer fast-forward via Git CLI porque este terminal não tem credencial GitHub. As alterações locais de limpeza e o diretório `legado/` foram preservados. Nenhum commit ou push adicional foi feito para o repositório GitHub.
 ## Remoção da referência local de branch redundante (2026-10-20)

@@ -1,5 +1,5 @@
 interface:
-  display_name: "Beta MOD — Processamento"
+  display_name: "Processamento"
   short_description: "Analisa ciclo de vida, estados e processamento funcional."
   brand_color: "#E3DB0B"
   icon_small: "./assets/beta-mod.png"

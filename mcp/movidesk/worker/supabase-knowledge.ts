@@ -17,7 +17,7 @@ export class SupabaseKnowledgeReader implements KnowledgeReader {
     } catch {
       throw new Error("Invalid Supabase URL.");
     }
-    endpoint.searchParams.set("select", "*");
+    endpoint.searchParams.set("select", "id,name");
     endpoint.searchParams.set("limit", "10");
 
     const response = await fetch(endpoint, {

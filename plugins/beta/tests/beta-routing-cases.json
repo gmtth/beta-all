@@ -3,7 +3,7 @@
     "id": "anl-duvida-conceito",
     "prompt": "O que é uma ficha no CENCIHUB e para que ela serve?",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-duvidas-funcionais",
+    "primary_skill": "beta-anl-duvidasfuncionais",
     "allowed_helpers": [],
     "transitions": [],
     "assertions": ["responder definição e finalidade", "não inventar tela ou campo"]
@@ -12,7 +12,7 @@
     "id": "anl-regra-validacao",
     "prompt": "Qual regra confirma o bloqueio quando a configuração obrigatória não está preenchida?",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-regras-negocio",
+    "primary_skill": "beta-anl-regrasnegocio",
     "allowed_helpers": [],
     "transitions": [],
     "assertions": ["separar regra, condição e efeito", "não transformar hipótese em regra"]
@@ -21,7 +21,7 @@
     "id": "anl-incidente",
     "prompt": "A tela exibiu uma mensagem diferente do esperado apenas para uma máquina. Faça a triagem.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-triagem-incidentes",
+    "primary_skill": "beta-anl-triagemincidentes",
     "allowed_helpers": [],
     "transitions": [],
     "assertions": ["isolar sintoma e escopo", "não fechar diagnóstico sem evidência"]
@@ -30,7 +30,7 @@
     "id": "anl-qa-testes",
     "prompt": "Crie um checklist de regressão para a alteração do fluxo de retirada.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-qa-testes",
+    "primary_skill": "beta-anl-qatestes",
     "allowed_helpers": [],
     "transitions": [],
     "assertions": ["criar cenários proporcionais ao risco", "não inventar regra não fornecida"]
@@ -39,8 +39,8 @@
     "id": "anl-qa-ciclo-publicacao-condicionada",
     "prompt": "Vamos testar esta tarefa do ClickUp: leia o card principal e os Itens relacionados, proponha Smoke e testes estendidos, depois de alinharmos publique o checklist e inicie QA Resultados.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-qa-testes",
-    "allowed_helpers": ["beta-anl-qa-resultados"],
+    "primary_skill": "beta-anl-qatestes",
+    "allowed_helpers": ["beta-anl-qaresultados"],
     "transitions": [],
     "assertions": ["checklist neutro sem nome ou ID de base", "tarefa principal lida integralmente", "relacionados limitados a Itens relacionados e cinco comentários recentes", "Smoke e testes estendidos apresentados separadamente com benefício explicado", "comentário bloqueado se status não for exatamente teste q.a.", "comentário Checklist de testes contém título e apenas itens - [ ] em linhas consecutivas sem rótulos de camada", "QA Resultados só começa após publicação confirmada"]
   },
@@ -48,7 +48,7 @@
     "id": "anl-qa-resultados",
     "prompt": "Organize os resultados executados deste checklist sem alterar os itens originais.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-qa-resultados",
+    "primary_skill": "beta-anl-qaresultados",
     "allowed_helpers": [],
     "transitions": [],
     "assertions": ["preservar checklist literal", "relacionar evidência ao item correto"]
@@ -57,7 +57,7 @@
     "id": "anl-card-consolidado",
     "prompt": "Transforme este achado já consolidado em um card do ClickUp.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-gerador-cards-clickup",
+    "primary_skill": "beta-anl-clickupgeradorcards",
     "allowed_helpers": [],
     "transitions": [],
     "assertions": ["produzir card rastreável", "não investigar novamente sem necessidade"]
@@ -75,7 +75,7 @@
     "id": "anl-clk-checklist",
     "prompt": "Sincronize o checklist comentado desta tarefa do ClickUp com os problemas registrados depois dele.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-clk-checklist",
+    "primary_skill": "beta-anl-clickupchecklist",
     "allowed_helpers": [],
     "transitions": [],
     "assertions": ["exigir link de tarefa ou comentário", "alterar somente o comentário de checklist"]
@@ -84,7 +84,7 @@
     "id": "mod-sites-clone",
     "prompt": "Atualize o clone web isolado do CENCIHUB com base na modelagem e nas referências visuais fornecidas.",
     "primary_mode": "MOD",
-    "primary_skill": "beta-sites",
+    "primary_skill": "beta-mod-sites",
     "allowed_helpers": ["beta-mod-regras", "beta-mod-fluxos"],
     "transitions": [],
     "assertions": ["manter execução isolada", "não integrar com o sistema real"]
@@ -102,7 +102,7 @@
     "id": "anl-para-mod-regra",
     "prompt": "A investigação encontrou comportamentos contraditórios e agora precisamos definir qual regra deve valer.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-triagem-incidentes",
+    "primary_skill": "beta-anl-triagemincidentes",
     "allowed_helpers": ["beta-mod-regras", "beta-mod-fontes"],
     "transitions": ["ANL->MOD"],
     "assertions": ["preservar incidente como evidência", "consolidar regra na MOD"]
@@ -111,8 +111,8 @@
     "id": "anl-qa-nao-vira-card",
     "prompt": "Durante a execução do QA apareceu um erro, mas ainda não sabemos a causa. Analise o próximo passo.",
     "primary_mode": "ANL",
-    "primary_skill": "beta-anl-triagem-incidentes",
-    "allowed_helpers": ["beta-anl-qa-resultados"],
+    "primary_skill": "beta-anl-triagemincidentes",
+    "allowed_helpers": ["beta-anl-qaresultados"],
     "transitions": [],
     "assertions": ["não avançar automaticamente para card", "diferenciar achado de diagnóstico"]
   },

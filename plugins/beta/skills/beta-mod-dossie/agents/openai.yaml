@@ -1,5 +1,5 @@
 interface:
-  display_name: "Beta MOD — Dossiê"
+  display_name: "Dossiê"
   short_description: "Mantém o contexto vigente, estados, destinos e persistência do Dossiê."
   brand_color: "#E3DB0B"
   icon_small: "./assets/beta-mod.png"

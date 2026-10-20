@@ -1564,7 +1564,7 @@ O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Bet
 
 **Limites:** não foi identificado se algum serviço independente ainda executa uma cópia de `source-bundle`. Não foram removidas dependências dos manifestos raiz, nem alteradas as ferramentas, contratos, OAuth, Worker ou configuração do Site. Build do pacote final foi executado com sucesso após a reconciliação das fontes; testes não foram executados nesta limpeza.
 
-**Estado:** a limpeza foi aplicada sobre a fonte atual do Site e está sendo registrada no commit de publicação; a implantação só será considerada atualizada após confirmação do Sites.
+**Estado:** limpeza publicada no Sites como versão 71, deployment `appgdep_6ad6d7cdb298819190fe5958612c9ac1`, a partir do commit `a895d3068c11abbab269955427611f5c642744a1`. No GitHub, o mesmo conteúdo está na PR #41, branch `codex/legacy-cleanup-20261020`, commit `d05206a2eb3f9ddb1722efafa4dc7434a2668f21`; a PR está aberta e mesclável.
 
 ## Remoção do exemplo D1 não utilizado (2026-10-19)
 
@@ -1597,3 +1597,11 @@ Os originais `dist/`, `_site-package-stage/` e os 35 `.tar.gz` foram removidos d
 Foi feita busca de imports e referências em todas as páginas/rotas, no build, nos testes e nas instruções/templates locais do Sites. `SkeletonPreview` só era declarado em `app/_sites-preview/SkeletonPreview.tsx`; não havia importador. O diretório privado `_sites-preview` não cria uma rota App Router, e a skill/template oficial Sites instalados não documentam nem usam esse caminho como contrato de extensão. O teste de HTML também exige que o componente não apareça em `app/page.tsx`.
 
 Com essa evidência, foram removidos `app/_sites-preview/SkeletonPreview.tsx`, seu CSS e a dependência sem outro uso `react-loading-skeleton` de `package.json`, `package-lock.json` e `pnpm-lock.yaml`. Nenhuma rota, integração, binding ou recurso publicado é referenciado por esses arquivos no código local. Build/teste não foram executados; portanto, o efeito foi verificado estaticamente, não em um deployment Sites. A mudança está local, sem commit, push, merge ou deploy.
+
+
+## Publicação da limpeza (2026-10-20)
+
+- **Sites:** versão 71 publicada com sucesso em `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`; deployment `appgdep_6ad6d7cdb298819190fe5958612c9ac1`; fonte `a895d3068c11abbab269955427611f5c642744a1`.
+- **GitHub:** PR #41 (`codex/legacy-cleanup-20261020` → `main`) aberta, mesclável, head `d05206a2eb3f9ddb1722efafa4dc7434a2668f21`. A árvore de arquivos foi conferida e corresponde exatamente à fonte publicada no Sites. O GitHub não reportou status checks para esse commit.
+- **Verificação:** `npm ci` e `npm run build` passaram no checkout reconciliado. Testes automatizados não foram executados.
+- O ZIP local `legado/artefatos-publicacao-20261019.zip` e `work/legacy-preservation/` continuam fora do GitHub e do pacote do Site; os backups locais foram mantidos.

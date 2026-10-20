@@ -31,6 +31,12 @@ Fluxo para a migration de ingestão, ainda sem aplicar ao remoto:
 
 Não usar `supabase db reset --linked` no projeto existente: esse comando pode apagar o schema/dados remotos. A referência do Supabase documenta `migration list` e `migration repair` para reconciliar os arquivos locais com a história remota; `repair` muda apenas o registro de migrations ([CLI reference](https://supabase.com/docs/reference/cli/supabase-migration-list), [database migrations guide](https://supabase.com/docs/guides/deployment/database-migrations)).
 
+### Painel administrativo (preparação local)
+
+A migration `20261020150000_admin_knowledge_overview.sql` adiciona uma RPC somente de leitura para o painel master do MCP. Ela retorna contagens por fonte e até dez importações recentes, sem conteúdo dos trechos. A execução fica concedida somente a `service_role`; o backend continua exigindo sessão ChatGPT e papel master. O rollback remove apenas a função.
+
+Esta migration está preparada no repositório, mas ainda não foi aplicada ao Supabase. Até sua aplicação e publicação do runtime correspondente, o painel pode mostrar a conexão online e os indicadores de conhecimento indisponíveis.
+
 ## Segredos e configuração
 
 Configurar no ambiente do servidor apenas `SUPABASE_URL` e `SUPABASE_SECRET_KEY`, com valores guardados no gerenciador de segredos do host. Nunca colocar a chave secreta em arquivos do plugin, navegador, commits ou contexto retornado ao modelo. Uma chave compartilhada anteriormente na conversa foi considerada comprometida; usar apenas uma chave rotacionada e ativa.

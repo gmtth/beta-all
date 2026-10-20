@@ -2,7 +2,17 @@ import type { KnowledgeStore, KnowledgeSourceSummary } from "./knowledge-tools";
 import type { MovideskKnowledgeRecord } from "./knowledge-ingest";
 
 const safeText = (value: unknown) => typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : null;
+const safeAdminText = (value: unknown) => typeof value === "string" || typeof value === "number" ? String(value).trim().slice(0, 180) || null : null;
+const safeCount = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
+const safeIsoDate = (value: unknown) => typeof value === "string" && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : null;
 const sourceNameKeys = ["display_name", "displayName", "name", "source_name", "sourceName", "system_name", "systemName", "source_system", "source", "system", "slug", "code", "key"];
+
+export type KnowledgeAdminOverview = {
+  sources: Array<{ id: string | null; code: string | null; name: string | null; active: boolean; recordCount: number; chunkCount: number }>;
+  recordCount: number;
+  chunkCount: number;
+  recentImports: Array<{ ticketId: string | null; title: string | null; actorEmail: string | null; chunkCount: number; createdAt: string | null }>;
+};
 
 export class SupabaseKnowledgeStore implements KnowledgeStore {
   private configuration() {
@@ -44,6 +54,53 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
       const name = sourceNameKeys.map((key) => safeText(row[key])).find((value) => value !== null) ?? id;
       return { id, name };
     });
+  }
+
+  async getAdminOverview(): Promise<KnowledgeAdminOverview> {
+    const { base, secretKey } = this.configuration();
+    const endpoint = new URL("/rest/v1/rpc/get_knowledge_admin_overview", base);
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers: {
+        apikey: secretKey,
+        Authorization: `Bearer ${secretKey}`,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        "Content-Profile": "beta",
+      },
+      body: "{}",
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!response.ok) throw new Error(`Supabase overview failed with HTTP ${response.status}.`);
+    const payload: unknown = await response.json();
+    const data = payload && typeof payload === "object" && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
+    const sources = Array.isArray(data.sources) ? data.sources.slice(0, 10).map((value) => {
+      const row = value && typeof value === "object" ? value as Record<string, unknown> : {};
+      return {
+        id: safeAdminText(row.id),
+        code: safeAdminText(row.code),
+        name: safeAdminText(row.name),
+        active: row.active === true,
+        recordCount: safeCount(row.record_count),
+        chunkCount: safeCount(row.chunk_count),
+      };
+    }) : [];
+    const recentImports = Array.isArray(data.recent_imports) ? data.recent_imports.slice(0, 10).map((value) => {
+      const row = value && typeof value === "object" ? value as Record<string, unknown> : {};
+      return {
+        ticketId: safeAdminText(row.ticket_id),
+        title: safeAdminText(row.title),
+        actorEmail: safeAdminText(row.actor_email),
+        chunkCount: safeCount(row.chunk_count),
+        createdAt: safeIsoDate(row.created_at),
+      };
+    }) : [];
+    return {
+      sources,
+      recordCount: safeCount(data.record_count),
+      chunkCount: safeCount(data.chunk_count),
+      recentImports,
+    };
   }
 
   async importMovideskTicket(record: MovideskKnowledgeRecord, actorEmail: string): Promise<{ recordId: string; chunkCount: number }> {

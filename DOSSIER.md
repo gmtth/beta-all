@@ -49,6 +49,13 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - A versão 74 do runtime MCP foi publicada com sucesso em 2026-10-20 no Sites; GET aos metadados OAuth confirmou os três scopes. Reautorização por analista e importação piloto ainda pendentes.
 - **Estado:** código, migration e verificações locais em andamento nesta branch; nenhuma publicação Sites, alteração remota dessa nova migration nem importação do chamado `20260702000000016` foi realizada nesta implementação local. O teste pedido para o chamado depende da revisão/aplicação da migration, publicação do runtime, nova autorização `knowledge:write` e invocação explícita da ferramenta.
 
+## Painel administrativo e refinamento da conexão (2026-10-20)
+
+- Foi preparado localmente um painel master de controle em `/admin/users` que agrega disponibilidade/latência do Supabase, contagens da base, fontes, importações recentes e escopos realmente presentes nos tokens ativos de cada analista.
+- A conexão foi alinhada à variável server-side `SUPABASE_SECRET_KEY` e valida o endpoint `beta.source_system`. Nenhuma chave ou erro bruto é devolvido à interface.
+- A RPC agregada `beta.get_knowledge_admin_overview()` e migration `20261020150000` ainda não foram aplicadas ao banco. A leitura administrativa de indicadores ficará indisponível até aplicar essa migration e publicar o runtime atualizado.
+- Nenhuma publicação no Sites, alteração do banco remoto ou concessão/revogação de acesso foi feita nesta etapa.
+
 ## Corte operacional concluído e pendências técnicas
 
 - O corte do GitHub foi concluído: `gmtth/beta-all` está privado e ativo; `plugin-beta` foi tornado privado e arquivado; `movidesk-mcp-oauth`, `skill-clickup-checklist` e `skill-clickup-sprint-export` foram arquivados (já privados). Repositórios históricos anteriormente privados/arquivados continuam assim.

@@ -56,6 +56,13 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 3. Implementar busca de trechos, depois busca vetorial/híbrida e citações.
 4. Definir política de importação em lote, retenção, backup e recuperação antes de expandir o piloto.
 
+## Painel administrativo e refinamento da conexão (2026-10-20)
+
+- A integração de status foi alinhada a `SUPABASE_SECRET_KEY` e ao endpoint real `beta.source_system`, com verificação HTTPS, medição de latência e retorno sem credenciais ou erros brutos.
+- O painel master local em `mcp/movidesk/app/admin/users` reúne disponibilidade da Data API, latência, contagens de fontes/registros/trechos, importações recentes e escopos em tokens ativos por analista. Os endpoints permanecem protegidos por autenticação ChatGPT e papel master.
+- A migration `20261020150000_admin_knowledge_overview.sql` cria uma RPC de leitura agregada, limitada a dez importações recentes e sem conteúdo de chamados/trechos. Execução concedida apenas a `service_role`; rollback remove somente a função.
+- **Estado:** implementação, migration e documentação preparadas localmente em 2026-10-20. A migration não foi aplicada remotamente e a nova versão do Sites/runtime não foi publicada nem validada end-to-end.
+
 ## Fontes internas
 
 - [`README.md`](./README.md) — resumo e orientação operacional.

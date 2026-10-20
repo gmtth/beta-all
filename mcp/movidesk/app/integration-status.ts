@@ -1,5 +1,11 @@
 type ServiceStatus = "online" | "offline";
 
+export type SupabaseConnectionHealth = {
+  status: ServiceStatus;
+  configured: boolean;
+  latencyMs: number | null;
+};
+
 async function isHealthy(url: URL, headers: HeadersInit) {
   try {
     const response = await fetch(url, {
@@ -25,26 +31,33 @@ async function movideskStatus(): Promise<ServiceStatus> {
   return (await isHealthy(url, { Accept: "application/json" })) ? "online" : "offline";
 }
 
-async function supabaseStatus(): Promise<ServiceStatus> {
+export async function checkSupabaseConnection(): Promise<SupabaseConnectionHealth> {
   const baseUrl = process.env.SUPABASE_URL;
-  const apiKey = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!baseUrl || !apiKey) return "offline";
+  const apiKey = process.env.SUPABASE_SECRET_KEY;
+  if (!baseUrl || !apiKey) return { status: "offline", configured: false, latencyMs: null };
 
+  const started = performance.now();
   try {
     const base = new URL(baseUrl);
-    if (base.protocol !== "https:") return "offline";
-    const url = new URL("/rest/v1/", base.origin);
-    return (await isHealthy(url, {
-      Accept: "application/openapi+json",
+    if (base.protocol !== "https:" || !base.hostname.endsWith(".supabase.co")) {
+      return { status: "offline", configured: true, latencyMs: null };
+    }
+    const url = new URL("/rest/v1/source_system", base);
+    url.searchParams.set("select", "id");
+    url.searchParams.set("limit", "1");
+    const online = await isHealthy(url, {
+      Accept: "application/json",
+      "Accept-Profile": "beta",
       apikey: apiKey,
       Authorization: `Bearer ${apiKey}`,
-    })) ? "online" : "offline";
+    });
+    return { status: online ? "online" : "offline", configured: true, latencyMs: Math.round(performance.now() - started) };
   } catch {
-    return "offline";
+    return { status: "offline", configured: true, latencyMs: Math.round(performance.now() - started) };
   }
 }
 
 export async function getIntegrationStatuses() {
-  const [movidesk, supabase] = await Promise.all([movideskStatus(), supabaseStatus()]);
-  return { movidesk, supabase };
+  const [movidesk, supabase] = await Promise.all([movideskStatus(), checkSupabaseConnection()]);
+  return { movidesk, supabase: supabase.status };
 }

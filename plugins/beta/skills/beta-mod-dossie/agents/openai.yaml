@@ -1,0 +1,10 @@
+interface:
+  display_name: "Beta MOD — Dossiê"
+  short_description: "Mantém o contexto vigente, estados, destinos e persistência do Dossiê."
+  brand_color: "#E3DB0B"
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"
+  default_prompt: "Use $beta-mod-dossie para atualizar o Dossiê de Contexto desta modelagem."
+
+policy:
+  allow_implicit_invocation: false

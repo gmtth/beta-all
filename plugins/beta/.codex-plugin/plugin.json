@@ -1,0 +1,42 @@
+{
+  "name": "suite-beta",
+  "version": "1.2.0",
+  "description": "Orquestradora única das famílias Beta ANL e Beta MOD para análise funcional, modelagem, QA e integrações do CENCIHUB.",
+  "author": {
+    "name": "thngrns",
+    "email": "39179366+gmtth@users.noreply.github.com"
+  },
+  "keywords": [
+    "beta",
+    "cencihub",
+    "beta-anl",
+    "beta-mod",
+    "movidesk",
+    "clickup",
+    "qa"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Beta",
+    "shortDescription": "Orquestre análise funcional e modelagem do CENCIHUB.",
+    "longDescription": "Une Beta ANL e Beta MOD em uma entrada única, com roteamento controlado entre análise funcional, modelagem, QA, Dossiê, artefatos, ClickUp e consultas somente leitura do Movidesk.",
+    "developerName": "thngrns",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Search",
+      "Analyze"
+    ],
+    "defaultPrompt": [
+      "Use a Beta para analisar este pedido.",
+      "Modele este comportamento funcional.",
+      "Crie um checklist funcional para esta alteração.",
+      "Consulte um ticket do Movidesk.",
+      "Transforme este cenário em um card do ClickUp."
+    ],
+    "brandColor": "#C11D26",
+    "composerIcon": "./assets/fundo.png",
+    "logo": "./assets/fundo.png"
+  }
+}

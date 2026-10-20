@@ -1,0 +1,11 @@
+interface:
+  display_name: "Beta ANL — QA testes funcionais"
+  short_description: "Cria smoke tests e cobertura funcional de regressão."
+  icon_small: "./assets/fundo.png"
+  icon_large: "./assets/fundo.png"
+  brand_color: "#C11D26"
+  default_prompt: "Use $beta-anl-qa-testes para criar um checklist funcional com smoke e cobertura ampliada proporcional ao risco."
+
+policy:
+  allow_implicit_invocation: false
+

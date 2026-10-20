@@ -1,0 +1,11 @@
+interface:
+  display_name: "Beta ANL — Triagem de incidentes"
+  short_description: "Isola incidentes e organiza evidências e hipóteses."
+  icon_small: "./assets/fundo.png"
+  icon_large: "./assets/fundo.png"
+  brand_color: "#C11D26"
+  default_prompt: "Use $beta-anl-triagem-incidentes para triar este incidente sem fechar o diagnóstico sem evidências."
+
+policy:
+  allow_implicit_invocation: false
+

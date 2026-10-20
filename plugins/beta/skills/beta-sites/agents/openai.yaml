@@ -1,0 +1,10 @@
+interface:
+  display_name: "Beta SIT"
+  short_description: "Cria clones visuais e funcionais isolados do CENCIHUB."
+  brand_color: "#168DE4"
+  icon_small: "./assets/beta-sit.png"
+  icon_large: "./assets/beta-sit.png"
+  default_prompt: "Use $beta-sites para criar ou atualizar um clone isolado do CENCIHUB."
+
+policy:
+  allow_implicit_invocation: false

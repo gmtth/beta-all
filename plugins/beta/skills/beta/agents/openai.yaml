@@ -1,0 +1,10 @@
+interface:
+  display_name: "Beta"
+  short_description: "Orquestre análise funcional e modelagem do CENCIHUB"
+  icon_small: "./assets/fundo.png"
+  icon_large: "./assets/fundo.png"
+  brand_color: "#C11D26"
+  default_prompt: "Use $beta para analisar este pedido e acionar apenas as skills Beta ANL ou Beta MOD necessárias."
+
+policy:
+  allow_implicit_invocation: true

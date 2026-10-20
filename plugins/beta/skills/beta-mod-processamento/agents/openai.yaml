@@ -1,0 +1,10 @@
+interface:
+  display_name: "Beta MOD — Processamento"
+  short_description: "Analisa ciclo de vida, estados e processamento funcional."
+  brand_color: "#E3DB0B"
+  icon_small: "./assets/beta-mod.png"
+  icon_large: "./assets/beta-mod.png"
+  default_prompt: "Use $beta-mod-processamento para analisar o ciclo de vida, estados e processamento deste cenário."
+
+policy:
+  allow_implicit_invocation: false

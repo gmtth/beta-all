@@ -1,0 +1,19 @@
+interface:
+  display_name: "Beta ANL — Movidesk"
+  short_description: "Consulta direta, somente leitura, do Movidesk."
+  icon_small: "./assets/fundo.png"
+  icon_large: "./assets/fundo.png"
+  brand_color: "#FF2A28"
+  default_prompt: "Use $beta-anl-movidesk para consultar um ticket do Movidesk e resumir o resultado."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "movidesk"
+      description: "Servidor MCP somente leitura do Movidesk"
+      transport: "streamable_http"
+      url: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/"
+
+policy:
+  allow_implicit_invocation: false
+

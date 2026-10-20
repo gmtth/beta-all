@@ -1,0 +1,11 @@
+interface:
+  display_name: "Beta ANL — Gerador de cards ClickUp"
+  short_description: "Cria cards ClickUp com análise funcional rastreável."
+  icon_small: "./assets/fundo.png"
+  icon_large: "./assets/fundo.png"
+  brand_color: "#C11D26"
+  default_prompt: "Use $beta-anl-gerador-cards-clickup para transformar este cenário em análise técnica e card pronto para o ClickUp."
+
+policy:
+  allow_implicit_invocation: false
+

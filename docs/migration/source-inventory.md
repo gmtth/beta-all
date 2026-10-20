@@ -43,3 +43,9 @@ Os dois snapshots `sites-beta-mcp-snapshot-*` tinham um gitlink sem `.gitmodules
 - Dados reais do Movidesk/ClickUp e credenciais Supabase não foram exportados ao Git.
 - Nenhuma alteração de visibilidade, arquivamento, branch, publicação ou dados do Supabase foi feita durante a importação.
 - Os repositórios ativos/legados originais ficam intactos até validar o clone limpo, publicação por componente e dependências externas.
+
+## Corte operacional (2026-10-20)
+
+O push de `main` de `gmtth/beta-all` foi validado por um clone limpo no Windows. A árvore não contém gitlinks ativos e os 400 arquivos listados nos manifestos SHA-256 conferem byte a byte. `gmtth/beta-all` permanece privado e ativo. `gmtth/plugin-beta` foi tornado privado e arquivado; `gmtth/movidesk-mcp-oauth`, `gmtth/skill-clickup-checklist` e `gmtth/skill-clickup-sprint-export` foram arquivados e já eram privados. Outros repositórios relacionados já estavam arquivados/privados no inventário.
+
+O repositório MCP arquivado conserva branches remotas não importadas individualmente, além dos históricos explicitamente importados em `legacy/`; esses refs permanecem recuperáveis no GitHub. O endpoint do plugin continua apontando para o Site `Beta MCP` publicado na versão 73. A consolidação não alterou publicação ou dados do Supabase. A reconstrução do banco aguarda o DDL e as políticas reais.

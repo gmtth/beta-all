@@ -41,7 +41,7 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 
 ## Pendências para o corte operacional
 
-- Fazer push do histórico consolidado para `gmtth/beta-all` e validar um clone limpo do remoto.
-- Conferir dependências externas e confirmar que o trabalho cotidiano pode ocorrer só pelo monorepo, mantendo publicação independente de plugin, MCP e Sites.
-- Após essa conferência, arquivar os antigos repositórios ativos relacionados e tornar privado `gmtth/plugin-beta`, que ainda está público. Os demais repositórios históricos já estão privados/arquivados conforme o inventário atual.
-- Obter e registrar o DDL/políticas reais do Supabase para criar migrações reproduzíveis em etapa própria; isso não bloqueia a preservação dos fontes, mas é necessário antes de afirmar que a infraestrutura pode ser recriada.
+- O corte do GitHub foi concluído: `gmtth/beta-all` está privado e ativo; `plugin-beta` foi tornado privado e arquivado; `movidesk-mcp-oauth`, `skill-clickup-checklist` e `skill-clickup-sprint-export` foram arquivados (já privados). Repositórios históricos anteriormente privados/arquivados continuam assim.
+- O push foi validado por clone limpo no Windows. Não há gitlinks/submódulos ativos; os 400 itens cobertos pelos quatro manifestos SHA-256 conferem com os bytes preservados.
+- A configuração do plugin aponta para o endpoint publicado do MCP/Sites. O Site `Beta MCP` continua na versão 73; nenhuma publicação foi feita durante o corte. A publicação futura deve partir do diretório apropriado no monorepo.
+- Pendência técnica separada: obter e registrar o DDL/políticas reais do Supabase para criar migrações reproduzíveis. `infra/supabase/migrations/` não contém migrações inventadas; não afirmar que a infraestrutura pode ser recriada até obter essa fonte.

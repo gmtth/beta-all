@@ -83,7 +83,7 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 
 ### Snapshot de execução da consolidação (2026-10-20)
 
-- `gmtth/beta-all` está privado, não arquivado, branch padrão `main`, e o clone local está em `Beta/beta-all`. A autenticação GitHub foi renovada pelo usuário. O monorepo já tem histórico local importado; o push e a conferência do clone remoto limpo ainda estão pendentes.
+- `gmtth/beta-all` está privado, não arquivado, branch padrão `main`, HEAD `b8d882a`; push concluído. O clone limpo em `Beta/beta-all-final2` está sincronizado, sem gitlinks, e os 400 itens de quatro manifestos SHA-256 conferem byte a byte.
 - `gmtth/movidesk-mcp-oauth` foi importado de `main` em `271dbdd8`; `gmtth/plugin-beta`, de `main` em `f63afd20`; `gmtth/suite-beta`, de `main` em `ad32de45`. A importação usou Git subtree, sem submódulos ativos.
 - A branch remota `feat/supabase-knowledge-read-scope` foi preservada integralmente em `legacy/source-archives/mcp-feature-supabase-scope/` no commit `7b63eb62`; ela divergiu do `main` e está 28 commits atrás. A implementação atual de `knowledge:read` e `knowledge_list_sources` já existe no MCP canônico. Não aplicar a branch antiga inteira; comparar itens específicos antes de portar.
 - O checkout MCP local em `codex/phase3b-similarity` (`392c2f8`) e seu diff não commitado permanecem intactos no workspace de origem; o branch, patch e seis arquivos não rastreados foram preservados em `legacy/` para reconciliação, sem aplicar o estado antigo sobre o `main` remoto.
@@ -92,7 +92,8 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 - Validação executada: plugin (`validate_beta_anl_skills.py` e `validate_beta_routing_cases.py`) passou; catálogo semântico MCP passou; build MCP passou. A suíte MCP teve 71/72 casos aprovados; `tests/rendered-html.test.mjs` falhou porque a expectativa de texto diverge da página existente na origem `main` importada (os arquivos têm hashes iguais à origem). `npm ci` reportou 35 vulnerabilidades na árvore de dependências; nenhuma correção automática foi aplicada.
 - Quatro manifestos de hashes de artefatos/snapshots foram conferidos. A árvore atual não tem gitlinks e a busca por padrões comuns de credenciais no conteúdo e na história retornou zero correspondências; isso não substitui uma auditoria exaustiva de segredos.
 - O schema Supabase foi documentado, mas não há DDL versionado suficiente para criar migração fiel. `infra/supabase/migrations/` permanece sem migração até comparar com o DDL real.
-- Repositórios ativos antigos ainda não foram arquivados/privatizados: `gmtth/plugin-beta`, `gmtth/movidesk-mcp-oauth`, `gmtth/skill-clickup-checklist` e `gmtth/skill-clickup-sprint-export`. Só fazer o corte final após push, clone limpo, dependências externas e documentação estarem conferidos.
+- Corte operacional realizado após a validação: `gmtth/plugin-beta` foi tornado privado e arquivado; `gmtth/movidesk-mcp-oauth`, `gmtth/skill-clickup-checklist` e `gmtth/skill-clickup-sprint-export` foram arquivados e já são privados. `gmtth/beta-all` segue privado e ativo. Repositórios de skills já arquivados e o antigo `suite-beta` permanecem preservados conforme inventário.
+- O MCP preserva em `legacy/` o `main`, a branch `feat/supabase-knowledge-read-scope` e o estado local exclusivo. Outras branches remotas antigas permanecem no repositório de origem arquivado, que conserva seus refs para recuperação; não são dependências do fluxo de trabalho diário.
 
 ### Arquitetura da cópia de conhecimento (requisito para a consolidação)
 

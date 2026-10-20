@@ -9,11 +9,11 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 | Pergunta | Resposta canônica |
 |---|---|
 | O que existe? | MCP Movidesk somente leitura, com consultas, timeline, análises, similaridade e recorrência. |
-| Onde roda? | Site com OAuth/PKCE, REST interno e endpoint MCP separado em `/mcp/`. |
+| Onde roda? | O Site consolidado contém OAuth/PKCE, REST interno e a rota MCP `/mcp/` no Worker; `source-bundle` é um servidor autônomo legado. |
 | Qual é a regra de segurança? | Não mutar tickets; não expor segredo/PII; não publicar sem confirmar manifesto e deployment. |
 | Qual é a fonte semântica? | YAML legível + snapshot JSON validado; grupos semânticos têm papéis separados. |
 | O que está estabilizado? | Fases 0–2, 3A, 3B e implementação de 3C, conforme o estado/evidência de cada seção. |
-| O que ainda precisa ser confirmado? | Principalmente merge/deploy/manifesto da última recorrência e documentação local. |
+| O que ainda precisa ser confirmado? | Smoke test direto do endpoint MCP publicado e eventual uso/deployment independente do servidor legado em `source-bundle`. |
 | Qual o próximo caminho? | Fase 4 (hardening/publicação), depois calibração, observabilidade e encerramento da beta. |
 | O que nunca inferir? | Commit ≠ merge; merge ≠ deploy; deploy ≠ manifesto ativo; teste local ≠ produção. |
 
@@ -33,16 +33,17 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 ## Resumo canônico atual
 
 - **Objetivo:** MCP somente leitura para consulta e análise factual de tickets Movidesk.
-- **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites, mas possuem contratos e ciclos de publicação diferentes.
+- **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites. O MCP publicado é implementado no Worker consolidado (`worker/index.ts`, `worker/mcp.ts`, `worker/mcp-tools.ts`); `source-bundle` contém um servidor independente legado e não é importado pelo código da aplicação Sites.
 - **Endpoint MCP:** `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` — a barra final é obrigatória.
 - **Raiz local:** `D:\Google Drive\Documents\ChatGPT\MCP Movidesk`.
 - **Branch funcional observada:** `codex/phase3b-similarity`.
-- **HEAD funcional observado:** `5748c2f393564b6c51e01bf28e050f7a03d80d82`.
-- **`origin/main` observado:** `31adf336a53b6b505e2c12b86bf5f2a587890ad5`.
-- **Último deploy Sites confirmado:** versão 65, baseada em `31adf33`; não há confirmação de deploy posterior ao `5748c2f`.
-- **PR pendente conhecida:** PR #35, com a correção de tendência de `detect_recurrent_issues`; merge/deploy não confirmados.
-- **Código funcional:** não há alteração de código nesta rodada de documentação.
-- **Working tree:** possui alterações de UI/branding, `source-bundle` e outros arquivos pertencentes a trabalhos não relacionados; não assumir que podem ser incluídos.
+- **HEAD local observado:** `392c2f8` (`Document consolidated MCP runtime`). O `main` consultado durante a revisão das PRs estava em `79f1f799a6413f15ed4d785c394f4b9426436b39`.
+- **Último deploy Sites confirmado:** versão 70, deployment `appgdep_6ad6b8f380a48191b2c9f6f25df2e260`, concluído com sucesso em 2026-10-20, baseado no commit de origem `e25f25d057de902e9ae79aa68a27b79e9d38b582`.
+- **MCP na versão publicada:** o código-fonte dessa versão contém `worker/index.ts` chamando `handleMcp` e `worker/mcp.ts` implementando `POST /mcp`. A integração nativa MCP do Sites reportou `has_mcp: false`; isso comprova a implementação personalizada no Worker, não uma declaração MCP nativa da plataforma.
+- **`source-bundle`:** o pacote contém outro servidor (`movidesk-mcp`, versão 1.0.0, com ferramentas próprias) e não é referenciado pelo código de aplicação/Worker do Site consolidado. O workspace da versão publicada ainda contém o gitlink do submódulo, mas a rota MCP do Site está no Worker raiz. Evidência indica legado/duplicação para este Site; não foi confirmado se existe deployment independente desse pacote em outro serviço.
+- **Limitação de verificação:** não foi possível fazer smoke test HTTP direto ao endpoint publicado nesta checagem. A implementação e o deployment da versão 70 foram verificados por código e metadados Sites.
+- **PRs abertas nesta revisão:** #38 (`codex/vendor-source-bundle` → `main`) e #39 (`codex/project-context-docs` → `codex/vendor-source-bundle`). A #39 deve entrar primeiro na branch da #38; depois a #38 pode seguir para `main`. Nenhuma das duas foi mesclada nesta revisão.
+- **Working tree:** pode conter alterações de UI/branding e `source-bundle` fora do escopo documental; não assumir que podem ser incluídas em commits.
 
 ## Regras de autoridade e precedência
 
@@ -1523,13 +1524,31 @@ Após o merge e o deploy, a sequência histórica e recomendada é: confirmar ve
 - teste sem PII não prova que todos os logs externos estejam sanitizados;
 - uma alteração documental pode revelar teste de UI obsoleto sem representar regressão de runtime.
 
-## Registro operacional — conversão do `source-bundle` (2026-10-19)
+## Revisão operacional — PR #38 e fidelidade do `source-bundle` (2026-10-19)
 
-Por decisão explícita do usuário, o diretório `source-bundle` deixou de ser mantido como submódulo Git e passou a ser versionado como diretório comum do repositório principal. A conversão preservou os arquivos rastreados pelo commit do submódulo (`67d07224d9d69934a2e9d9bfe1cbf08033fde61f`) e não incorporou dependências instaladas, diretórios de staging ou artefatos locais não rastreados, como `node_modules` e `package-stage`.
+A PR #38 propõe converter o gitlink `source-bundle` em arquivos comuns do repositório. A comparação revelou que o gitlink do `main` apontava para o commit `5c789e553424d0938649e7433fcb94c11de78ae1`, enquanto a primeira cópia da PR correspondia ao commit anterior `67d07224d9d69934a2e9d9bfe1cbf08033fde61f`. Esses estados diferem em cinco arquivos: `server/index.ts`, `src/movidesk-client.ts`, `src/server.ts`, `src/tools/index.ts` e `tests/movidesk-client.test.ts`.
 
-O commit local da conversão foi `c0b0890` (`Vendor source bundle as regular project files`). Como a credencial Git da sessão não permitiu o push CLI, o mesmo conteúdo foi criado e verificado no GitHub pela API autenticada, no branch `codex/phase3b-similarity`, no commit remoto `0f31d491d1baf5a91bade167cb2b7f639d17afca`. Os SHAs diferem porque são commits Git distintos, mas o commit remoto foi construído sobre o estado remoto equivalente e conferido pela árvore GitHub.
+Para evitar substituir o estado referenciado pelo gitlink por uma revisão anterior, esses cinco arquivos foram atualizados na branch da PR #38 com o conteúdo exato do commit `5c789e5`. Os demais arquivos rastreados da PR foram preservados, incluindo `dist/server/index.js`; dependências instaladas, diretórios de staging e arquivos locais não rastreados não foram adicionados. A PR permanece aberta, portanto a conversão ainda não está em `main` nem foi mesclada.
 
-O estado esperado após essa mudança é `git ls-tree HEAD source-bundle` exibindo modo `040000 tree` (diretório normal), e não modo `160000 commit` (gitlink). O metadata Git interno usado pelo submódulo foi mantido apenas como backup local em `.git/source-bundle-git-backup`; ele não faz parte do conteúdo versionado nem deve ser publicado.
+A PR #39 contém `AGENTS.md` e este dossiê, e tem como base a branch `codex/vendor-source-bundle` (head da PR #38). Para manter essa dependência coerente, o fluxo é mesclar primeiro a #39 na branch da #38 e, em seguida, mesclar a #38 em `main`. Também é possível retargetar a #39 para `main` depois da #38, mas isso não é necessário para a ordem atual.
 
-Não houve PR, merge em `main` ou deploy como parte desta operação. A alteração é de empacotamento/rastreabilidade e não modifica as ferramentas MCP, seus contratos, o OAuth ou o Site.
+A correção da PR não integra `source-bundle` ao runtime do Site: o Site consolidado continua implementando sua própria rota MCP no Worker. Não houve merge ou deploy nesta revisão.
 
+## Verificação arquitetural — `source-bundle` e MCP do Site (2026-10-19)
+
+### Conclusão
+
+O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Beta MCP consolidado implementa a rota MCP em seu próprio Worker e não importa o pacote `source-bundle`. Portanto, o pacote não é a implementação usada pelo código do Site consolidado. A evidência sustenta classificá-lo como legado/duplicado para esse Site, mas não prova que nenhum serviço externo ainda execute uma cópia dele.
+
+### Evidências
+
+- Na fonte do Site publicada na versão 70 (`e25f25d057de902e9ae79aa68a27b79e9d38b582`), `worker/index.ts` chama `handleMcp` para as requisições; `worker/mcp.ts` trata `POST /mcp`, cria o `McpServer` e registra as ferramentas do Site por `registerMovideskTools`; as definições estão em `worker/mcp-tools.ts`.
+- O deployment Sites da versão 70 terminou com status `succeeded` em 2026-10-20. O metadado de deployment retornou `has_mcp: false`, ou seja, a plataforma Sites não declara um MCP nativo para esse projeto. Isso não remove a implementação personalizada presente no Worker.
+- `source-bundle/server/index.ts` instancia outro servidor, versão `1.0.0`, e `source-bundle/src/tools/index.ts` registra o conjunto de ferramentas desse pacote. O código da aplicação e do Worker do Site não o referencia; o `package.json` raiz tem sua própria dependência do SDK MCP e seu próprio build Vinext.
+- A versão publicada ainda tinha o gitlink do submódulo no checkout de origem. Isso registra a presença do pacote no repositório, mas não é uma importação pelo runtime consolidado.
+
+### Limites e decisão pendente
+
+- Não foi possível executar uma chamada HTTP direta de smoke test ao endpoint publicado nesta verificação. A confirmação é da implementação no código-fonte da versão publicada e do estado do deployment, não de uma sessão MCP ativa nem da lista de ferramentas entregue ao cliente.
+- Não foi verificado se `source-bundle` está implantado como serviço autônomo fora do Site. Não remover nem desligar eventual serviço externo sem localizar o deployment correspondente.
+- A conclusão sobre não ser dependência do Site consolidado não equivale, por si só, à autorização para apagar o diretório/submódulo do repositório. Uma remoção deve ser tratada como mudança Git separada e considerar consumidores externos.

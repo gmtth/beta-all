@@ -1,13 +1,15 @@
 ---
 name: beta-anl-movidesk
 description: Consultar e sintetizar dados reais do Movidesk ou executar consultas diretas pelo MCP Beta MOV, com filtros, escopo, paginação, segurança somente leitura e limites de evidência bem definidos.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta ANL — Movidesk
+# beta-anl-movidesk
 
 Esta skill reúne a consulta analítica e a operação direta do MCP Beta MOV. Use o modo analítico para recuperar, comparar e sintetizar dados; use o modo direto quando o pedido exigir uma Action específica do Movidesk. Consulte a fonte original em `references/origem-SKILL_CONSULTA_MOVIDESK-v003.md` quando houver dúvida de rastreabilidade.
 

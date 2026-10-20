@@ -1,13 +1,15 @@
 ---
 name: beta-anl-triagemincidentes
 description: Triar erros, falhas e divergências isolando sintomas, escopo, evidências e hipóteses sem fechar diagnóstico prematuramente.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta ANL — Triagem de incidentes
+# beta-anl-triagemincidentes
 
 ## Quando usar
 

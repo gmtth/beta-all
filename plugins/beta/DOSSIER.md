@@ -1,35 +1,39 @@
 # Dossier do plugin Beta
 
-**Atualizado:** 2026-10-20  
-**Componente ativo:** `plugins/beta/`  
-**Fonte importada:** `gmtth/plugin-beta`, branch `main`, commit `f63afd20d346cd666c2f2b7908683be76eb16ea5` (registrado em `docs/migration/SOURCE_IMPORTS.tsv`).
+**Atualizado:** 2026-10-20
 
-## Limite desta reconstrução
+**Componente:** `plugins/beta/`
 
-Este dossier foi criado retroativamente após a consolidação. Baseia-se no snapshot de código e documentos importados, no manifesto do plugin, na matriz de roteamento e nos repositórios históricos de skills preservados em `legacy/source-archives/`. Não foi encontrada uma exportação integral das conversas históricas do plugin nem um dossier retroativo anterior. Portanto, fatos de implementação são descritos como observáveis no snapshot; motivações ou datas de decisões só são afirmadas quando há registro explícito. Este arquivo não é transcrição de conversas.
+**Manifesto:** `suite-beta`, versão `1.0.2`
 
-## Resumo canônico atual
+## Resumo e escopo
 
-O plugin, identificado no manifesto como `suite-beta` e com versão `1.2.0` no snapshot importado, reúne a família Beta ANL e Beta MOD em uma experiência com uma skill principal, `beta`, que atua como control plane e roteia para módulos especializados. O manifesto ativa a pasta `skills/` e configura `.mcp.json`; a integração declarada com o MCP é somente leitura.
+O plugin reúne a família Beta ANL e Beta MOD em uma experiência com a skill `beta` como entrada e orquestradora. Ela encaminha tarefas às skills especializadas, consolida respostas e mantém o comportamento transversal descrito em suas instruções.
 
-O plugin deve permanecer editável e publicável de forma independente dentro do monorepo. As regras normativas estão em [`AGENTS.md`](./AGENTS.md) e nas skills correspondentes; este dossier registra o mapa, fatos e estado, sem substituir instruções especializadas.
+Este dossier cobre o pacote do plugin, suas skills, referências, metadados, configuração MCP, roteamento e publicação pelo marketplace GitHub. O código e estado do runtime MCP/OAuth e da integração Supabase têm dossiers próprios em [`mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md) e [`infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md).
 
-## Arquitetura observada
+Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se no snapshot importado, manifesto, matriz de roteamento e repositórios históricos preservados em `legacy/source-archives/`. Não foi encontrada uma exportação integral das conversas históricas nem um dossier retroativo anterior. Fatos de implementação são descritos como observáveis nas fontes disponíveis; não é uma transcrição de conversas.
 
-- **Entrada/orquestração:** `skills/beta/` escolhe um modo primário ANL ou MOD, aciona somente módulos necessários, fecha handoffs e consolida a resposta.
-- **Módulos ANL:** dúvidas funcionais, regras de negócio, triagem de incidentes, QA (testes e resultados), geração de cards e Movidesk.
-- **Módulos MOD:** regras, dossiê, fontes, fluxos, permissões, processamento, relatórios, Figma, QA e artefatos.
-- **Capacidades adicionais:** `beta-anl-clickupchecklist` para sincronização estreita de checklist existente no ClickUp; `beta-mod-sites` para materialização de clone web isolado.
-- **Protocolo transversal:** evidências, classificação de certeza, vigência, handoffs e limites de publicação em `skills/beta/references/protocolo-evidencias-e-handoffs.md`.
-- **Referências compartilhadas:** Knowledge Master, integridade e materiais de apoio em `references/`; arquivos `origem-*.md` preservam rastreabilidade e não são reescritos como instruções novas.
-- **Contrato e verificações:** `tests/beta-routing-cases.json` e scripts de validação verificam cobertura/estrutura de roteamento; a lista atual de subskills e comandos fica em `AGENTS.md`.
-- **MCP declarado:** `.mcp.json` aponta para `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`. O endpoint termina em `/mcp/`; o runtime e seu estado publicado são documentados no dossier MCP e em `docs/components/sites.md`.
+## Estado atual
 
-## Diretriz de nomenclatura das skills
+- O pacote contém 20 skills: a orquestradora `beta` e 19 skills especializadas ANL/MOD.
+- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão `1.0.2`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
+- As 20 skills estão na revisão `metadata.version: "2"` no frontmatter de `SKILL.md`. A revisão `"1"` foi a inicial; o ajuste dos títulos internos nesta data incrementou as skills afetadas conforme a regra definida em [`AGENTS.md`](./AGENTS.md).
+- Os metadados das skills incluem nomes técnicos e exibidos vigentes, descrições, prompts, política de invocação, cores e logos. As skills ClickUp Cards e ClickUp Checklist compartilham brand color `#754FF6` e os logos small/large, copiados para cada pasta para manter o pacote autossuficiente.
+- `beta-anl-clickupchecklist` tem prompt padrão coerente com sua restrição de atualizar apenas o comentário mais recente “Checklist de testes” e com as informações necessárias da rodada.
+- A integração configurada em `.mcp.json` aponta para `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` e é descrita como somente leitura. O endpoint e o estado publicado são acompanhados pelo dossier MCP; a configuração no plugin não prova conectividade end-to-end.
+- O marketplace GitHub **Beta** está configurado na raiz do monorepo para apontar a este pacote. A importação/sincronização no workspace e o uso pelos quatro analistas ainda precisam ser confirmados; consulte [`plugin-marketplace.md`](../../docs/components/plugin-marketplace.md).
+- Os validadores `validate_beta_anl_skills.py` e `validate_beta_routing_cases.py` foram executados em 2026-10-20 após as alterações de nomenclatura, metadados e versionamento; ambos passaram sem erros (20 skills e 24 casos de roteamento).
 
-Registrada em 2026-10-20 a pedido do usuário. A convenção normativa está em [`AGENTS.md`](./AGENTS.md), seção “Padrão de nomenclatura”. Somente a orquestradora usa o identificador técnico `beta` e o nome exibido `Beta`. As demais usam identificadores técnicos no padrão `beta-anl-identificação` para análise ou `beta-mod-identificação` para modelagem; quando associadas a uma ferramenta, o nome da ferramenta vem primeiro na identificação técnica e também no nome exibido. Nomes exibidos das skills especializadas devem ser curtos, explicativos, sem `Beta`/`ANL`/`MOD` como prefixo e sem travessão, preferencialmente com duas palavras e no máximo três quando a clareza exigir.
+## Decisões vigentes
 
-A migração coordenada foi aprovada e aplicada em 2026-10-20. Os identificadores técnicos abaixo são os vigentes; a primeira coluna preserva os identificadores anteriores para rastreabilidade. Foram atualizados nomes de pastas, frontmatter, roteamento, handoffs, referências, fixtures, validadores e documentação. Os nomes exibidos das 19 skills especializadas foram encurtados; a orquestradora permanece `Beta`.
+### Nomenclatura técnica e exibida
+
+A orquestradora é a única skill com identificador técnico `beta` e nome exibido `Beta`. As demais usam `beta-anl-identificação` para análise ou `beta-mod-identificação` para modelagem. Quando relacionadas a uma ferramenta, o nome da ferramenta aparece primeiro no identificador e no nome exibido. Nomes exibidos especializados são curtos, não começam por Beta/ANL/MOD e não usam travessão.
+
+Dentro do pacote, referências internas usam sempre o identificador técnico: pasta, `name`, títulos de `SKILL.md`, roteamento, handoffs, exemplos de invocação, documentação e validações. O nome exibido de `agents/openai.yaml` fica reservado à interface e a textos voltados ao usuário quando a apresentação visual do nome for relevante. Assim, por exemplo, o título interno é `beta-anl-clickupchecklist`, enquanto o nome de interface é `ClickUp Checklist`.
+
+A migração de nomes foi aplicada em 2026-10-20: pastas, frontmatter, roteamento, referências, fixtures, validadores e metadados foram atualizados. Esta tabela preserva o mapeamento anterior para consulta histórica.
 
 | Identificador técnico anterior | Identificador técnico vigente | Nome exibido anterior | Nome exibido vigente |
 |---|---|---|---|
@@ -54,66 +58,81 @@ A migração coordenada foi aprovada e aplicada em 2026-10-20. Os identificadore
 | `beta-mod-relatorios` | `beta-mod-relatorios` | Beta MOD — Relatórios | Relatórios |
 | `beta-sites` | `beta-mod-sites` | Beta SIT | Sites |
 
-## Diretriz visual e completude dos metadados
+### Metadados, identidade visual e dependências
 
-Toda skill ativa deve preencher `display_name`, `short_description`, `icon_small`, `icon_large`, `brand_color`, `default_prompt` e `policy.allow_implicit_invocation` em `agents/openai.yaml`. Os campos `icon_small` e `icon_large` são os dois logos da interface; podem referenciar o mesmo arquivo ou arquivos distintos. Os assets precisam existir, estar versionados na pasta da skill e corresponder ao produto/família. A orquestradora é a única com `allow_implicit_invocation: true`; as especializadas usam `false`. Sempre declarar `dependencies.tools` quando a skill depender de uma ferramenta/conexão externa suportada pelo formato e runtime. Não criar dependências fictícias: quando a integração necessária não tiver configuração suportada e verificada, registrar essa limitação e manter a dependência pendente.
+- Cada skill deve preencher `display_name`, `short_description`, `icon_small`, `icon_large`, `brand_color`, `default_prompt` e `policy.allow_implicit_invocation` em `agents/openai.yaml`.
+- Manter os dois logos preenchidos com assets existentes e versionados dentro da pasta da skill. Skills ANL e MOD reutilizam os logos e cores canônicos de suas famílias, salvo exceções aprovadas.
+- Movidesk (`#FF2A28`), Sites (`#168DE4`) e as duas skills ClickUp (`#754FF6`) são exceções visuais registradas. ClickUp Cards e ClickUp Checklist têm cópias locais dos mesmos logos pequeno e grande.
+- Declarar `dependencies.tools` sempre que uma skill depender de uma ferramenta/conexão externa suportada pelo formato e runtime. Não inventar dependências. A skill Movidesk declara a conexão MCP; não há uma definição verificável de servidor ClickUp no pacote atual, portanto a dependência ClickUp permanece pendente de confirmação.
+- `policy.allow_implicit_invocation` é `true` somente para `beta`; todas as especializadas usam `false`.
+- O manifesto deve respeitar limites do formato: `shortDescription` com até 30 caracteres e `defaultPrompt` com até três opções. A configuração vigente cumpre esses limites.
 
-Defaults visuais observados para orientar a padronização, sem alterar os assets nesta decisão:
-
-| Grupo/skill | Logo atual | Cor atual | Tratamento |
+| Grupo/skill | Logo vigente | Cor | Diretriz |
 |---|---|---|---|
-| ANL em geral | `./assets/fundo.png` | `#C11D26` | Reutilizar como padrão ANL |
-| MOD em geral | `./assets/beta-mod.png` | `#E3DB0B` | Reutilizar como padrão MOD; conferir contraste em futuras alterações |
-| Movidesk | `./assets/fundo.png` próprio da skill | `#FF2A28` | Exceção de produto aprovada, manter identidade própria |
-| ClickUp Cards e ClickUp Checklist | `./assets/small-logo.png` e `./assets/large-logo.png` em cada pasta de skill | `#754FF6` | Identidade compartilhada das skills ClickUp |
-| Sites | `./assets/beta-sit.png` | `#168DE4` | Exceção de produto aprovada, manter identidade própria |
+| ANL em geral | `./assets/fundo.png` | `#C11D26` | Reutilizar como padrão ANL. |
+| MOD em geral | `./assets/beta-mod.png` | `#E3DB0B` | Reutilizar como padrão MOD; conferir contraste em futuras alterações. |
+| Movidesk | `./assets/fundo.png` na pasta da skill | `#FF2A28` | Exceção de produto aprovada. |
+| ClickUp Cards e ClickUp Checklist | `./assets/small-logo.png` e `./assets/large-logo.png` em cada pasta | `#754FF6` | Identidade compartilhada ClickUp, mantida autossuficiente em cada skill. |
+| Sites | `./assets/beta-sit.png` | `#168DE4` | Exceção de produto aprovada. |
 
-Na migração, os 20 arquivos `agents/openai.yaml` foram revisados: os nomes exibidos foram atualizados conforme a tabela e `beta-anl-clickupchecklist` recebeu um `default_prompt` coerente com seu limite de escrita e pré-condições de autorização. As 20 skills mantêm `brand_color`, `icon_small` e `icon_large`; os assets não foram alterados. A skill Movidesk declara sua dependência MCP. A skill de checklist usa ferramentas do ClickUp, mas esta configuração não declara um servidor ClickUp verificável; não inventar `dependencies.tools` sem a conexão suportada identificada.
+### Comportamento e proteção
 
-Em 2026-10-20, `beta-anl-clickupgeradorcards` passou a compartilhar a cor `#754FF6` e os logos do ClickUp Checklist. Os dois arquivos de logo foram copiados para a pasta da skill de cards para manter os assets autossuficientes e empacotáveis.
+- Selecionar uma intenção e um modo primário; não acionar ANL e MOD em paralelo sem necessidade.
+- Preservar autoridade das skills. Não converter ticket, hipótese ou precedente isolado em regra, requisito ou causa confirmada.
+- Fazer handoff apenas quando outra skill puder fornecer evidência ou decisão necessária e devolver uma síntese consolidada.
+- Distinguir regra confirmada, fato operacional, precedente, padrão, hipótese e lacuna.
+- Respeitar limites de segurança e publicação do MCP. `beta-mod-sites` trabalha em clone isolado e não se conecta ao backend real do CENCIHUB.
+- Tratar arquivos `references/origem-*.md` como fontes de rastreabilidade; não reescrevê-los como novas instruções.
 
-O manifesto de nível do plugin também tem `interface.brandColor`, `interface.composerIcon` e `interface.logo`. Em 2026-10-20, `interface.shortDescription` foi reduzida para “Análise e modelagem funcional” (29 caracteres) e `interface.defaultPrompt` passou a conter três opções, respeitando o formato de pacote. A terceira opção cobre checklist e card ClickUp; a primeira mantém um exemplo de consulta ao Movidesk.
+## Mapa dos componentes
 
-## Princípios comportamentais registrados
+| Caminho | Responsabilidade |
+|---|---|
+| `skills/beta/` | Entrada, control plane, roteamento e protocolo transversal |
+| `skills/beta-anl-*/` | Dúvidas funcionais, regras, triagem, QA, ClickUp e Movidesk |
+| `skills/beta-mod-*/` | Modelagem de regras, dossiê, fontes, fluxos, permissões, processamento, relatórios, Figma, QA, artefatos e Sites |
+| `references/` | Knowledge Master, integridade e apoio compartilhado |
+| `tests/beta-routing-cases.json` | Casos de contrato e cobertura de roteamento |
+| `scripts/` | Validadores estruturais e de cobertura das skills/roteamento |
+| `.codex-plugin/plugin.json` | Manifesto e metadados do pacote |
+| `.mcp.json` | Servidor MCP declarado para o plugin |
+| `../../.agents/plugins/marketplace.json` | Registro do marketplace Beta no monorepo |
 
-- Selecionar uma intenção e um modo primário; não executar ANL e MOD em paralelo por padrão.
-- Preservar a autoridade e especificidade das skills. O control plane roteia e consolida; não deve duplicar instruções locais nem “promover” ticket, hipótese ou precedente a regra confirmada.
-- Fazer handoff somente quando outra skill puder fornecer evidência ou decisão necessária, e retornar com uma síntese única.
-- Distinguir regra confirmada, fato operacional, precedente, padrão, hipótese e lacuna; manter incertezas visíveis.
-- Respeitar os limites de segurança e publicação de cada skill e do MCP. A skill `beta-mod-sites` opera em clone isolado e não se conecta ao backend real.
+O protocolo transversal de evidências, certeza, vigência, handoffs e publicação está em `skills/beta/references/protocolo-evidencias-e-handoffs.md`. A skill `beta` encaminha para módulos especializados e mantém a resposta final; os contratos locais de cada módulo permanecem em seu `SKILL.md` e referências.
 
-## Registro histórico reconstruído
+As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de incidentes, QA de testes e resultados, geração de cards ClickUp, checklist ClickUp e consulta Movidesk. As especialidades MOD cobrem regras, dossiê, fontes, fluxos, permissões, processamento, relatórios, Figma, QA e artefatos. As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte do diretório ativo; seus contratos foram incorporados à skill `beta`, e cópias de auditoria são mantidas fora do pacote ativo.
 
-| Marco ou evidência | O que se pode afirmar | Fonte / limite |
+## Histórico de mudanças
+
+| Data/marco | Alteração ou evidência | Fonte e limite |
 |---|---|---|
-| Componentes precursores | Repositórios separados de skills ANL/MOD, Sites e Movidesk foram preservados como históricos; sua importação não os torna ativos automaticamente | `docs/migration/source-inventory.md`, `SOURCE_IMPORTS.tsv` e `legacy/source-archives/` |
-| Consolidação do plugin | O plugin `gmtth/plugin-beta` foi importado em `plugins/beta/` no commit listado acima; o agregador `suite-beta` e skills independentes foram guardados em `legacy/` | Inventário de migração e manifestos SHA-256; não implica que cada skill histórica faça parte do plugin ativo |
-| Orquestrador atual | A skill `beta` é a entrada automática e as 19 subskills especializadas são explicitamente roteáveis segundo as instruções e a matriz do snapshot | `plugins/beta/AGENTS.md`, `skills/beta/SKILL.md`, `tests/beta-routing-cases.json` |
-| Integração MCP | O plugin aponta para o endpoint Sites/MCP documentado; isso configura o cliente, mas não comprova publicação ou conectividade end-to-end | `.mcp.json`, `docs/components/sites.md` e estado publicado registrado no dossier MCP |
-| Validação da consolidação | Os validadores do plugin foram registrados como aprovados em 2026-10-20 durante a consolidação | `AGENTS.md` raiz; o estado deve ser revalidado após mudanças posteriores |
+| Importação inicial | O plugin `gmtth/plugin-beta`, branch `main`, commit `f63afd20d346cd666c2f2b7908683be76eb16ea5`, foi consolidado em `plugins/beta/`; proveniência em `docs/migration/SOURCE_IMPORTS.tsv`. | Snapshot importado e inventários. |
+| Reconstrução do dossier | Este registro foi criado a partir do código, instruções, manifestos e arquivos históricos; não existe transcrição integral das conversas. | `legacy/source-archives/` e documentação de migração. |
+| 2026-10-20, nomenclatura | Identificadores técnicos de oito skills e nomes exibidos das 19 especializadas foram padronizados. Nomes anteriores estão preservados na tabela de decisões para rastreabilidade. | Pastas, `SKILL.md`, roteamento, referências, fixtures e metadados ativos. |
+| 2026-10-20, revisão de `SKILL.md` | Revisados os 20 frontmatters, os links relativos e os identificadores citados. Títulos internos foram alinhados aos nomes exibidos e, nesta revisão, corrigidos para os identificadores técnicos; invocação/exemplo do ClickUp Checklist também foi atualizado após encontrar referências antigas. | Todos os `skills/*/SKILL.md`; identificadores sem diretório de skill ativo são nomes de referências/control planes ou menções históricas. |
+| 2026-10-20, versionamento inicial | Inicializada a contagem do pacote em `1.0.0` e das 20 skills em `"1"`; futuras alterações incrementam o patch do pacote e somente as skills afetadas. | `.codex-plugin/plugin.json`, `skills/*/SKILL.md` e regra em `AGENTS.md`. |
+| 2026-10-20, referência técnica e versão | Decidido que conteúdo interno referencia skills por identificador técnico, reservando `display_name` para interface e comunicação voltada ao usuário. Títulos dos 20 `SKILL.md` foram alinhados às pastas/identificadores; todas as skills passaram à revisão `"2"` e o manifesto a `1.0.1`. | Regra em `AGENTS.md`, todos os `skills/*/SKILL.md` e `.codex-plugin/plugin.json`. |
+| 2026-10-20, validação e versão | Os validadores de skills e roteamento passaram sem erros. O manifesto foi incrementado para `1.0.2` para registrar esta atualização do dossier; as versões das skills não mudaram. | Saída recente de `python scripts/validate_beta_anl_skills.py` e `python scripts/validate_beta_routing_cases.py`; `.codex-plugin/plugin.json`. |
+| 2026-10-20, metadados | O prompt padrão de ClickUp Checklist foi preenchido; o manifesto foi ajustado para descrição de 29 caracteres e três prompts; ClickUp Cards recebeu os logos e a cor de ClickUp Checklist. | `.codex-plugin/plugin.json`, arquivos `agents/openai.yaml` e assets nas duas skills ClickUp. |
+| Integração MCP | `.mcp.json` configura o endpoint documentado do Sites/MCP, mas isso não comprova conectividade ou publicação end-to-end. | `.mcp.json`, `docs/components/sites.md` e `mcp/movidesk/DOSSIER.md`. |
 
-Não há material suficiente para atribuir cronologia ou motivo detalhado a toda evolução do plugin. Para recuperar um caso histórico específico, consulte as histórias preservadas em `legacy/source-archives/` ou os exports disponíveis; não deduza intenção apenas de uma mudança de código.
+Não há evidência suficiente para atribuir data ou motivação a toda a evolução anterior do plugin. Para casos históricos específicos, consultar o arquivo de origem e o repositório preservado; não deduzir intenção apenas a partir de uma alteração de código.
 
-## Fontes de verdade e precedência
+## Pendências
 
-1. Pedido explícito atual do usuário e regras globais do monorepo.
-2. `plugins/beta/AGENTS.md` para regras do componente.
-3. Skills, referências e testes ativos para contratos específicos.
-4. Este dossier para estado, evidências e histórico resumido.
-5. Inventários, snapshots e históricos de `legacy/` para proveniência e comparação, nunca como instruções atuais sem reconciliação.
+| Item | Estado | Condição para concluir |
+|---|---|---|
+| Sincronização/importação do marketplace Beta no workspace | Pendente de confirmação | Configurar/confirmar o marketplace e verificar a disponibilidade da skill para os analistas. |
+| Dependência declarativa ClickUp | Pendente de verificação do formato/runtime | Identificar e validar a conexão ClickUp suportada; então declarar `dependencies.tools` sem inventar endpoints ou IDs. |
+| Conectividade MCP/Supabase em produção | Acompanhada pelo dossier MCP/Supabase | Confirmar a autorização `knowledge:read` e chamada end-to-end; não inferir sucesso da configuração local. |
+| Busca diagnóstica completa | Pendente em MCP/base | Ingestão, busca híbrida, filtros de classificação, reranking, citações e avaliação permanecem etapas separadas. |
 
-Em divergências, preserve as evidências e marque o ponto como divergente até resolver por fonte vigente. Não sincronize o mesmo texto indiscriminadamente entre todas as skills e dossiers.
+## Fontes de verdade
 
-## Pendências e critérios de prontidão
+1. Pedido explícito atual do usuário e regras globais do monorepo em [`../../AGENTS.md`](../../AGENTS.md).
+2. Regras específicas deste componente em [`AGENTS.md`](./AGENTS.md).
+3. Contratos ativos em `skills/*/SKILL.md`, referências e `tests/beta-routing-cases.json`.
+4. Este dossier para estado, decisões registradas, histórico e pendências.
+5. Inventários, snapshots e materiais em `legacy/` para proveniência, não como instruções vigentes sem reconciliação.
 
-- Nomenclatura técnica e nomes exibidos aplicados em 2026-10-20; a tabela acima conserva a correspondência anterior → vigente.
-- O marketplace GitHub se chama **Beta** e está definido em `.agents/plugins/marketplace.json` na raiz do monorepo, apontando para este pacote em `plugins/beta/`. A configuração/importação no workspace ainda não foi realizada; o procedimento e as limitações de superfície estão em [`plugin-marketplace.md`](../../docs/components/plugin-marketplace.md).
-- Manter a matriz e os testes de roteamento alinhados quando skills forem renomeadas, adicionadas ou removidas.
-- Ao mudar integração MCP, validar o contrato do plugin, o escopo OAuth, o endpoint/deployment e o comportamento publicado separadamente.
-- Ao mudar regra transversal, atualizar o protocolo compartilhado e os testes; manter as regras próprias em cada skill.
-- A conexão Supabase/`knowledge:read` não torna o plugin uma busca diagnóstica completa: ingestão, busca híbrida, filtros de classificação e resposta citada são dependências do MCP/base e permanecem estados separados.
-- Revalidar empacotamento e validadores antes de uma nova publicação do plugin.
-
-## Como atualizar este dossier
-
-Registre alterações duráveis com data, arquivos/commit como evidência, estado (confirmado, pendente, divergente ou histórico) e impacto em outros componentes. Atualize o dossier raiz somente quando houver efeito compartilhado. Mantenha esta reconstrução como tal; não acrescente fatos de conversa que não estejam acessíveis ou corroborados.
+Para identidade e comportamento de publicação do Sites/MCP, consultar [`../../docs/components/sites.md`](../../docs/components/sites.md) e [`../../mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md). Para regras e estado do conhecimento Supabase, consultar [`../../infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md). Em conflito, preservar a evidência, identificar escopo/data e aplicar a precedência explícita; não apagar divergências silenciosamente.

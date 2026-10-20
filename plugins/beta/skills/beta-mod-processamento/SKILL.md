@@ -1,13 +1,15 @@
 ---
 name: beta-mod-processamento
 description: Analisar ciclo de vida e processamento na família Beta MOD. Usar em modelagens com criação, edição, exclusão, restauração, inativação, importação, reimportação, processamento em lote, filas, timeout, retry, concorrência, duplicidade, precedência, histórico ou migração funcional. Estruturar estados, transições e resultados sem inventar tecnologia ou regra funcional.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD Processamento
+# beta-mod-processamento
 
 ## Responsabilidade
 

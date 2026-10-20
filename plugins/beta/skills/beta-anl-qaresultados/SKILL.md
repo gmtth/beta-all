@@ -1,13 +1,15 @@
 ---
 name: beta-anl-qaresultados
 description: No ciclo integrado iniciado após QA Testes e aceite do usuário, organizar resultados por item, preparar um comentário independente por problema no ClickUp e publicá-lo somente após aprovação explícita do lote exato; encaminhar estados da rodada para atualização do comentário Checklist de testes quando o usuário confirmar o término.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta ANL — QA resultados
+# beta-anl-qaresultados
 
 Esta skill adapta o contrato original de `SKILL_QA_RESULTADOS` para o formato Codex. Preserve o conteúdo e as restrições abaixo; consulte a fonte original em `references/origem-SKILL_QA_RESULTADOS-v001.md` quando houver dúvida de rastreabilidade.
 

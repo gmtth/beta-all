@@ -1,13 +1,15 @@
 ---
 name: beta-mod-figma
 description: Inspecionar e revisar consistência visual no Figma para a família Beta MOD. Usar em criação ou alteração de telas, comparação entre modelagem e interface, componentes, tabelas, filtros, modais, toasts, tooltips, tags, estados e referências de views. Preservar padrões visuais reais sem inventar regra funcional.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD Figma
+# beta-mod-figma
 
 ## Responsabilidade
 

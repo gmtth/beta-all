@@ -34,6 +34,7 @@ As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pas
 - `beta` sem sufixo é reservado exclusivamente à skill orquestradora.
 - Identificadores técnicos das skills especializadas seguem `beta-[anl|mod]-identificação`: use `anl` para análise e `mod` para modelagem. Quando a skill for ligada a uma ferramenta, escreva primeiro o nome da ferramenta dentro da identificação, por exemplo `beta-anl-movidesk`, `beta-anl-clickupchecklist`, `beta-anl-clickupgeradorcards`, `beta-mod-figma` e `beta-mod-sites`.
 - Mantenha os identificadores técnicos estáveis entre a pasta da skill e o `name` em `SKILL.md`. Se um identificador técnico mudar, atualize no mesmo conjunto o roteamento e os handoffs da orquestradora, referências textuais, `agents/openai.yaml`, testes/fixtures e documentação. Preserve o nome antigo apenas onde for necessário registrar compatibilidade ou histórico.
+- Em conteúdo interno do pacote, use sempre o identificador técnico (`beta-anl-*`, `beta-mod-*` ou `beta`) ao referenciar uma skill, inclusive em títulos de `SKILL.md`, roteamento, handoffs, exemplos de invocação, documentação e validações. Use `display_name`/nome exibido apenas em metadados de interface ou quando o texto for deliberadamente voltado ao usuário e a identidade visual for relevante. Não use o nome exibido como substituto do identificador em contratos internos.
 - O nome exibido da orquestradora é `Beta`. As demais skills não devem começar com `Beta`, `ANL` ou `MOD`, nem usar travessão no nome exibido. Se forem relacionadas a uma ferramenta, escreva o nome da ferramenta primeiro também no nome exibido, por exemplo `ClickUp Cards` e `ClickUp Checklist`. Prefira nomes curtos e explicativos de duas palavras; use até três quando necessário para clareza.
 - Mudar apenas o nome exibido em `agents/openai.yaml` não altera o identificador técnico nem exige renomear a pasta ou atualizar chamadas. Essa alteração ainda deve ser refletida no dossier e nos artefatos de publicação pertinentes.
 - Uma padronização de nomes existentes deve ser feita como migração coordenada: atualizar identificadores e referências juntos, rodar os validadores de skills e roteamento e revisar o pacote. Não renomear skills como efeito colateral de uma mudança apenas de nomes exibidos.
@@ -48,6 +49,14 @@ As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pas
 - `policy.allow_implicit_invocation` deve ser `true` somente para a orquestradora `beta` e `false` para skills especializadas. Sempre declare `dependencies.tools` quando a skill depender de uma ferramenta ou conexão externa que o formato e o runtime suportem. Não invente dependências nem copie configuração de outro conector; se não houver integração suportada/verificada, registre a limitação e não declare uma dependência fictícia.
 - No manifesto do plugin, mantenha também `interface.brandColor`, `interface.composerIcon` e `interface.logo` preenchidos, junto aos metadados descritivos e funcionais exigidos pelo formato de pacote. Verifique limites de tamanho e quantidade definidos pelo formato antes de empacotar.
 - Ao validar metadados, conferir também que todo caminho de logo é relativo, existe dentro da pasta da skill e aponta para o asset correto; que a cor está em hexadecimal; e que prompt, nome e política correspondem à função e ao modo da skill.
+
+## Versionamento do plugin e das skills
+
+- O manifesto `.codex-plugin/plugin.json` deve usar `version` como SemVer válido. A contagem inicial é `1.0.0`; a cada alteração no pacote, incrementar o patch em exatamente um (`1.0.1`, `1.0.2`...), sem saltos. O contador do pacote cobre qualquer alteração incluída no plugin.
+- Cada `SKILL.md` deve ter `metadata.version` como string numérica, começando em `"1"`. A cada alteração no conteúdo, instruções ou metadados daquela skill, incrementar esse número em exatamente um. Skills não alteradas mantêm suas versões.
+- Toda mudança em uma skill também é uma alteração do pacote: atualizar a versão da skill afetada e incrementar o patch do plugin. Uma mudança compartilhada apenas fora das skills incrementa apenas a versão do plugin.
+- Essas versões são contadores simples de revisão, não sinalizam compatibilidade ou impacto. Não usar SemVer nas skills nem números não inteiros; não omitir aspas em `metadata.version`, pois o formato de skills requer valores de metadata como strings.
+- Ao revisar, conferir que o plugin começa na versão inicial `1.0.0`, todas as skills foram inicializadas em `"1"`, e que cada alteração posterior incrementa apenas os contadores correspondentes. Registrar o escopo da versão no dossier e manter o manifesto sincronizado com a release publicada.
 
 ## Regras de comportamento
 
@@ -95,6 +104,20 @@ Também confira:
 ## Preservação de fontes
 
 Arquivos `references/origem-*.md` são fontes de rastreabilidade e não devem ser reescritos durante ajustes de estilo ou roteamento. Regras específicas devem permanecer na skill correspondente. O protocolo compartilhado não substitui conteúdo especializado.
+
+## Estrutura obrigatória dos dossiers
+
+Todo dossier ativo deste componente deve seguir esta ordem fixa de seções, usando estes títulos:
+
+1. `## Resumo e escopo` — finalidade, limites do componente, caminho canônico e limites de reconstrução quando aplicável.
+2. `## Estado atual` — fatos observáveis com data de referência, versão/integrações, estado de validação e limites conhecidos. Não apresentar estados históricos como atuais.
+3. `## Decisões vigentes` — decisões aprovadas e regras de referência; distinguir claramente o que está confirmado do que foi substituído.
+4. `## Mapa dos componentes` — diretórios, arquivos e relações necessários para localizar e entender a implementação.
+5. `## Histórico de mudanças` — marcos em ordem cronológica, com data, estado, evidência e impacto; preservar proveniência sem reescrever o passado.
+6. `## Pendências` — questões abertas, estado, condição para conclusão e dependências; não misturar com decisões vigentes.
+7. `## Fontes de verdade` — links para instruções e fontes canônicas, com ordem de precedência e tratamento de snapshots/legado.
+
+No início do documento, informar a data de atualização e o componente. Use tabelas para mudanças ou estados que precisem ser comparados. Mantenha cada fato na fonte canônica e resuma com links nos demais dossiers; não replique conteúdo operacional completo. Se uma seção não tiver conteúdo, mantenha o título e escreva “Nenhuma pendência conhecida” ou “Sem histórico adicional identificado”, em vez de omiti-la. Orientações sobre como editar dossiers ficam no `AGENTS.md`, não como uma seção extra que altere a ordem fixa.
 
 ## Empacotamento
 

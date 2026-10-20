@@ -1,13 +1,15 @@
 ---
 name: beta-anl-regrasnegocio
 description: Explicar regras funcionais confirmadas, suas condições, dependências, exceções e efeitos, sem inventar comportamento.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta ANL — Regras de negócio
+# beta-anl-regrasnegocio
 
 ## Quando usar
 

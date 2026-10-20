@@ -1,13 +1,15 @@
 ---
 name: beta-mod-relatorios
 description: Analisar relatórios, indicadores, previsões, projeções e cálculos na família Beta MOD. Usar em modelagens que envolvam granularidade, elegibilidade, períodos, origem dos dados, fórmulas, unidades, arredondamento, valores ausentes, situações, colunas, filtros, paginação ou exportação. Retornar análise reproduzível sem inventar regra funcional.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD Relatórios
+# beta-mod-relatorios
 
 ## Responsabilidade
 

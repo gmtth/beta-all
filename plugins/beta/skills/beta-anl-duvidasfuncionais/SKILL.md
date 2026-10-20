@@ -1,13 +1,15 @@
 ---
 name: beta-anl-duvidasfuncionais
 description: Explicar conceitos e funcionamento do CENCIHUB de forma curta, funcional e didática, sem inventar detalhes.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta ANL — Dúvidas funcionais
+# beta-anl-duvidasfuncionais
 
 ## Quando usar
 

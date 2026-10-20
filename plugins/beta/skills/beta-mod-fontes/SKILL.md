@@ -1,13 +1,15 @@
 ---
 name: beta-mod-fontes
 description: Analisar e comparar fontes da família Beta, incluindo conversa, arquivos, documentos, ClickUp, comentários, reuniões, transcrições, prints, Figma e versões alteradas. Usar quando o usuário acionar @beta-mod-fontes ou quando uma modelagem exigir determinar fonte principal, prioridade, recência pelo conteúdo, divergências, regras substituídas, comportamento atual versus futuro e pontos não confirmados. Operar em leitura e devolver evidências à Beta sem persistir Dossiê, decidir regra funcional, alterar fontes, gerar artefatos ou assumir especialidades de outros módulos.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD Fontes
+# beta-mod-fontes
 
 ## Responsabilidade
 

@@ -1,9 +1,11 @@
 ---
 name: beta
 description: Orquestrar as famílias Beta ANL e Beta MOD em uma única entrada, escolhendo a análise funcional ou a modelagem adequada e fazendo handoffs entre elas somente quando isso alterar ou melhorar materialmente o resultado.
+metadata:
+  version: "2"
 ---
 
-# Beta
+# beta
 
 ## Protocolo transversal obrigatório
 
@@ -56,7 +58,7 @@ Quando o objetivo for atualizar um clone web isolado do CENCIHUB, use `beta-mod-
 - o Gerador de Cards domina quando o objetivo final for criar, consolidar ou reescrever o card;
 - QA Testes domina quando o usuário quer criar ou revisar os cenários de teste, mesmo que forneça uma tarefa do ClickUp como contexto;
 - QA Resultados domina quando o usuário quer organizar resultados, evidências ou problemas de uma execução; se pedir para marcar/sincronizar esses problemas em um comentário de checklist já existente no ClickUp, encaminhe para `beta-anl-clickupchecklist`;
-- Beta CLK Checklist domina somente quando o objetivo é atualizar o comentário de um checklist já publicado com base nos problemas posteriores; não use essa skill para criar checklist novo nem para revisar seus cenários;
+- ClickUp Checklist domina somente quando o objetivo é atualizar o comentário de um checklist já publicado com base nos problemas posteriores; não use essa skill para criar checklist novo nem para revisar seus cenários;
 - Triagem domina quando o objetivo for causa, impacto, recorrência ou diagnóstico, mesmo que o achado tenha surgido em QA;
 - Regras de negócio domina quando a pergunta central for qual deveria ser o comportamento;
 - Dúvidas funcionais domina quando a pergunta for apenas explicativa;

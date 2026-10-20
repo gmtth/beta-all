@@ -1,13 +1,15 @@
 ---
 name: beta-mod-qa
 description: Revisar criticamente modelagens funcionais consolidadas na família Beta MOD. Usar antes da finalização de qualquer modelagem relevante para identificar bloqueios, contradições, ambiguidades relevantes, riscos e melhorias recomendadas que possam causar implementação divergente, falha funcional, risco de dados ou dificuldade real de homologação. Não criar regra, não reescrever o documento e não produzir plano completo de testes.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD QA
+# beta-mod-qa
 
 ## Responsabilidade
 

@@ -1,13 +1,15 @@
 ---
 name: beta-mod-fluxos
 description: Analisar fluxos de telas e comportamentos de interface na família Beta MOD. Usar em modelagens de portal, totem, máquina, balcão, formulários, carrinho, modais, telas sequenciais, navegação, retorno, validações e estados da interface. Estruturar o fluxo de forma sequencial e verificável sem inventar telas ou regras de negócio.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD Fluxos
+# beta-mod-fluxos
 
 ## Responsabilidade
 

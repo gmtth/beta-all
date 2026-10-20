@@ -1,13 +1,15 @@
 ---
 name: beta-anl-qatestes
 description: Criar checklists funcionais, smoke tests e cobertura de regressão proporcionais ao risco e ao escopo informado.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta ANL — QA testes funcionais
+# beta-anl-qatestes
 
 Esta skill adapta o contrato original de `SKILL_QA_TESTES` para o formato Codex. Preserve o conteúdo e as restrições abaixo; consulte a fonte original em `references/origem-SKILL_QA_TESTES-v006.md` quando houver dúvida de rastreabilidade.
 

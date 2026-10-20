@@ -1,13 +1,15 @@
 ---
 name: beta-mod-regras
 description: Analisar completude de regras funcionais e rastreabilidade na família Beta MOD. Usar quando o usuário acionar @beta-mod-regras ou quando uma modelagem/revisão exigir separar conceitos, mapear gatilhos, ações, validações e resultados, tratar confirmação/cancelamento/fechamento/falha, definir efeito de campos vazios, preservação de estado, diferenças entre canais, atores, registros e auditoria. Retornar achados para a Beta sem gerar modelagem final, persistir Dossiê, criar artefatos ou assumir especialidades de outros módulos.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD Regras
+# beta-mod-regras
 
 ## Responsabilidade
 

@@ -1,6 +1,8 @@
 ---
 name: beta-anl-clickupgeradorcards
 description: Criar, consolidar e revisar cards do ClickUp com análise funcional, rastreabilidade e solicitação clara para desenvolvimento.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
@@ -9,7 +11,7 @@ Antes de responder, aplique o [protocolo compartilhado](../beta/references/proto
 
 Esta skill adapta o contrato original de `SKILL_GERADOR_CARDS_CLICKUP` para o formato Codex. Preserve as regras e restrições abaixo; consulte a fonte original em `references/origem-SKILL_GERADOR_CARDS_CLICKUP-v005.md` quando houver dúvida de rastreabilidade.
 
-# SKILL GERADOR DE CARDS CLICKUP
+# beta-anl-clickupgeradorcards
 
 ## 1. Quando usar
 

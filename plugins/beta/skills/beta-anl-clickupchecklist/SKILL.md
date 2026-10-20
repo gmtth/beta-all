@@ -1,9 +1,11 @@
 ---
 name: beta-anl-clickupchecklist
 description: Após o usuário confirmar que uma rodada de QA terminou, atualizar somente o comentário mais recente intitulado exatamente “Checklist de testes” no ClickUp, usando o identificador Execução QA e o estado informado de cada item. Manter pendentes itens com problema, não executados, bloqueados ou incertos e concluir somente itens confirmados como sucesso na rodada atual. Exigir tarefa, rodada e estados claros; nunca criar checklist nem alterar outro conteúdo.
+metadata:
+  version: "2"
 ---
 
-# Beta CLK Checklist
+# beta-anl-clickupchecklist
 
 ## Objetivo
 
@@ -12,7 +14,7 @@ Atualizar somente um comentário de checklist no ClickUp com base nos problemas 
 ## Regra de autorização
 
 - Exigir link/ID da tarefa, confirmação explícita do usuário de que a execução terminou, identificador da rodada `Execução QA` e estado suficiente de cada item.
-- A chamada `@Beta-CLK-checklist` com link, isoladamente, não autoriza edição. A autorização ocorre quando o usuário confirma o término e a Beta encaminha o contexto completo desta rodada; isso autoriza somente uma edição do comentário-alvo identificado abaixo.
+- A chamada `@beta-anl-clickupchecklist` com link, isoladamente, não autoriza edição. A autorização ocorre quando o usuário confirma o término e a Beta encaminha o contexto completo desta rodada; isso autoriza somente uma edição do comentário-alvo identificado abaixo.
 - Se faltar link, confirmação de término, identificador da rodada ou estado dos itens, não escrever no ClickUp; peça apenas a informação ausente.
 - Não aceitar como autorização implícita nenhuma outra mutação no card.
 
@@ -160,7 +162,7 @@ Se houver ambiguidade real entre dois itens com nomes parecidos, não escolher a
 ## Exemplo de uso
 
 Usuário:
-`@Beta-CLK-checklist https://app.clickup.com/t/31046217/86aj43ca9`
+`@beta-anl-clickupchecklist https://app.clickup.com/t/31046217/86aj43ca9`
 
 Comportamento esperado:
 - localizar o último comentário `Checklist de testes`;

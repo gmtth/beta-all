@@ -1,13 +1,15 @@
 ---
 name: beta-mod-permissoes
 description: Analisar permissões e segurança funcional na família Beta MOD. Usar em modelagens com autenticação, autorização, papéis, senha, biometria, RFID, dados sensíveis, ações administrativas, alteração por terceiro, acesso entre empresas ou necessidade de diferenciar interface e backend. Retornar riscos e regras confirmadas sem inventar papéis, permissões ou arquitetura.
+metadata:
+  version: "2"
 ---
 
 ## Protocolo transversal obrigatório
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se esta skill foi acionada pela `beta`, considere o protocolo já carregado e complemente apenas com as regras específicas desta skill.
 
-# Beta MOD Permissões
+# beta-mod-permissoes
 
 ## Responsabilidade
 

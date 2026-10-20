@@ -14,7 +14,7 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 |---|---|---|---|
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
 | MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; dossier completo junto ao componente |
-| Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration controlada aplicada e runtime MCP publicado na versão 74 em 2026-10-20; importação piloto pendente de reautorização |
+| Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel publicado no Sites v75; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
 | Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Publicação atual documentada; origem de publicação a partir do monorepo precisa ser validada |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
@@ -53,8 +53,9 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 
 - Foi preparado localmente um painel master de controle em `/admin/users` que agrega disponibilidade/latência do Supabase, contagens da base, fontes, importações recentes e escopos realmente presentes nos tokens ativos de cada analista.
 - A conexão foi alinhada à variável server-side `SUPABASE_SECRET_KEY` e valida o endpoint `beta.source_system`. Nenhuma chave ou erro bruto é devolvido à interface.
-- A RPC agregada `beta.get_knowledge_admin_overview()` e migration `20261020150000` ainda não foram aplicadas ao banco. A leitura administrativa de indicadores ficará indisponível até aplicar essa migration e publicar o runtime atualizado.
-- Nenhuma publicação no Sites, alteração do banco remoto ou concessão/revogação de acesso foi feita nesta etapa.
+- A RPC agregada `beta.get_knowledge_admin_overview()` e migration `20261020150000` ainda não foram aplicadas ao banco. A conexão pode estar disponível, mas os indicadores agregados aguardam a migration.
+- O painel e o fluxo OAuth atualizado foram publicados no Sites v75; commit GitHub `53a0fc0` na branch `codex/knowledge-ticket-ingestion`; deployment `appgdep_6ad7c07e1d548191a4f3ff1283f93926`. A audiência permaneceu pública.
+- Na página de consentimento OAuth, o envio ocorre automaticamente após dez segundos; o usuário também pode autorizar antes ou cancelar.
 
 ## Corte operacional concluído e pendências técnicas
 

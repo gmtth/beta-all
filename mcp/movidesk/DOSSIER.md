@@ -8,7 +8,7 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 
 | Pergunta | Resposta canônica |
 |---|---|
-| O que existe? | Ferramentas de consulta/análise Movidesk e catálogo Supabase validados; importação explícita e auditada foi publicada na versão 74, e a migration RPC foi aplicada remotamente pelo usuário. |
+| O que existe? | Ferramentas de consulta/análise Movidesk e catálogo Supabase validados; importação explícita/auditada publicada na versão 74; painel admin e autorização OAuth temporizada publicados na versão 75. |
 | Onde roda? | O Site consolidado contém OAuth/PKCE, REST interno e a rota MCP `/mcp/` no Worker. O antigo servidor autônomo `source-bundle` foi removido da árvore de código nesta limpeza; deployments externos não foram verificados. |
 | Qual é a regra de segurança? | Não mutar tickets; não expor segredo/PII; não publicar sem confirmar manifesto e deployment. |
 | Qual é a fonte semântica? | YAML legível + snapshot JSON validado; grupos semânticos têm papéis separados. |
@@ -38,7 +38,8 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 - **Raiz local canônica:** `D:\Google Drive\Documents\ChatGPT\Beta\beta-all\mcp\movidesk`.
 - **Branch da implementação atual:** `codex/knowledge-ticket-ingestion` no monorepo `beta-all`.
 - **HEAD local do monorepo:** atualização de implementação `c695d1e` (`Add audited Movidesk ticket ingestion`) na branch remota `codex/knowledge-ticket-ingestion`. O `main` remoto continua em `a2a40b280c7e3308837de9c059d774b7e1657fc6` após as PRs #42 e #43; a branch de implementação não foi mesclada.
-- **Último runtime publicado confirmado:** versão 74, deployment `appgdep_6ad7b935b2e08191b2b8ab60f55d51df`, fonte Site `f8955ac8c286a47f1b8e42b757365eb12cf948ef`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. Deploy concluído com `succeeded` em 2026-10-20; metadados OAuth HTTP confirmaram `movidesk:read`, `knowledge:read` e `knowledge:write`. O smoke test autenticado e a importação do chamado ainda não ocorreram.
+- **Último runtime publicado confirmado:** versão 75, deployment `appgdep_6ad7c07e1d548191a4f3ff1283f93926`, fonte Site `f1641c2f70475ae6c655c0f36a9e666acaadc884`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. Deploy concluído com `succeeded` em 2026-10-20; a audiência permaneceu pública. A migration do painel de métricas ainda não foi aplicada.
+- A tela OAuth envia o formulário automaticamente depois de dez segundos, com opções visíveis para autorizar imediatamente ou cancelar.
 - **MCP na versão publicada:** o código-fonte dessa versão contém `worker/index.ts` chamando `handleMcp` e `worker/mcp.ts` implementando `POST /mcp`. A integração nativa MCP do Sites reportou `has_mcp: false`; isso comprova a implementação personalizada no Worker, não uma declaração MCP nativa da plataforma.
 - **`source-bundle`:** o antigo servidor independente foi removido da árvore de código por esta limpeza, pois o MCP do Site é implementado no Worker consolidado. O código local removido está preservado em `work/legacy-preservation/`; a alteração não desliga serviços externos. Deployment autônomo externo permanece não identificado.
 - **Limitação de verificação:** não foi possível fazer smoke test HTTP direto ao endpoint publicado nesta checagem. A implementação e o deployment da versão 70 foram verificados por código e metadados Sites.

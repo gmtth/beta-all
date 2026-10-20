@@ -3,6 +3,9 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { GET as getTickets } from "../app/api/tickets/route";
 import { GET as getPersons } from "../app/api/persons/route";
 import { GET as getServices } from "../app/api/services/route";
+import { authorizeOAuthScope, KNOWLEDGE_READ_SCOPE, SUPPORTED_OAUTH_SCOPES } from "../app/oauth/_lib";
+import { registerKnowledgeTools } from "./knowledge-tools";
+import { SupabaseKnowledgeReader } from "./supabase-knowledge";
 import { registerMovideskTools, type MovideskReader } from "./mcp-tools";
 
 const bearerToken = (authorization: string | null) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
@@ -27,7 +30,7 @@ class LocalMovideskClient implements MovideskReader {
 }
 
 export function protectedResourceMetadata(origin: string) {
-  return { resource: `${origin}/mcp/`, authorization_servers: [origin], scopes_supported: ["movidesk:read"], bearer_methods_supported: ["header"] };
+  return { resource: `${origin}/mcp/`, authorization_servers: [origin], scopes_supported: [...SUPPORTED_OAUTH_SCOPES], bearer_methods_supported: ["header"] };
 }
 
 export async function handleMcp(request: Request): Promise<Response | null> {
@@ -38,7 +41,7 @@ export async function handleMcp(request: Request): Promise<Response | null> {
   }
   if (pathname !== "/mcp" || request.method !== "POST") return null;
   const accessToken = bearerToken(request.headers.get("authorization"));
-  if (!accessToken) return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource", scope="movidesk:read"` } });
+  if (!accessToken) return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource", scope="${SUPPORTED_OAUTH_SCOPES.join(" ")}"` } });
   if (request.headers.get("mcp-method") === "server/discover") {
     let id: string | number | null = null;
     try { id = ((await request.clone().json()) as { id?: string | number | null }).id ?? null; } catch { /* SDK will handle malformed JSON below. */ }
@@ -46,6 +49,7 @@ export async function handleMcp(request: Request): Promise<Response | null> {
   }
   const server = new McpServer({ name: "movidesk-mcp", version: "1.1.0" });
   registerMovideskTools(server, new LocalMovideskClient(), accessToken);
+  registerKnowledgeTools(server, new SupabaseKnowledgeReader(), () => authorizeOAuthScope(accessToken, KNOWLEDGE_READ_SCOPE));
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   await server.connect(transport);
   return transport.handleRequest(request);

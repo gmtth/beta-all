@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { clientSecretFor, GPT_ACTION_CLIENT_ID, MCP_CLIENT_ID, oauthClient, OAUTH_SCOPE, validRedirectForClient, validateAuthorizationRequest } from "./clients";
+import { clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, MCP_CLIENT_ID, oauthClient, permissionLabelForScopes, OAUTH_SCOPE, SUPPORTED_OAUTH_SCOPES, validRedirectForClient, validateAuthorizationRequest } from "./clients";
 
 const encoder = new TextEncoder();
 export const db = () => env.DB as D1Database;
@@ -24,8 +24,17 @@ export async function ensureSchema() {
   for (const email of masterEmails()) await db().prepare("INSERT OR IGNORE INTO oauth_users (email, role, active, created_at) VALUES (?, 'master', 1, ?)").bind(email, Date.now()).run();
 }
 export async function getUserRole(email: string) { return (await db().prepare("SELECT role FROM oauth_users WHERE email = ? AND active = 1").bind(email.trim().toLowerCase()).first<{ role: string }>())?.role ?? null; }
-export { clientSecretFor, GPT_ACTION_CLIENT_ID, MCP_CLIENT_ID, oauthClient, OAUTH_SCOPE, validRedirectForClient, validateAuthorizationRequest };
-export function allowedScopes() { return [OAUTH_SCOPE]; }
+export async function authorizeOAuthScope(accessToken: string, requiredScope: string) {
+  if (!(SUPPORTED_OAUTH_SCOPES as readonly string[]).includes(requiredScope)) return false;
+  await ensureSchema();
+  const row = await db().prepare("SELECT scope, expires_at, user_email FROM oauth_tokens WHERE token_hash = ?")
+    .bind(await hash(accessToken))
+    .first<{ scope: string; expires_at: number; user_email: string | null }>();
+  if (!row || row.expires_at < Date.now() || !row.scope.split(" ").includes(requiredScope)) return false;
+  return Boolean(row.user_email && await getUserRole(row.user_email));
+}
+export { clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, MCP_CLIENT_ID, oauthClient, OAUTH_SCOPE, SUPPORTED_OAUTH_SCOPES, permissionLabelForScopes, validRedirectForClient, validateAuthorizationRequest };
+export function allowedScopes() { return [...SUPPORTED_OAUTH_SCOPES]; }
 export function canonicalResource(origin: string) { return `${origin}/mcp/`; }
 export function isMaster(role: string | null) { return role === "master"; }
 export function validRedirect(uri: string, requestedClient: string) { return validRedirectForClient(requestedClient, uri, process.env); }

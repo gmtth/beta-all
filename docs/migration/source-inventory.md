@@ -22,6 +22,8 @@ Também foram trazidos para `legacy/source-archives/` `legacy-movimcp`, `skill-c
 
 O checkout `D:\Google Drive\Documents\ChatGPT\MCP Movidesk` tinha cinco commits locais exclusivos e mudanças não commitadas. O remoto avançara e já continha funcionalidades que faltavam ao `main` local. O branch local foi preservado em `legacy/source-archives/mcp-local-branch/`; o patch das mudanças rastreadas foi guardado em `legacy/local-snapshots/mcp-2026-10-20/working-tree.patch`; seis arquivos não rastreados foram copiados para `untracked/`. As cópias originais continuam intactas no checkout anterior.
 
+A branch remota `feat/supabase-knowledge-read-scope` também foi preservada com seu histórico completo em `legacy/source-archives/mcp-feature-supabase-scope/` (HEAD `7b63eb62`). Ela contém 16 commits exclusivos em relação ao `main` observado na migração, incluindo a implementação inicial do escopo `knowledge:read`, ferramenta `knowledge_list_sources`, testes e documentação. A versão importada do `main` já contém a funcionalidade de leitura e o escopo; a branch divergiu e está 28 commits atrás do `main`, então sua versão antiga não foi aplicada sobre o componente canônico. Use-a como fonte histórica para comparar decisões e requisitos.
+
 ## Artefatos de release do workspace
 
 Os ZIPs RC1/RC2, os diretórios extraídos e o pacote de staging `_suite-beta-package-rc2` foram copiados sem mover os originais para `legacy/artifacts/releases/`. `SHA256SUMS.txt` registra hashes para conferência.

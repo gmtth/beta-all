@@ -23,3 +23,4 @@ skill-clickup-sprint-export	main	13cabd58dc003c348b0835b4d83bc1bba552334e	legacy
 movidesk-site-artifact	main	34a16f81fee751c3e985c2688f86ebfde2746c97	legacy/source-archives/movidesk-site-artifact
 sites-beta-mcp-snapshot-v1	main	9ca61ae64489e9404eb60398fc5f2442c64e3104	legacy/source-archives/sites-beta-mcp-snapshot-v1
 sites-beta-mcp-snapshot-v2	main	e25f25d057de902e9ae79aa68a27b79e9d38b582	legacy/source-archives/sites-beta-mcp-snapshot-v2
+mcp-feature-supabase-scope	feat/supabase-knowledge-read-scope	7b63eb62ee60a9828d1f11eec5a4b7cb35de504c	legacy/source-archives/mcp-feature-supabase-scope

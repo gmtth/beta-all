@@ -1,6 +1,6 @@
 {
   "name": "suite-beta",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Orquestradora única das famílias Beta ANL e Beta MOD para análise funcional, modelagem, QA e integrações do CENCIHUB.",
   "author": {
     "name": "thngrns",
@@ -20,7 +20,7 @@
   "interface": {
     "displayName": "Beta",
     "shortDescription": "Análise e modelagem funcional",
-    "longDescription": "Une Beta ANL e Beta MOD em uma entrada única, com roteamento controlado entre análise funcional, modelagem, QA, Dossiê, artefatos, ClickUp e consultas somente leitura do Movidesk.",
+    "longDescription": "Une Beta ANL e Beta MOD em uma entrada única, com análise funcional, modelagem, QA, Dossiê, ClickUp, consultas Movidesk e importação explícita de conhecimento.",
     "developerName": "thngrns",
     "category": "Productivity",
     "capabilities": [

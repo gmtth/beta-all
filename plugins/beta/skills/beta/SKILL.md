@@ -2,7 +2,7 @@
 name: beta
 description: Orquestrar as famílias Beta ANL e Beta MOD em uma única entrada, escolhendo a análise funcional ou a modelagem adequada e fazendo handoffs entre elas somente quando isso alterar ou melhorar materialmente o resultado.
 metadata:
-  version: "3"
+  version: "4"
 ---
 
 # beta
@@ -47,7 +47,7 @@ Use as skills especializadas conforme a intenção:
 - `beta-anl-qaresultados`: organização de resultados, evidências e problemas de uma execução já realizada.
 - `beta-anl-clickupgeradorcards`: criação ou consolidação de card quando o conteúdo já estiver suficientemente definido.
 - `beta-anl-clickupchecklist`: marcar/sincronizar um checklist já existente em comentário do ClickUp com base nos problemas registrados depois dele; exige link explícito da tarefa ou comentário e atualiza somente o comentário-alvo.
-- `beta-anl-movidesk`: consulta analítica ou execução direta das consultas somente leitura disponíveis pelo MCP Beta MOV.
+- `beta-anl-movidesk`: consulta analítica no Movidesk ou importação explícita de chamados para a base interna pelo MCP Beta MOV.
 
 Não use uma skill de QA apenas porque um erro apareceu durante um teste; se a intenção for investigar o erro, priorize `beta-anl-triagemincidentes`.
 
@@ -110,7 +110,7 @@ Não faça transição apenas porque uma skill relacionada existe. Preserve a in
 - Dossiê é estado operacional da modelagem e não deve ser publicado automaticamente como requisito.
 - Não invente telas, campos, regras, integrações ou implementação técnica.
 - Não simule acesso a ClickUp, Movidesk, Figma ou qualquer conector indisponível.
-- Preserve somente leitura nas consultas operacionais e não prometa alterações externas.
+- Preserve somente leitura nas consultas operacionais. Só importe um chamado quando o usuário pedir explicitamente para adicioná-lo à base compartilhada; a importação grava uma cópia interna auditada e nunca altera o ticket no Movidesk. Não prometa alterações externas.
 
 ## Contrato de execução
 

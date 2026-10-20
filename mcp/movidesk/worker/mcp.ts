@@ -3,9 +3,9 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { GET as getTickets } from "../app/api/tickets/route";
 import { GET as getPersons } from "../app/api/persons/route";
 import { GET as getServices } from "../app/api/services/route";
-import { authorizeOAuthScope, KNOWLEDGE_READ_SCOPE, SUPPORTED_OAUTH_SCOPES } from "../app/oauth/_lib";
+import { authorizeOAuthScope, getAuthorizedOAuthPrincipal, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, OAUTH_SCOPE, SUPPORTED_OAUTH_SCOPES } from "../app/oauth/_lib";
 import { registerKnowledgeTools } from "./knowledge-tools";
-import { SupabaseKnowledgeReader } from "./supabase-knowledge";
+import { SupabaseKnowledgeStore } from "./supabase-knowledge";
 import { registerMovideskTools, type MovideskReader } from "./mcp-tools";
 
 const bearerToken = (authorization: string | null) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
@@ -24,6 +24,13 @@ class LocalMovideskClient implements MovideskReader {
     return data;
   }
   getTicket(id: string, accessToken: string, signal?: AbortSignal) { return this.get("tickets", { id }, accessToken, signal); }
+  async getTicketForKnowledge(id: string, accessToken: string) {
+    try { return await this.getTicket(id, accessToken); }
+    catch (error) {
+      if (!(error instanceof Error) || !error.message.includes("HTTP 404")) throw error;
+      return this.get("tickets", { id, include_past: true }, accessToken);
+    }
+  }
   searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal) { return this.get("tickets", params, accessToken, signal); }
   searchPeople(params: Record<string, string | number | boolean | undefined>, accessToken: string) { return this.get("persons", params, accessToken); }
   listServices(params: Record<string, string | number | boolean | undefined>, accessToken: string) { return this.get("services", params, accessToken); }
@@ -48,8 +55,13 @@ export async function handleMcp(request: Request): Promise<Response | null> {
     return json({ jsonrpc: "2.0", id, error: { code: -32601, message: "Method not found: server/discover" } }, { status: 404 });
   }
   const server = new McpServer({ name: "movidesk-mcp", version: "1.1.0" });
-  registerMovideskTools(server, new LocalMovideskClient(), accessToken);
-  registerKnowledgeTools(server, new SupabaseKnowledgeReader(), () => authorizeOAuthScope(accessToken, KNOWLEDGE_READ_SCOPE));
+  const movideskClient = new LocalMovideskClient();
+  registerMovideskTools(server, movideskClient, accessToken);
+  registerKnowledgeTools(server, new SupabaseKnowledgeStore(), {
+    authorizeRead: () => authorizeOAuthScope(accessToken, KNOWLEDGE_READ_SCOPE),
+    authorizeImport: () => getAuthorizedOAuthPrincipal(accessToken, [OAUTH_SCOPE, KNOWLEDGE_WRITE_SCOPE]),
+    getMovideskTicket: (id) => movideskClient.getTicketForKnowledge(id, accessToken),
+  });
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   await server.connect(transport);
   return transport.handleRequest(request);

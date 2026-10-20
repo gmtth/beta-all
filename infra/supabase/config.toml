@@ -1,0 +1,3 @@
+# Supabase CLI project workspace. Run commands with `--workdir infra` from
+# the beta-all repository root so migrations resolve to infra/supabase/migrations.
+project_id = "beta-knowledge"

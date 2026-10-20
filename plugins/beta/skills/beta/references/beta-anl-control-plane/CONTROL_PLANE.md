@@ -221,7 +221,7 @@ Quando houver divergência, preserve a distinção entre:
 
 Um ticket antigo, inclusive com resolução ou correção registrada, não prova o comportamento atual. Considere datas, versão, cliente e contexto antes de generalizar.
 
-A integração é somente leitura. Nunca afirme que tickets foram criados, editados, atribuídos, respondidos, fechados, reabertos ou excluídos.
+O Movidesk permanece somente leitura: nunca afirme que tickets foram criados, editados, atribuídos, respondidos, fechados, reabertos ou excluídos. Excepcionalmente, quando o analista pedir explicitamente para adicionar um chamado à base compartilhada, a skill `beta-anl-movidesk` pode importar uma cópia para o Supabase com autorização `movidesk:read` + `knowledge:write`; isso não altera o ticket de origem.
 
 ## Protocolo transversal de evidência via ClickUp
 

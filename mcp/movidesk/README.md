@@ -1,17 +1,17 @@
 # MCP Movidesk
 
-Servidor MCP somente leitura para consulta e análise factual de tickets do Movidesk, protegido por OAuth 2.0 Authorization Code com PKCE S256.
+Servidor MCP para consulta/análise factual somente leitura no Movidesk e inclusão explícita de cópia de chamados na base interna Supabase, protegido por OAuth 2.0 Authorization Code com PKCE S256.
 
 ## Conexão
 
 - Endpoint MCP: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`
 - Discovery OAuth: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server`
 - Client ID: `movidesk-mcp-app`
-- Scopes: `movidesk:read` para Movidesk e `knowledge:read` para listar fontes da base compartilhada.
-Para habilitar `knowledge_list_sources`, o cliente MCP precisa solicitar `knowledge:read`; tokens já emitidos precisam ser reautorizados para conceder esse acesso.
+- Scopes: `movidesk:read` para Movidesk, `knowledge:read` para listar fontes e `knowledge:write` para inclusão explícita de chamados na base.
+Para habilitar cada ferramenta, o cliente MCP precisa solicitar o scope correspondente; tokens já emitidos precisam ser reautorizados para receber scopes novos. A ferramenta de inclusão exige os scopes `movidesk:read` e `knowledge:write`.
 - PKCE: `S256` obrigatório
 
-Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status, atribui responsáveis ou publica comentários.
+Mantenha a barra final em `/mcp/`. O servidor não altera tickets, status, responsáveis ou comentários no Movidesk.
 
 ## Ferramentas
 
@@ -27,6 +27,7 @@ Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status,
 ### Base de conhecimento
 
 - `knowledge_list_sources`: lista até dez fontes cadastradas no schema `beta` do Supabase. Exige o scope `knowledge:read`; não consulta o conteúdo dos documentos.
+- `knowledge_import_movidesk_ticket`: importa/atualiza um chamado explicitamente indicado pelo analista, preserva ID e proveniência, remove padrões detectáveis de dados pessoais e grava trechos lexicais. Exige `movidesk:read` + `knowledge:write`; gravação é feita por RPC transacional com auditoria, sem privilégios DML diretos nas tabelas.
 
 ### Análise de um ticket
 
@@ -41,7 +42,7 @@ Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status,
 
 ## Regras de uso
 
-- Todas as operações são somente leitura.
+- Consultas permanecem somente leitura. A única escrita é a inclusão/atualização explícita de um chamado na base; não altera o ticket no Movidesk.
 - Informe escopo temporal em buscas amplas; o detector de recorrências usa o ano corrente por padrão.
 - `ticket_id` e `protocol` são alternativas: não envie ambos nas ferramentas de análise.
 - `top` e `skip` controlam paginação; em análises agrupadas, `total` representa grupos, não tickets brutos.

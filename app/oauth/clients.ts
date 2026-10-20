@@ -1,6 +1,8 @@
 export const GPT_ACTION_CLIENT_ID = "movidesk-gpt-action";
 export const MCP_CLIENT_ID = "movidesk-mcp-app";
 export const OAUTH_SCOPE = "movidesk:read";
+export const KNOWLEDGE_READ_SCOPE = "knowledge:read";
+export const SUPPORTED_OAUTH_SCOPES = [OAUTH_SCOPE, KNOWLEDGE_READ_SCOPE] as const;
 
 export type OAuthClient = {
   id: string;
@@ -55,6 +57,15 @@ function isOfficialMcpRedirect(uri: string) {
   }
 }
 
+export function supportsScopeRequest(clientId: string, scope: string) {
+  const client = oauthClient(clientId);
+  if (!client) return false;
+  const requested = scope.split(" ").filter(Boolean);
+  if (!requested.length || new Set(requested).size !== requested.length) return false;
+  const supported = client.kind === "gpt-action" ? [OAUTH_SCOPE] : SUPPORTED_OAUTH_SCOPES;
+  return requested.every((item) => (supported as readonly string[]).includes(item));
+}
+
 export function validRedirectForClient(clientId: string, uri: string, env: Record<string, string | undefined>) {
   const client = oauthClient(clientId);
   if (!client) return false;
@@ -66,9 +77,17 @@ export function validRedirectForClient(clientId: string, uri: string, env: Recor
   return configured.length === 0 ? true : configured.includes(uri);
 }
 
+export function permissionLabelForScopes(scope: string) {
+  const requested = new Set(scope.split(" ").filter(Boolean));
+  const labels: string[] = [];
+  if (requested.has(OAUTH_SCOPE)) labels.push("Movidesk · leitura de tickets");
+  if (requested.has(KNOWLEDGE_READ_SCOPE)) labels.push("Base de conhecimento · leitura");
+  return labels.join(" + ");
+}
+
 export function validateAuthorizationRequest(clientId: string, responseType: string, redirectUri: string, scope: string, challenge: string, method: string, env: Record<string, string | undefined>) {
   const client = oauthClient(clientId);
-  return Boolean(client && responseType === "code" && scope === OAUTH_SCOPE && validRedirectForClient(clientId, redirectUri, env) && (!client.requiresPkce || (challenge.length > 0 && method === "S256")));
+  return Boolean(client && responseType === "code" && supportsScopeRequest(clientId, scope) && validRedirectForClient(clientId, redirectUri, env) && (!client.requiresPkce || (challenge.length > 0 && method === "S256")));
 }
 
 export function clientSecretFor(clientId: string, env: Record<string, string | undefined>) {

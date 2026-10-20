@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { GPT_ACTION_CLIENT_ID, MCP_CLIENT_ID, OAUTH_SCOPE, validateAuthorizationRequest, validRedirectForClient } from "../app/oauth/clients.js";
+import { GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, MCP_CLIENT_ID, OAUTH_SCOPE, permissionLabelForScopes, validateAuthorizationRequest, validRedirectForClient } from "../app/oauth/clients.js";
 
 const env = {};
 const actionRedirect = "https://chat.openai.com/aip/action-123/oauth/callback";
@@ -23,9 +23,28 @@ test("MCP requires PKCE S256", () => {
   assert.equal(validateAuthorizationRequest(codexCimdClient, "code", loopbackRedirect, OAUTH_SCOPE, "challenge", "S256", env), true);
 });
 
+test("MCP accepts separate Movidesk and knowledge read scopes, while GPT Action remains Movidesk-only", () => {
+  const combined = `${OAUTH_SCOPE} ${KNOWLEDGE_READ_SCOPE}`;
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, KNOWLEDGE_READ_SCOPE, "challenge", "S256", env), true);
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, combined, "challenge", "S256", env), true);
+  assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, KNOWLEDGE_READ_SCOPE, "", "", env), false);
+  assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, combined, "", "", env), false);
+});
+
+test("MCP rejects unsupported or duplicate scopes", () => {
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, "knowledge:write", "challenge", "S256", env), false);
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, `${KNOWLEDGE_READ_SCOPE} ${KNOWLEDGE_READ_SCOPE}`, "challenge", "S256", env), false);
+});
+
 test("unknown clients, scopes, and redirects are rejected", () => {
   assert.equal(validateAuthorizationRequest("unknown", "code", actionRedirect, OAUTH_SCOPE, "", "", env), false);
   assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, "other", "", "", env), false);
   assert.equal(validRedirectForClient(GPT_ACTION_CLIENT_ID, "https://evil.example/callback", env), false);
   assert.equal(validRedirectForClient(MCP_CLIENT_ID, actionRedirect, env), false);
+});
+
+test("consent labels match the scopes being granted", () => {
+  assert.equal(permissionLabelForScopes(OAUTH_SCOPE), "Movidesk · leitura de tickets");
+  assert.equal(permissionLabelForScopes(KNOWLEDGE_READ_SCOPE), "Base de conhecimento · leitura");
+  assert.equal(permissionLabelForScopes(`${OAUTH_SCOPE} ${KNOWLEDGE_READ_SCOPE}`), "Movidesk · leitura de tickets + Base de conhecimento · leitura");
 });

@@ -1,4 +1,4 @@
-import { GPT_ACTION_CLIENT_ID, json, MCP_CLIENT_ID } from "../../oauth/_lib";
+import { GPT_ACTION_CLIENT_ID, json, MCP_CLIENT_ID, SUPPORTED_OAUTH_SCOPES } from "../../oauth/_lib";
 
 export async function GET(request: Request) {
   const issuer = new URL(request.url).origin;
@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     response_types_supported: ["code"],
     grant_types_supported: ["authorization_code"],
     code_challenge_methods_supported: ["S256"],
-    scopes_supported: ["movidesk:read"],
+    scopes_supported: [...SUPPORTED_OAUTH_SCOPES],
     token_endpoint_auth_methods_supported: ["none"],
     authorization_response_iss_parameter_supported: true,
     client_id_metadata_document_supported: true,

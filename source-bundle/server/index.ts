@@ -7,7 +7,7 @@ import { registerTools } from "../src/tools/index.js";
 type Env = Record<string, string | undefined> & { OAUTH_PROXY_URL: string; OAUTH_CLIENT_ID: string; MCP_PUBLIC_URL: string };
 
 const json = (data: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
-const createMcpServer = (env: Env, accessToken: string) => { const server = new McpServer({ name: "movidesk-mcp", version: "1.0.0" }); registerTools(server, new MovideskClient({ proxyUrl: env.OAUTH_PROXY_URL as string, siteAuthorization: env.OAUTH_PROXY_SITE_TOKEN }), accessToken); return server; };
+const createMcpServer = (env: Env, accessToken: string) => { const server = new McpServer({ name: "movidesk-mcp", version: "1.0.0" }); registerTools(server, new MovideskClient({ proxyUrl: env.OAUTH_PROXY_URL as string }), accessToken); return server; };
 
 export async function handleDiscovery(request: Request): Promise<Response | null> {
   if (request.headers.get("mcp-method") !== "server/discover") return null;

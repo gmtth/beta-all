@@ -1522,3 +1522,13 @@ Após o merge e o deploy, a sequência histórica e recomendada é: confirmar ve
 - retry que recupera 502 prova resiliência observada, não disponibilidade permanente;
 - teste sem PII não prova que todos os logs externos estejam sanitizados;
 - uma alteração documental pode revelar teste de UI obsoleto sem representar regressão de runtime.
+
+## Registro operacional — conversão do `source-bundle` (2026-10-19)
+
+Por decisão explícita do usuário, o diretório `source-bundle` deixou de ser mantido como submódulo Git e passou a ser versionado como diretório comum do repositório principal. A conversão preservou os arquivos rastreados pelo commit do submódulo (`67d07224d9d69934a2e9d9bfe1cbf08033fde61f`) e não incorporou dependências instaladas, diretórios de staging ou artefatos locais não rastreados, como `node_modules` e `package-stage`.
+
+O commit local da conversão foi `c0b0890` (`Vendor source bundle as regular project files`). Como a credencial Git da sessão não permitiu o push CLI, o mesmo conteúdo foi criado e verificado no GitHub pela API autenticada, no branch `codex/phase3b-similarity`, no commit remoto `0f31d491d1baf5a91bade167cb2b7f639d17afca`. Os SHAs diferem porque são commits Git distintos, mas o commit remoto foi construído sobre o estado remoto equivalente e conferido pela árvore GitHub.
+
+O estado esperado após essa mudança é `git ls-tree HEAD source-bundle` exibindo modo `040000 tree` (diretório normal), e não modo `160000 commit` (gitlink). O metadata Git interno usado pelo submódulo foi mantido apenas como backup local em `.git/source-bundle-git-backup`; ele não faz parte do conteúdo versionado nem deve ser publicado.
+
+Não houve PR, merge em `main` ou deploy como parte desta operação. A alteração é de empacotamento/rastreabilidade e não modifica as ferramentas MCP, seus contratos, o OAuth ou o Site.

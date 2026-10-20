@@ -14,4 +14,3 @@ export default async function UsersPage() {
     <footer className="card-footer"><span>Alterações protegidas pela conta master</span><span className="version">BETA / ACCESS CONTROL</span></footer>
   </section></main>;
 }
-

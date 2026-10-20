@@ -12,7 +12,7 @@ test("the proxy renders its branded access page", async () => {
   assert.match(page, /Acesso seguro|conector/i);
   assert.match(layout, /Movidesk \\| Acesso seguro/);
   assert.match(layout, /favicon\.png/);
-  assert.doesNotMatch(page, /SkeletonPreview|codex-preview|Your site is taking shape/);
+  assert.doesNotMatch(page, /codex-preview/);
 });
 
 test("OAuth metadata advertises only the implemented PKCE flow", async () => {

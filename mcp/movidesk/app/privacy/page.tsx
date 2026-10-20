@@ -2,7 +2,7 @@ export const dynamic = "force-static";
 
 export default function PrivacyPage() {
   return <main className="shell"><div className="ambient ambient-one" /><div className="ambient ambient-two" /><article className="card privacy-card">
-    <header className="brandbar"><div className="brand"><img src="/beta-logo.svg" alt="Beta" /><span className="brand-product">MCP</span></div><a className="back-link" href="/">Voltar ao acesso</a></header>
+    <header className="brandbar internal-brandbar"><a className="back-link" href="/">← Voltar ao acesso</a></header>
     <div className="hero"><div className="eyebrow"><span className="pulse" /> PRIVACIDADE</div><h1>Dados tratados<br /><em>com propósito.</em></h1><p className="lead">Esta página explica como a Beta trata os dados necessários para autenticar usuários e consultar integrações autorizadas. Atualmente, este projeto inclui o conector Movidesk e a base interna de conhecimento.</p></div>
     <section className="access-panel privacy-content">
       <h2>O que é processado</h2><p>O serviço recebe sua identidade do ChatGPT para validar se a conta está autorizada. Consultas processam dados retornados pelo Movidesk. Quando um analista solicita explicitamente a inclusão de um chamado na base, o serviço guarda assunto, descrição, interações selecionadas e metadados técnicos do chamado no Supabase; e-mails, documentos pessoais, contatos, nomes de solicitantes e autores não são incluídos como campos estruturados, e padrões detectáveis de e-mail, documento, telefone identificado e URL são removidos do texto.</p>

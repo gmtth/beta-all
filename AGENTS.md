@@ -194,6 +194,13 @@ beta-all/                              # único clone/repos de trabalho após a 
 - Não deixar workflows, automações ou instruções de contribuição apontando aos repositórios antigos como destino de desenvolvimento. Manter seus URLs somente como proveniência/arquivo.
 - Na primeira versão, não depender de scripts. Se forem introduzidos depois, limitar a bootstrap e verificação segura; nunca esconder deploys ou mutações remotas em comandos inesperados.
 
+### Cadência de commits
+
+- O usuário autoriza commits automáticos a cada três prompts do usuário que resultem em alterações rastreadas feitas pelo agente neste repositório. Prompts apenas informativos, perguntas sem alteração e atualizações de status não contam; reiniciar a contagem após cada commit.
+- Antes de cada commit, revisar o diff e o estado do Git. Incluir somente alterações relacionadas ao trabalho autorizado; nunca incluir segredos, dados operacionais, arquivos temporários/gerados ou alterações preexistentes do usuário sem relação com a tarefa.
+- Essa autorização cobre apenas o commit local. Push, publicação/deploy, merge e alterações remotas continuam exigindo pedido explícito do usuário.
+- Se o trabalho estiver incompleto, o diff não puder ser atribuído com segurança ou houver risco de registrar conteúdo sensível, adiar o commit e explicar o motivo.
+
 ### Sequência de execução antes da importação
 
 1. Verificar se as tarefas paralelas relacionadas ao MCP, Site, `AGENTS.md`, `DOSSIER.md` e documentação terminaram; confirmar que as alterações desejadas foram commitadas e enviadas aos remotes.

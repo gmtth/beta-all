@@ -1,0 +1,15 @@
+interface:
+  display_name: "ClickUp Sprint Export"
+  short_description: "Exporta sprints do ClickUp para Markdown consultável"
+  default_prompt: "Use $clickup-sprint-export para exportar esta sprint do ClickUp em Markdown estruturado para consulta por IA."
+  icon_small: "./assets/logo.png"
+  icon_large: "./assets/logo.png"
+  brand_color: "#FF3BA7"
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
+

@@ -9,11 +9,11 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 | Pergunta | Resposta canônica |
 |---|---|
 | O que existe? | MCP Movidesk somente leitura, com consultas, timeline, análises, similaridade e recorrência. |
-| Onde roda? | O Site consolidado contém OAuth/PKCE, REST interno e a rota MCP `/mcp/` no Worker; `source-bundle` é um servidor autônomo legado. |
+| Onde roda? | O Site consolidado contém OAuth/PKCE, REST interno e a rota MCP `/mcp/` no Worker. O antigo servidor autônomo `source-bundle` foi removido da árvore de código nesta limpeza. |
 | Qual é a regra de segurança? | Não mutar tickets; não expor segredo/PII; não publicar sem confirmar manifesto e deployment. |
 | Qual é a fonte semântica? | YAML legível + snapshot JSON validado; grupos semânticos têm papéis separados. |
 | O que está estabilizado? | Fases 0–2, 3A, 3B e implementação de 3C, conforme o estado/evidência de cada seção. |
-| O que ainda precisa ser confirmado? | Smoke test direto do endpoint MCP publicado e eventual uso/deployment independente do servidor legado em `source-bundle`. |
+| O que ainda precisa ser confirmado? | Smoke test direto do endpoint MCP publicado e eventual deployment externo independente do antigo `source-bundle`; a remoção local não desliga serviços externos. |
 | Qual o próximo caminho? | Fase 4 (hardening/publicação), depois calibração, observabilidade e encerramento da beta. |
 | O que nunca inferir? | Commit ≠ merge; merge ≠ deploy; deploy ≠ manifesto ativo; teste local ≠ produção. |
 
@@ -33,17 +33,17 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 ## Resumo canônico atual
 
 - **Objetivo:** MCP somente leitura para consulta e análise factual de tickets Movidesk.
-- **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites. O MCP publicado é implementado no Worker consolidado (`worker/index.ts`, `worker/mcp.ts`, `worker/mcp-tools.ts`); `source-bundle` contém um servidor independente legado e não é importado pelo código da aplicação Sites.
+- **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites. O MCP publicado é implementado no Worker consolidado (`worker/index.ts`, `worker/mcp.ts`, `worker/mcp-tools.ts`). O antigo `source-bundle` não era importado pelo Site e foi removido da árvore de código; não há confirmação sobre deployments externos.
 - **Endpoint MCP:** `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` — a barra final é obrigatória.
 - **Raiz local:** `D:\Google Drive\Documents\ChatGPT\MCP Movidesk`.
 - **Branch funcional observada:** `codex/phase3b-similarity`.
-- **HEAD local observado:** `392c2f8` (`Document consolidated MCP runtime`). O `main` consultado durante a revisão das PRs estava em `79f1f799a6413f15ed4d785c394f4b9426436b39`.
+- **Base local desta limpeza:** `392c2f8` (`Document consolidated MCP runtime`); o `main` remoto foi atualizado para `46e8a3ce07f8be0c1cd253e0f6df216e358a2379` antes da sincronização final.
 - **Último deploy Sites confirmado:** versão 70, deployment `appgdep_6ad6b8f380a48191b2c9f6f25df2e260`, concluído com sucesso em 2026-10-20, baseado no commit de origem `e25f25d057de902e9ae79aa68a27b79e9d38b582`.
 - **MCP na versão publicada:** o código-fonte dessa versão contém `worker/index.ts` chamando `handleMcp` e `worker/mcp.ts` implementando `POST /mcp`. A integração nativa MCP do Sites reportou `has_mcp: false`; isso comprova a implementação personalizada no Worker, não uma declaração MCP nativa da plataforma.
-- **`source-bundle`:** o pacote contém outro servidor (`movidesk-mcp`, versão 1.0.0, com ferramentas próprias) e não é referenciado pelo código de aplicação/Worker do Site consolidado. O workspace da versão publicada ainda contém o gitlink do submódulo, mas a rota MCP do Site está no Worker raiz. Evidência indica legado/duplicação para este Site; não foi confirmado se existe deployment independente desse pacote em outro serviço.
+- **`source-bundle`:** removido da árvore de trabalho após confirmação de que o Site consolidado não o importa. A pasta local, com dependências instaladas, está preservada em `work/legacy-preservation/source-bundle-local-only`; a cópia do bundle modificado está em `work/legacy-preservation/source-bundle-dist-server-index.local.js`. A exclusão não altera deployments externos.
 - **Limitação de verificação:** não foi possível fazer smoke test HTTP direto ao endpoint publicado nesta checagem. A implementação e o deployment da versão 70 foram verificados por código e metadados Sites.
 - **PRs desta consolidação:** #39 foi mesclada à branch `codex/vendor-source-bundle` (merge commit `0437be815023ed17fabdaee578a31cf92c7d7ac4`); a #38 foi mesclada em `main` (merge commit `46a4b69d4d526d151da6261f7dc758c9b6e79043`). Nenhum deploy Sites foi realizado nesta operação.
-- **Working tree:** pode conter alterações de UI/branding e `source-bundle` fora do escopo documental; não assumir que podem ser incluídas em commits.
+- **Working tree:** contém a limpeza documentada abaixo e alterações sincronizadas do Site; o ZIP de artefatos legado está excluído do Git e do pacote publicado.
 
 ## Regras de autoridade e precedência
 
@@ -1552,3 +1552,48 @@ O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Bet
 - Não foi possível executar uma chamada HTTP direta de smoke test ao endpoint publicado nesta verificação. A confirmação é da implementação no código-fonte da versão publicada e do estado do deployment, não de uma sessão MCP ativa nem da lista de ferramentas entregue ao cliente.
 - Não foi verificado se `source-bundle` está implantado como serviço autônomo fora do Site. Não remover nem desligar eventual serviço externo sem localizar o deployment correspondente.
 - A conclusão sobre não ser dependência do Site consolidado não equivale, por si só, à autorização para apagar o diretório/submódulo do repositório. Uma remoção deve ser tratada como mudança Git separada e considerar consumidores externos.
+
+
+## Limpeza do servidor legado `source-bundle` (2026-10-19)
+
+**Pedido:** preparar o projeto para o futuro removendo código e dependências consideradas legadas.
+
+**Decisão e evidência:** remover da árvore do projeto os 19 arquivos rastreados de `source-bundle`, incluindo servidor, testes, manifestos e lockfile próprios. O Site consolidado registra seu MCP em `worker/` e não importa esse pacote; as dependências do Site são declaradas nos manifestos raiz. Esta alteração é apenas no repositório e não desliga deployments externos.
+
+**Preservação:** a versão local modificada de `source-bundle/dist/server/index.js` e os diretórios locais não rastreados (dependências instaladas e pacotes de estágio) foram movidos para `work/legacy-preservation/`. O conteúdo local permanece recuperável, mas não faz parte do código ativo.
+
+**Limites:** não foi identificado se algum serviço independente ainda executa uma cópia de `source-bundle`. Não foram removidas dependências dos manifestos raiz, nem alteradas as ferramentas, contratos, OAuth, Worker ou configuração do Site. Build do pacote final foi executado com sucesso após a reconciliação das fontes; testes não foram executados nesta limpeza.
+
+**Estado:** a limpeza foi aplicada sobre a fonte atual do Site e está sendo registrada no commit de publicação; a implantação só será considerada atualizada após confirmação do Sites.
+
+## Remoção do exemplo D1 não utilizado (2026-10-19)
+
+A pasta `examples/d1/` continha apenas uma rota de notas e um schema de exemplo. A rota ficava fora de `app/`, não era importada pelo runtime e não era copiada pelo plugin de build do Sites. Seu único helper, `db/index.ts`, também só era importado por essa rota. Os dois arquivos de exemplo e o helper foram removidos localmente após essa verificação.
+
+O schema OAuth em `db/schema.ts`, a configuração Drizzle e as migrações em `drizzle/` foram preservados: o build do Sites copia as migrações, e o fluxo OAuth ativo usa as tabelas D1. Não foram removidos `drizzle-orm`, `drizzle-kit` nem as dependências relacionadas. Nenhum teste ou build foi executado; a verificação foi por referências/imports estáticos. A alteração está local, sem commit, push, merge ou deploy.
+
+## Verificação do uso de migrações D1 pelo Sites (2026-10-19)
+
+A referência oficial da skill Sites (`references/storage.md`, seção “Schema Changes”) diz que o Sites aplica as migrações hospedadas antes de enviar o Worker. No projeto, `.openai/hosting.json` declara o binding `DB`; `vite.config.ts` registra `sites()`; e `build/sites-vite-plugin.ts` copia `drizzle/` para `dist/.openai/drizzle`. A cópia local de build contém `0000_oauth.sql` e `_journal.json`. A conexão Sites também confirma o binding D1 `DB` e as tabelas OAuth existentes (`oauth_codes`, `oauth_tokens`, `oauth_users`), sem expor linhas de dados.
+
+**Decisão:** manter `drizzle/`, `drizzle.config.ts`, `db/schema.ts`, `drizzle-kit` e `drizzle-orm`. Eles sustentam a geração e o empacotamento das migrações, necessários para preservar deployments novos e atualizações do Worker. `drizzle-orm`/`drizzle-kit` são tooling de schema, não a camada usada diretamente pelas rotas OAuth, que executam SQL pelo binding D1.
+
+**Limite:** a interface consultada não expõe um histórico de aplicação por migration ID; portanto, não está confirmado se `0000_oauth.sql` foi a migração específica aplicada na versão 70. Isso não é evidência de que o arquivo seja dispensável: removê-lo poderia quebrar a inicialização/atualização de um banco em outro estado. O `db/index.ts`, que só servia ao exemplo D1 removido acima, não é necessário e permanece removido. Nenhum dado D1 foi lido, alterado ou apagado nesta checagem.
+
+## Padronização do gerenciador de pacotes (2026-10-19)
+
+O projeto tinha `package-lock.json` e `pnpm-lock.yaml`. O seletor oficial do fluxo Sites instalado (`scripts/package-manager.mjs`) detecta famílias de lockfile conflitantes e encerra com erro quando mais de uma está presente. Foi escolhido npm porque o README já documentava `npm install`, o starter Sites/Vinext usa `npm ci` e o `package-lock.json` é necessário para a instalação determinística do Site. Foram removidos `pnpm-lock.yaml` e `pnpm-workspace.yaml`, que só sustentava a configuração de aprovação de scripts do pnpm; o README agora orienta `npm ci`. Não foi adicionado `packageManager` porque a seleção oficial se resolve pelo lockfile único. A árvore npm foi ajustada para a remoção de `react-loading-skeleton` na mesma limpeza. O `package.json` também registra, com versões fixas, a autorização de scripts de instalação para `esbuild` (0.18.20, 0.25.12, 0.27.3 e 0.28.0), `sharp` (0.34.5) e `workerd` (1.20260515.1), exigidos pelo build no npm 11.
+
+Dependências instaladas no checkout reconciliado; build final concluído com sucesso. Testes automatizados não foram executados.
+
+## Arquivamento dos artefatos locais de publicação (2026-10-19)
+
+Os pacotes de `_site-package-stage/`, o `dist/` local e os 35 arquivos `.tar.gz` da raiz foram consolidados em `legado/artefatos-publicacao-20261019.zip`. O ZIP contém 1.323 arquivos e preserva os caminhos relativos originais; os SHA-256 de todos os arquivos extraídos do ZIP foram conferidos contra as fontes antes de removê-las das localizações originais. Tamanho dos arquivos-fonte: 47.344.594 bytes; ZIP: 31.066.825 bytes.
+
+Os originais `dist/`, `_site-package-stage/` e os 35 `.tar.gz` foram removidos da raiz somente após a verificação integral do arquivo. `legado/README.md` descreve o conteúdo e a restauração. O ZIP está excluído do Git pelo `.gitignore`, por ser backup local de artefatos, não fonte do Site. `work/legacy-preservation/` permanece separado e intacto; não foi incluído nesse lote. Nenhum build, teste, commit, push, merge ou deploy foi executado.
+
+## Remoção da prévia Skeleton não referenciada (2026-10-19)
+
+Foi feita busca de imports e referências em todas as páginas/rotas, no build, nos testes e nas instruções/templates locais do Sites. `SkeletonPreview` só era declarado em `app/_sites-preview/SkeletonPreview.tsx`; não havia importador. O diretório privado `_sites-preview` não cria uma rota App Router, e a skill/template oficial Sites instalados não documentam nem usam esse caminho como contrato de extensão. O teste de HTML também exige que o componente não apareça em `app/page.tsx`.
+
+Com essa evidência, foram removidos `app/_sites-preview/SkeletonPreview.tsx`, seu CSS e a dependência sem outro uso `react-loading-skeleton` de `package.json`, `package-lock.json` e `pnpm-lock.yaml`. Nenhuma rota, integração, binding ou recurso publicado é referenciado por esses arquivos no código local. Build/teste não foram executados; portanto, o efeito foi verificado estaticamente, não em um deployment Sites. A mudança está local, sem commit, push, merge ou deploy.

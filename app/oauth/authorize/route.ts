@@ -57,4 +57,3 @@ export async function POST(request: Request) {
   if (client.kind === "mcp") callback.searchParams.set("iss", origin);
   return Response.redirect(callback, 302);
 }
-

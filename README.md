@@ -48,7 +48,7 @@ Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status,
 Requisito: Node.js `>=22.13.0`.
 
 ```bash
-npm install
+npm ci
 npm run dev
 npm run build
 npm run validate:semantic-catalog

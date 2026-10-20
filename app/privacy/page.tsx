@@ -13,4 +13,3 @@ export default function PrivacyPage() {
     <footer className="card-footer"><span>OAuth 2.1 · acesso somente leitura</span><span className="version">BETA / PRIVACY</span></footer>
   </article></main>;
 }
-

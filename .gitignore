@@ -42,5 +42,6 @@ yarn-error.log*
 /.pnpm-store/
 /__pycache__/
 /_site-package-stage/
+/legado/*.zip
 /*.tar.gz
 *.tsbuildinfo

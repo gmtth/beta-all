@@ -14,8 +14,8 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 |---|---|---|---|
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
 | MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; dossier completo junto ao componente |
-| Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos ampliados publicado no Sites v79; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
-| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; `sites:workflow` isola o helper e faz pré-voo de projeto, dependências, build e pacote antes do commit/push; versão 79 publicada |
+| Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos Supabase publicado no Sites v79; gráficos MCP no D1 publicados na v80; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
+| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; `sites:workflow` isola o helper e faz pré-voo; versão 80 publicada com sucesso |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
 
@@ -31,9 +31,10 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 ### Telemetria do painel no Sites (2026-10-20)
 
 - Decisão do usuário: gráficos e métricas de uso/erros devem contabilizar chamadas das ferramentas MCP no ambiente Sites; não usar Supabase para esse fim.
-- Implementação local em `mcp/movidesk/`: eventos mínimos no D1 do Sites, endpoint administrativo separado dos indicadores Supabase, gráfico de chamadas por ferramenta, erros diários em 30 dias e lista dos dez erros mais recentes. Retenção de até 90 dias.
+- Implementação publicada no Sites v80: eventos mínimos no D1, endpoint administrativo separado dos indicadores Supabase, gráfico de chamadas por ferramenta, erros diários em 30 dias e lista dos dez erros mais recentes. Retenção de até 90 dias.
 - Os eventos não contêm identidade, argumentos, conteúdo de retorno nem mensagens brutas de erro. A tabela é declarada em Drizzle e possui migration própria; o Worker também garante criação idempotente.
-- Estado: implementação local nesta branch; build, publicação e confirmação de métricas reais ainda pendentes. Ver `mcp/movidesk/DOSSIER.md` para detalhes.
+- Estado: commit GitHub `f013830` enviado à branch `codex/knowledge-ticket-ingestion`; fonte Sites `f0e56004251435d2b3b07b8c516857c7f3a4f4de`; versão 80 implantada com sucesso em deployment `appgdep_6ad7ffa179f88191bf045ab6570e161c`. Ainda não confirmado que chamadas reais estejam aparecendo nos gráficos. Ver `mcp/movidesk/DOSSIER.md` para detalhes.
+- O commit `2d05b69` corrige o `PATH` enviado pelo wrapper Sites no Windows, incluindo Node para o empacotador Bash. O workflow completo foi concluído com esse ajuste.
 
 ## Migração e rastreabilidade
 

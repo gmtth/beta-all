@@ -8,12 +8,12 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 
 | Pergunta | Resposta canônica |
 |---|---|
-| O que existe? | MCP Movidesk somente leitura, com consultas, timeline, análises, similaridade e recorrência. |
+| O que existe? | MCP Movidesk somente leitura, com consultas, timeline, análises, similaridade, recorrência e listagem inicial de fontes Supabase (`knowledge_list_sources`). |
 | Onde roda? | O Site consolidado contém OAuth/PKCE, REST interno e a rota MCP `/mcp/` no Worker; `source-bundle` é um servidor autônomo legado. |
 | Qual é a regra de segurança? | Não mutar tickets; não expor segredo/PII; não publicar sem confirmar manifesto e deployment. |
 | Qual é a fonte semântica? | YAML legível + snapshot JSON validado; grupos semânticos têm papéis separados. |
 | O que está estabilizado? | Fases 0–2, 3A, 3B e implementação de 3C, conforme o estado/evidência de cada seção. |
-| O que ainda precisa ser confirmado? | Smoke test direto do endpoint MCP publicado e eventual uso/deployment independente do servidor legado em `source-bundle`. |
+| O que ainda precisa ser confirmado? | Publicação da nova versão, variáveis/permissões Supabase no Sites, solicitação de `knowledge:read` pelo cliente e smoke test; eventual uso/deployment independente do servidor legado em `source-bundle`. |
 | Qual o próximo caminho? | Fase 4 (hardening/publicação), depois calibração, observabilidade e encerramento da beta. |
 | O que nunca inferir? | Commit ≠ merge; merge ≠ deploy; deploy ≠ manifesto ativo; teste local ≠ produção. |
 
@@ -33,12 +33,12 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 ## Resumo canônico atual
 
 - **Objetivo:** MCP somente leitura para consulta e análise factual de tickets Movidesk.
-- **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites. O MCP publicado é implementado no Worker consolidado (`worker/index.ts`, `worker/mcp.ts`, `worker/mcp-tools.ts`); `source-bundle` contém um servidor independente legado e não é importado pelo código da aplicação Sites.
+- **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites. O MCP publicado é implementado no Worker consolidado (`worker/index.ts`, `worker/mcp.ts`, `worker/mcp-tools.ts`). O código mesclado também registra `knowledge_list_sources` no Worker, mas a versão publicada ainda não foi atualizada para incluí-la; `source-bundle` contém um servidor independente legado.
 - **Endpoint MCP:** `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` — a barra final é obrigatória.
 - **Raiz local:** `D:\Google Drive\Documents\ChatGPT\MCP Movidesk`.
 - **Branch funcional observada:** `codex/phase3b-similarity`.
-- **HEAD local observado:** `392c2f8` (`Document consolidated MCP runtime`). O `main` consultado durante a revisão das PRs estava em `79f1f799a6413f15ed4d785c394f4b9426436b39`.
-- **Último deploy Sites confirmado:** versão 70, deployment `appgdep_6ad6b8f380a48191b2c9f6f25df2e260`, concluído com sucesso em 2026-10-20, baseado no commit de origem `e25f25d057de902e9ae79aa68a27b79e9d38b582`.
+- **HEAD local observado:** `392c2f8` (`Document consolidated MCP runtime`). Após a PR #42, o `main` remoto está em `e1ecb2c718c0169be8774ce2c97917b6ff8e0a76`.
+- **Último deploy Sites confirmado:** versão 70, deployment `appgdep_6ad6b8f380a48191b2c9f6f25df2e260`, baseado no commit `e25f25d057de902e9ae79aa68a27b79e9d38b582`. A PR #42 foi mesclada depois; essa feature ainda não foi publicada no Sites.
 - **MCP na versão publicada:** o código-fonte dessa versão contém `worker/index.ts` chamando `handleMcp` e `worker/mcp.ts` implementando `POST /mcp`. A integração nativa MCP do Sites reportou `has_mcp: false`; isso comprova a implementação personalizada no Worker, não uma declaração MCP nativa da plataforma.
 - **`source-bundle`:** o pacote contém outro servidor (`movidesk-mcp`, versão 1.0.0, com ferramentas próprias) e não é referenciado pelo código de aplicação/Worker do Site consolidado. O workspace da versão publicada ainda contém o gitlink do submódulo, mas a rota MCP do Site está no Worker raiz. Evidência indica legado/duplicação para este Site; não foi confirmado se existe deployment independente desse pacote em outro serviço.
 - **Limitação de verificação:** não foi possível fazer smoke test HTTP direto ao endpoint publicado nesta checagem. A implementação e o deployment da versão 70 foram verificados por código e metadados Sites.
@@ -1552,3 +1552,16 @@ O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Bet
 - Não foi possível executar uma chamada HTTP direta de smoke test ao endpoint publicado nesta verificação. A confirmação é da implementação no código-fonte da versão publicada e do estado do deployment, não de uma sessão MCP ativa nem da lista de ferramentas entregue ao cliente.
 - Não foi verificado se `source-bundle` está implantado como serviço autônomo fora do Site. Não remover nem desligar eventual serviço externo sem localizar o deployment correspondente.
 - A conclusão sobre não ser dependência do Site consolidado não equivale, por si só, à autorização para apagar o diretório/submódulo do repositório. Uma remoção deve ser tratada como mudança Git separada e considerar consumidores externos.
+
+
+## Listagem inicial de fontes Supabase (2026-10-20)
+
+- **Pedido:** reconciliar a branch `feat/supabase-knowledge-read-scope`, abrir PR e mesclar com segurança.
+- **Branch original:** `7b63eb62ee60a9828d1f11eec5a4b7cb35de504c`, 16 commits atrás e 16 à frente do `main`; preservada sem reescrita.
+- **Integração:** a implementação foi portada para `codex/supabase-knowledge-read-scope`, baseada no `main` de `46e8a3ce07f8be0c1cd253e0f6df216e358a2379`. PR #42 foi mesclada em `e1ecb2c718c0169be8774ce2c97917b6ff8e0a76`.
+- **Comportamento:** scope `knowledge:read` separado de `movidesk:read`; ferramenta somente leitura `knowledge_list_sources`, máximo de dez fontes, resposta limitada a ID/nome e verificação do token/expiração/conta ativa em cada chamada. O consentimento exibe as permissões por escopo.
+- **Verificação local:** suíte relevante, 69 testes aprovados; `node_modules/.bin/vinext.cmd build` aprovado. O GitHub não reportou workflows/checks para a PR.
+- **Limites:** a ferramenta apenas lista fontes; não busca conteúdo nem grava. A chave Supabase pode ignorar RLS. `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, privilégios no banco, escopo solicitado pela conexão ChatGPT e reautorização dos usuários não foram verificados no ambiente.
+- **Publicação:** não realizada nesta operação. O Site permanece na versão 70 até novo deploy e smoke test.
+- **PR #41:** continua aberta. A branch de limpeza permanece preservada; após a PR #42, a comparação acusa divergência em relação ao `main` e requer nova verificação/resync antes de merge.
+

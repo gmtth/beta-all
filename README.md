@@ -8,6 +8,7 @@ Servidor MCP somente leitura para consulta e análise factual de tickets do Movi
 - Discovery OAuth: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server`
 - Client ID: `movidesk-mcp-app`
 - Scopes: `movidesk:read` para Movidesk e `knowledge:read` para listar fontes da base compartilhada.
+Para habilitar `knowledge_list_sources`, o cliente MCP precisa solicitar `knowledge:read`; tokens já emitidos precisam ser reautorizados para conceder esse acesso.
 - PKCE: `S256` obrigatório
 
 Mantenha a barra final em `/mcp/`. O servidor não grava tickets, altera status, atribui responsáveis ou publica comentários.

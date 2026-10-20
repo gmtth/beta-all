@@ -1,8 +1,8 @@
 ---
 name: beta-anl-qaresultados
-description: No ciclo integrado iniciado após QA Testes e aceite do usuário, organizar resultados por item, preparar um comentário independente por problema no ClickUp e publicá-lo somente após aprovação explícita do lote exato; encaminhar estados da rodada para atualização do comentário Checklist de testes quando o usuário confirmar o término.
+description: No ciclo integrado iniciado após `beta-anl-qatestes` e aceite do usuário, organizar resultados por item, preparar um comentário independente por problema no ClickUp e publicá-lo somente após aprovação explícita do lote exato; encaminhar estados da rodada para atualização do comentário Checklist de testes quando o usuário confirmar o término.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -44,7 +44,7 @@ Transformar os resultados da execução de QA em registros claros, literais e ra
 
 A skill organiza o que foi observado. Não cria requisito, não diagnostica causa e não gera card de desenvolvimento automaticamente.
 
-No ciclo integrado de QA, use o checklist escolhido na etapa QA Testes e registre o estado de cada item informado pelo usuário: problema, sucesso, não executado ou bloqueado. Não presuma que a ausência de relato significa sucesso até o usuário confirmar que a execução completa terminou e que todos os problemas foram relatados.
+No ciclo integrado de QA, use o checklist escolhido na etapa `beta-anl-qatestes` e registre o estado de cada item informado pelo usuário: problema, sucesso, não executado ou bloqueado. Não presuma que a ausência de relato significa sucesso até o usuário confirmar que a execução completa terminou e que todos os problemas foram relatados.
 
 ## Regra central
 O checklist fornecido pelo usuário é a fonte de verdade para os itens de teste.
@@ -111,7 +111,7 @@ Consulte Movidesk somente quando fatos de ticket puderem contribuir materialment
 
 O Movidesk pode sustentar ocorrência, datas, contexto e histórico registrado. Não deve ser usado para criar requisito, comportamento esperado ou causa raiz.
 
-Siga o protocolo transversal de evidência do Router.
+Siga o protocolo transversal de evidência do `beta`.
 
 ## Mapeamento de problemas
 Cada problema declarado pelo usuário gera um registro independente.
@@ -143,9 +143,9 @@ Quando o comportamento esperado não estiver disponível e não puder ser confir
 
 Esta é a única escrita desta skill no ClickUp: criar comentários de nível superior, um por problema, apenas no fluxo e com a aprovação e a trava de status abaixo. Não executar outras escritas; aplica-se também a regra de autorização do control plane.
 
-No ciclo integrado, use o checklist escolhido e publicado na etapa QA Testes. A publicação confirmada inicia QA Resultados; organize os estados informados para cada item: problema, sucesso, não executado ou bloqueado. Não presuma que o silêncio significa sucesso; antes de fechar a rodada, confirme que a execução terminou e que todos os problemas foram relatados.
+No ciclo integrado, use o checklist escolhido e publicado na etapa `beta-anl-qatestes`. A publicação confirmada inicia `beta-anl-qaresultados`; organize os estados informados para cada item: problema, sucesso, não executado ou bloqueado. Não presuma que o silêncio significa sucesso; antes de fechar a rodada, confirme que a execução terminou e que todos os problemas foram relatados.
 
-Quando QA Testes tiver passado o ID da tarefa e o usuário relatar problemas durante a execução, prepare um comentário independente para cada problema, sem combinar erros distintos. Mantenha um identificador novo e único `Execução QA` para cada rodada e use-o no acompanhamento interno e no handoff para Beta CLK. Para reproduzir o formato visual preferido pelo usuário, não inclua esse identificador nem rótulos como `Item do checklist`, `Problema encontrado`, `Comportamento esperado` ou `Evidência` no corpo do comentário, salvo se o usuário pedir.
+Quando `beta-anl-qatestes` tiver passado o ID da tarefa e o usuário relatar problemas durante a execução, prepare um comentário independente para cada problema, sem combinar erros distintos. Mantenha um identificador novo e único `Execução QA` para cada rodada e use-o no acompanhamento interno e no handoff para `beta-anl-clickupchecklist`. Para reproduzir o formato visual preferido pelo usuário, não inclua esse identificador nem rótulos como `Item do checklist`, `Problema encontrado`, `Comportamento esperado` ou `Evidência` no corpo do comentário, salvo se o usuário pedir.
 
 ### Formato do comentário
 
@@ -170,11 +170,11 @@ Antes de qualquer publicação, releia o status atual da tarefa e confirme que �
 
 Publique os comentários somente se o conector ClickUp estiver disponível e permitir cumprir o formato solicitado, inclusive inserir os anexos reais no comentário quando houver evidência anexada. Crie um comentário por problema e não acrescente comentário-resumo ou comentário de encerramento. Se o resultado da chamada for incerto, leia os comentários da tarefa antes de tentar novamente para evitar duplicidade. Se não houver aprovação, acesso ou suporte a anexos no comentário, mantenha o texto como rascunho na resposta e informe a limitação; não publique caminhos ou nomes de arquivo como se fossem anexos.
 
-Ao encaminhar a execução para Beta CLK, forneça o ID da tarefa, o checklist exato, o identificador `Execução QA`, os itens com problema e o estado informado de todos os outros itens. Se nenhum problema ocorreu, passe a confirmação de execução completa e o identificador no contexto; não crie comentário de erro.
+Ao encaminhar a execução para `beta-anl-clickupchecklist`, forneça o ID da tarefa, o checklist exato, o identificador `Execução QA`, os itens com problema e o estado informado de todos os outros itens. Se nenhum problema ocorreu, passe a confirmação de execução completa e o identificador no contexto; não crie comentário de erro.
 
 ## Confirmação de término e handoff
 
-Quando o usuário disser que terminou os testes, confirme se a execução do checklist está completa e se todos os problemas daquela rodada foram informados, caso isso ainda não esteja claro. Só então encaminhe para Beta CLK o link/ID da tarefa, o checklist selecionado, o identificador da rodada e o estado de cada item. A declaração de término não autoriza, por si só, publicar comentários; cada lote de comentários de problema continua sujeito à prévia exata e aprovação descritas acima. Se não houver problemas, encaminhe a confirmação explícita de sucesso integral sem criar comentários de erro.
+Quando o usuário disser que terminou os testes, confirme se a execução do checklist está completa e se todos os problemas daquela rodada foram informados, caso isso ainda não esteja claro. Só então encaminhe para `beta-anl-clickupchecklist` o link/ID da tarefa, o checklist selecionado, o identificador da rodada e o estado de cada item. A declaração de término não autoriza, por si só, publicar comentários; cada lote de comentários de problema continua sujeito à prévia exata e aprovação descritas acima. Se não houver problemas, encaminhe a confirmação explícita de sucesso integral sem criar comentários de erro.
 
 ## Marcação para o ClickUp
 Quando o usuário pedir o checklist pronto para colar, atualizar ou marcar no ClickUp, preserve todos os itens e a ordem original.

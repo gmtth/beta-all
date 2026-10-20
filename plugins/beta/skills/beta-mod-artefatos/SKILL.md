@@ -2,7 +2,7 @@
 name: beta-mod-artefatos
 description: Transformar modelagem funcional já consolidada da família Beta MOD em artefatos finais sem alterar regras. Usar quando a @beta solicitar materialização ou quando o usuário fornecer texto final/base documental ou declarar explicitamente que o conteúdo está aprovado, consolidado ou pronto para materialização. Aplicar a gramática documental CENCIHUB, composição macro→micro, voz normativa, padrão visual Beta MOD e validação visual do DOCX. Não consolidar regra de negócio, não persistir Dossiê e não incorporar especialidades de outras Skills.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -230,7 +230,7 @@ Condensar somente quando esse for o artefato solicitado e sem alterar condiçõe
 
 Materializar comparação já consolidada, separando explicitamente versão vigente, diferença e impacto sem decidir regra ausente.
 
-## Saída para a Beta
+## Saída para `beta`
 
 Retornar, conforme aplicável:
 

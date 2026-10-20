@@ -2,7 +2,7 @@
 name: beta-anl-qatestes
 description: Criar checklists funcionais, smoke tests e cobertura de regressão proporcionais ao risco e ao escopo informado.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -123,7 +123,7 @@ Selecione a busca conforme a evidência necessária:
 
 Correspondência textual ajuda a localizar candidatos de regressão, mas não cria critério de aceite.
 
-Siga o protocolo transversal de evidência do Router.
+Siga o protocolo transversal de evidência do `beta`.
 
 Só transforme um ticket em teste quando ele estiver relacionado:
 - ao comportamento funcional confirmado; ou
@@ -250,9 +250,9 @@ Quando o usuário indicar que o checklist será publicado, comentado ou copiado 
 O uso do ClickUp não elimina a separação das duas camadas. A seleção final de itens é feita com o usuário antes de qualquer publicação.
 
 ### Publicação na tarefa
-Esta é a única escrita desta skill no ClickUp: no ciclo integrado solicitado pelo usuário, apresente primeiro Smoke e Testes estendidos; discuta quais itens entram ou saem; após a decisão, releia o status atual e publique somente se for exatamente `teste q.a.`. Publique um único comentário e só inicie QA Resultados após confirmação de sucesso do conector. Essa seleção acordada autoriza o comentário, condicionada à trava de status e à regra de autorização do control plane.
+Esta é a única escrita desta skill no ClickUp: no ciclo integrado solicitado pelo usuário, apresente primeiro Smoke e Testes estendidos; discuta quais itens entram ou saem; após a decisão, releia o status atual e publique somente se for exatamente `teste q.a.`. Publique um único comentário e só inicie `beta-anl-qaresultados` após confirmação de sucesso do conector. Essa seleção acordada autoriza o comentário, condicionada à trava de status e à regra de autorização do control plane.
 
-Se o status estiver diferente, indisponível ou ambíguo, não publique comentário algum nem avance para QA Resultados; informe o status observado e aguarde. O nome do status é sensível à grafia retornada pelo ClickUp: compare literalmente com `teste q.a.`. Releia o status imediatamente antes de cada novo comentário do ciclo, inclusive comentários de problemas em QA Resultados. A atualização posterior do comentário existente pela Beta CLK não cria comentário novo.
+Se o status estiver diferente, indisponível ou ambíguo, não publique comentário algum nem avance para `beta-anl-qaresultados`; informe o status observado e aguarde. O nome do status é sensível à grafia retornada pelo ClickUp: compare literalmente com `teste q.a.`. Releia o status imediatamente antes de cada novo comentário do ciclo, inclusive comentários de problemas em `beta-anl-qaresultados`. A atualização posterior do comentário existente pela `beta-anl-clickupchecklist` não cria comentário novo.
 
 Nunca altere descrição, campos, status, checklist nativo ou outras partes da tarefa. Se o retorno da publicação for incerto, leia os comentários antes de tentar novamente.
 
@@ -300,7 +300,7 @@ Se o usuário pedir explicitamente:
 ## Handoff após a execução
 A criação do checklist termina na definição dos testes. A organização do que ocorreu durante a execução pertence a `SKILL_QA_RESULTADOS`.
 
-No ciclo integrado, QA Resultados começa automaticamente somente depois que o comentário definitivo `Checklist de testes` for publicado com sucesso e passar pela trava de status. Não pergunte novamente se pode iniciar essa etapa. O acompanhamento não significa que os testes foram executados. Passe o checklist escolhido, ID da tarefa e identificador da execução.
+No ciclo integrado, `beta-anl-qaresultados` começa automaticamente somente depois que o comentário definitivo `Checklist de testes` for publicado com sucesso e passar pela trava de status. Não pergunte novamente se pode iniciar essa etapa. O acompanhamento não significa que os testes foram executados. Passe o checklist escolhido, ID da tarefa e identificador da execução.
 
 Se o usuário pedir apenas um checklist isolado, entregue as duas camadas sem iniciar publicação ou acompanhamento.
 
@@ -312,7 +312,7 @@ Não inclua essa sugestão quando:
 - o usuário disser que não quer próximos passos;
 - a resposta já estiver dentro de outro fluxo que determine a próxima ação.
 
-Se o usuário começar a relatar resultados, erros ou evidências de execução após o checklist, trate a nova intenção conforme o Router em vez de continuar ampliando os testes automaticamente.
+Se o usuário começar a relatar resultados, erros ou evidências de execução após o checklist, trate a nova intenção conforme o `beta` em vez de continuar ampliando os testes automaticamente.
 
 ## Regras de escrita
 - Pense como QA Sênior: use causa, evidências e condições do fluxo para identificar riscos e regressões relevantes, sem ampliar o escopo nem criar requisito.

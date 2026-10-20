@@ -2,7 +2,7 @@
 name: beta
 description: Orquestrar as famílias Beta ANL e Beta MOD em uma única entrada, escolhendo a análise funcional ou a modelagem adequada e fazendo handoffs entre elas somente quando isso alterar ou melhorar materialmente o resultado.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 # beta
@@ -49,19 +49,19 @@ Use as skills especializadas conforme a intenção:
 - `beta-anl-clickupchecklist`: marcar/sincronizar um checklist já existente em comentário do ClickUp com base nos problemas registrados depois dele; exige link explícito da tarefa ou comentário e atualiza somente o comentário-alvo.
 - `beta-anl-movidesk`: consulta analítica ou execução direta das consultas somente leitura disponíveis pelo MCP Beta MOV.
 
-Não use uma skill de QA apenas porque um erro apareceu durante um teste; se a intenção for investigar o erro, priorize Triagem de Incidentes.
+Não use uma skill de QA apenas porque um erro apareceu durante um teste; se a intenção for investigar o erro, priorize `beta-anl-triagemincidentes`.
 
 Quando o objetivo for atualizar um clone web isolado do CENCIHUB, use `beta-mod-sites` como módulo de materialização visual e funcional, sem integrar com o sistema real.
 
 ### Desambiguação ANL
 
-- o Gerador de Cards domina quando o objetivo final for criar, consolidar ou reescrever o card;
-- QA Testes domina quando o usuário quer criar ou revisar os cenários de teste, mesmo que forneça uma tarefa do ClickUp como contexto;
-- QA Resultados domina quando o usuário quer organizar resultados, evidências ou problemas de uma execução; se pedir para marcar/sincronizar esses problemas em um comentário de checklist já existente no ClickUp, encaminhe para `beta-anl-clickupchecklist`;
-- ClickUp Checklist domina somente quando o objetivo é atualizar o comentário de um checklist já publicado com base nos problemas posteriores; não use essa skill para criar checklist novo nem para revisar seus cenários;
+- `beta-anl-clickupgeradorcards` domina quando o objetivo final for criar, consolidar ou reescrever o card;
+- `beta-anl-qatestes` domina quando o usuário quer criar ou revisar os cenários de teste, mesmo que forneça uma tarefa do ClickUp como contexto;
+- `beta-anl-qaresultados` domina quando o usuário quer organizar resultados, evidências ou problemas de uma execução; se pedir para marcar/sincronizar esses problemas em um comentário de checklist já existente no ClickUp, encaminhe para `beta-anl-clickupchecklist`;
+- `beta-anl-clickupchecklist` domina somente quando o objetivo é atualizar o comentário de um checklist já publicado com base nos problemas posteriores; não use essa skill para criar checklist novo nem para revisar seus cenários;
 - Triagem domina quando o objetivo for causa, impacto, recorrência ou diagnóstico, mesmo que o achado tenha surgido em QA;
-- Regras de negócio domina quando a pergunta central for qual deveria ser o comportamento;
-- Dúvidas funcionais domina quando a pergunta for apenas explicativa;
+- `beta-anl-regrasnegocio` domina quando a pergunta central for qual deveria ser o comportamento;
+- `beta-anl-duvidasfuncionais` domina quando a pergunta for apenas explicativa;
 - Movidesk domina somente quando recuperar, consultar ou analisar dados do Movidesk for o objetivo final; ticket usado como evidência mantém a intenção principal original.
 
 Não avance automaticamente de testes para resultados ou de resultados para card. Faça cada handoff somente quando a intenção correspondente for solicitada ou necessária para concluir a tarefa.
@@ -72,7 +72,7 @@ Quando o usuário iniciar um ciclo de QA de uma tarefa, `beta-anl-qatestes` é s
 
 Apresente Smoke e Testes estendidos em blocos separados e explique por que a cobertura estendida traz benefício. Discuta com o usuário os itens que entrarão/sairão antes de publicar. Depois da seleção final, releia o status atual da tarefa: qualquer comentário novo no ciclo fica bloqueado salvo quando o status for exatamente `teste q.a.`. Se estiver diferente, indisponível ou ambíguo, não comente e não avance; informe o estado. Com status correto, publique um único comentário sempre neste formato exato: `**Checklist de testes**`, uma linha em branco e cada item selecionado em linha própria no formato `- [ ] <teste>`. Não use rótulos de Smoke/Testes estendidos ou explicações no comentário. Ao atualizar a execução, preserve o mesmo título em negrito e a mesma estrutura; altere somente o estado da caixa (`- [ ]`/`- [x]`) conforme confirmado.
 
-Somente após o conector confirmar a publicação do checklist, inicie QA Resultados sem uma nova pergunta de aceite; registre ID da tarefa, checklist e identificador único da execução. Isso inicia acompanhamento, não significa que os testes ocorreram. Em QA Resultados, prepare um comentário por problema, mostre a tarefa de destino e o texto exato do lote, e peça aprovação explícita antes de publicar. Releia o status imediatamente antes de cada novo comentário e publique somente quando ele for exatamente `teste q.a.`. Quando o usuário declarar que a execução terminou, encaminhe para `beta-anl-clickupchecklist` o identificador da execução e o estado de cada item. Atualize somente o comentário mais recente intitulado exatamente `Checklist de testes`; itens com problema, não executados ou bloqueados permanecem pendentes. Se a execução completa ou o estado de algum item não estiver confirmado, pergunte antes de marcar sucesso.
+Somente após o conector confirmar a publicação do checklist, inicie `beta-anl-qaresultados` sem uma nova pergunta de aceite; registre ID da tarefa, checklist e identificador único da execução. Isso inicia acompanhamento, não significa que os testes ocorreram. Em `beta-anl-qaresultados`, prepare um comentário por problema, mostre a tarefa de destino e o texto exato do lote, e peça aprovação explícita antes de publicar. Releia o status imediatamente antes de cada novo comentário e publique somente quando ele for exatamente `teste q.a.`. Quando o usuário declarar que a execução terminou, encaminhe para `beta-anl-clickupchecklist` o identificador da execução e o estado de cada item. Atualize somente o comentário mais recente intitulado exatamente `Checklist de testes`; itens com problema, não executados ou bloqueados permanecem pendentes. Se a execução completa ou o estado de algum item não estiver confirmado, pergunte antes de marcar sucesso.
 
 Quando o modo ANL envolver comunicação com suporte/cliente, grau de certeza, protocolos detalhados de evidência operacional, ClickUp ou memória, consulte [beta-anl-control-plane/CONTROL_PLANE.md](references/beta-anl-control-plane/CONTROL_PLANE.md).
 

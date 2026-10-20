@@ -2,7 +2,7 @@
 name: beta-mod-relatorios
 description: Analisar relatórios, indicadores, previsões, projeções e cálculos na família Beta MOD. Usar em modelagens que envolvam granularidade, elegibilidade, períodos, origem dos dados, fórmulas, unidades, arredondamento, valores ausentes, situações, colunas, filtros, paginação ou exportação. Retornar análise reproduzível sem inventar regra funcional.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -115,7 +115,7 @@ Quando relevante, considerar cenários de:
 
 Não criar exemplos numéricos que introduzam regras ausentes.
 
-## Saída para a Beta
+## Saída para `beta`
 
 Retornar somente os itens aplicáveis:
 

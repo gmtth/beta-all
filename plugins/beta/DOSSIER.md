@@ -4,7 +4,7 @@
 
 **Componente:** `plugins/beta/`
 
-**Manifesto:** `suite-beta`, versão `1.0.2`
+**Manifesto:** `suite-beta`, versão `1.0.3`
 
 ## Resumo e escopo
 
@@ -17,13 +17,14 @@ Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se
 ## Estado atual
 
 - O pacote contém 20 skills: a orquestradora `beta` e 19 skills especializadas ANL/MOD.
-- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão `1.0.2`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
-- As 20 skills estão na revisão `metadata.version: "2"` no frontmatter de `SKILL.md`. A revisão `"1"` foi a inicial; o ajuste dos títulos internos nesta data incrementou as skills afetadas conforme a regra definida em [`AGENTS.md`](./AGENTS.md).
+- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão `1.0.3`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
+- O Knowledge Master vigente é [`CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`](./references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md). Ele resolve duas referências quebradas com anchors explícitos; o snapshot `v001` está preservado sem alteração. O relatório correspondente está em [`KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md`](./references/KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md).
+- Dezoito skills estão na revisão `metadata.version`: `"3"`; `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"` por não terem sido alteradas nesta rodada. A contagem inicial foi `"1"`; os incrementos seguem a regra definida em [`AGENTS.md`](./AGENTS.md).
 - Os metadados das skills incluem nomes técnicos e exibidos vigentes, descrições, prompts, política de invocação, cores e logos. As skills ClickUp Cards e ClickUp Checklist compartilham brand color `#754FF6` e os logos small/large, copiados para cada pasta para manter o pacote autossuficiente.
 - `beta-anl-clickupchecklist` tem prompt padrão coerente com sua restrição de atualizar apenas o comentário mais recente “Checklist de testes” e com as informações necessárias da rodada.
 - A integração configurada em `.mcp.json` aponta para `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` e é descrita como somente leitura. O endpoint e o estado publicado são acompanhados pelo dossier MCP; a configuração no plugin não prova conectividade end-to-end.
 - O marketplace GitHub **Beta** está configurado na raiz do monorepo para apontar a este pacote. A importação/sincronização no workspace e o uso pelos quatro analistas ainda precisam ser confirmados; consulte [`plugin-marketplace.md`](../../docs/components/plugin-marketplace.md).
-- Os validadores `validate_beta_anl_skills.py` e `validate_beta_routing_cases.py` foram executados em 2026-10-20 após as alterações de nomenclatura, metadados e versionamento; ambos passaram sem erros (20 skills e 24 casos de roteamento).
+- Os validadores `validate_beta_anl_skills.py` e `validate_beta_routing_cases.py` foram executados em 2026-10-20 após os ajustes de referências técnicas, snapshot, metadados e versionamento; ambos passaram sem erros (20 skills e 24 casos de roteamento).
 
 ## Decisões vigentes
 
@@ -92,6 +93,7 @@ A migração de nomes foi aplicada em 2026-10-20: pastas, frontmatter, roteament
 | `skills/beta-anl-*/` | Dúvidas funcionais, regras, triagem, QA, ClickUp e Movidesk |
 | `skills/beta-mod-*/` | Modelagem de regras, dossiê, fontes, fluxos, permissões, processamento, relatórios, Figma, QA, artefatos e Sites |
 | `references/` | Knowledge Master, integridade e apoio compartilhado |
+| `references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md` | Snapshot vigente, com links internos resolvidos; `v001` preservado |
 | `tests/beta-routing-cases.json` | Casos de contrato e cobertura de roteamento |
 | `scripts/` | Validadores estruturais e de cobertura das skills/roteamento |
 | `.codex-plugin/plugin.json` | Manifesto e metadados do pacote |
@@ -113,6 +115,7 @@ As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de
 | 2026-10-20, versionamento inicial | Inicializada a contagem do pacote em `1.0.0` e das 20 skills em `"1"`; futuras alterações incrementam o patch do pacote e somente as skills afetadas. | `.codex-plugin/plugin.json`, `skills/*/SKILL.md` e regra em `AGENTS.md`. |
 | 2026-10-20, referência técnica e versão | Decidido que conteúdo interno referencia skills por identificador técnico, reservando `display_name` para interface e comunicação voltada ao usuário. Títulos dos 20 `SKILL.md` foram alinhados às pastas/identificadores; todas as skills passaram à revisão `"2"` e o manifesto a `1.0.1`. | Regra em `AGENTS.md`, todos os `skills/*/SKILL.md` e `.codex-plugin/plugin.json`. |
 | 2026-10-20, validação e versão | Os validadores de skills e roteamento passaram sem erros. O manifesto foi incrementado para `1.0.2` para registrar esta atualização do dossier; as versões das skills não mudaram. | Saída recente de `python scripts/validate_beta_anl_skills.py` e `python scripts/validate_beta_routing_cases.py`; `.codex-plugin/plugin.json`. |
+| 2026-10-20, referências técnicas e Knowledge Master | Referências internas a skills foram padronizadas com identificadores técnicos. Links quebrados no snapshot foram resolvidos em nova versão `v002`, preservando `v001` e os hashes das seis fontes. Dezoito skills passaram à revisão `"3"`; o manifesto passou a `1.0.3`. | Skills e referências alteradas; `references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`; relatório de integridade correspondente. |
 | 2026-10-20, metadados | O prompt padrão de ClickUp Checklist foi preenchido; o manifesto foi ajustado para descrição de 29 caracteres e três prompts; ClickUp Cards recebeu os logos e a cor de ClickUp Checklist. | `.codex-plugin/plugin.json`, arquivos `agents/openai.yaml` e assets nas duas skills ClickUp. |
 | Integração MCP | `.mcp.json` configura o endpoint documentado do Sites/MCP, mas isso não comprova conectividade ou publicação end-to-end. | `.mcp.json`, `docs/components/sites.md` e `mcp/movidesk/DOSSIER.md`. |
 

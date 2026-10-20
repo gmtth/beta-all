@@ -2,7 +2,7 @@
 name: beta-mod-processamento
 description: Analisar ciclo de vida e processamento na família Beta MOD. Usar em modelagens com criação, edição, exclusão, restauração, inativação, importação, reimportação, processamento em lote, filas, timeout, retry, concorrência, duplicidade, precedência, histórico ou migração funcional. Estruturar estados, transições e resultados sem inventar tecnologia ou regra funcional.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -213,7 +213,7 @@ Registrar, quando aplicável:
 
 Não inventar nomes de logs, tabelas ou estruturas técnicas.
 
-## Saída para a Beta
+## Saída para `beta`
 
 Retornar somente os itens aplicáveis:
 

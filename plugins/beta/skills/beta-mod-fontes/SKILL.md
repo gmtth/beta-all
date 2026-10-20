@@ -1,8 +1,8 @@
 ---
 name: beta-mod-fontes
-description: Analisar e comparar fontes da família Beta, incluindo conversa, arquivos, documentos, ClickUp, comentários, reuniões, transcrições, prints, Figma e versões alteradas. Usar quando o usuário acionar @beta-mod-fontes ou quando uma modelagem exigir determinar fonte principal, prioridade, recência pelo conteúdo, divergências, regras substituídas, comportamento atual versus futuro e pontos não confirmados. Operar em leitura e devolver evidências à Beta sem persistir Dossiê, decidir regra funcional, alterar fontes, gerar artefatos ou assumir especialidades de outros módulos.
+description: Analisar e comparar fontes da família Beta, incluindo conversa, arquivos, documentos, ClickUp, comentários, reuniões, transcrições, prints, Figma e versões alteradas. Usar quando o usuário acionar @beta-mod-fontes ou quando uma modelagem exigir determinar fonte principal, prioridade, recência pelo conteúdo, divergências, regras substituídas, comportamento atual versus futuro e pontos não confirmados. Operar em leitura e devolver evidências a `beta` sem persistir Dossiê, decidir regra funcional, alterar fontes, gerar artefatos ou assumir especialidades de outros módulos.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -210,7 +210,7 @@ Sinalizar como ponto não confirmado somente quando puder alterar:
 
 Não criar pendência por detalhe cosmético ou metadado irrelevante.
 
-## Saída para a Beta
+## Saída para `beta`
 
 Retornar somente o necessário:
 

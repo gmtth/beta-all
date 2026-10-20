@@ -1,8 +1,8 @@
 ---
 name: beta-mod-regras
-description: Analisar completude de regras funcionais e rastreabilidade na família Beta MOD. Usar quando o usuário acionar @beta-mod-regras ou quando uma modelagem/revisão exigir separar conceitos, mapear gatilhos, ações, validações e resultados, tratar confirmação/cancelamento/fechamento/falha, definir efeito de campos vazios, preservação de estado, diferenças entre canais, atores, registros e auditoria. Retornar achados para a Beta sem gerar modelagem final, persistir Dossiê, criar artefatos ou assumir especialidades de outros módulos.
+description: Analisar completude de regras funcionais e rastreabilidade na família Beta MOD. Usar quando o usuário acionar @beta-mod-regras ou quando uma modelagem/revisão exigir separar conceitos, mapear gatilhos, ações, validações e resultados, tratar confirmação/cancelamento/fechamento/falha, definir efeito de campos vazios, preservação de estado, diferenças entre canais, atores, registros e auditoria. Retornar achados para `beta` sem gerar modelagem final, persistir Dossiê, criar artefatos ou assumir especialidades de outros módulos.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -173,7 +173,7 @@ Quando a preservação fizer parte do requisito, identificar comportamentos atua
 
 Não aceitar “manter o fluxo atual” como definição suficiente quando o comportamento preservado precisar ser verificável.
 
-## Saída para a Beta
+## Saída para `beta`
 
 Retornar somente os itens aplicáveis:
 

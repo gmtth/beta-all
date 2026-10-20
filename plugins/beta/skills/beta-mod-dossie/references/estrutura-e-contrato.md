@@ -1,4 +1,4 @@
-# Estrutura e contrato do Beta MOD Dossiê
+# Estrutura e contrato de `beta-mod-dossie`
 
 ## Campos de registro
 

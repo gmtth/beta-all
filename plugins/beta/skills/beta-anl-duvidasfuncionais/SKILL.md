@@ -2,7 +2,7 @@
 name: beta-anl-duvidasfuncionais
 description: Explicar conceitos e funcionamento do CENCIHUB de forma curta, funcional e didática, sem inventar detalhes.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -43,7 +43,7 @@ Se a dúvida for simples e clara, responda diretamente.
 3. Consulte histórico de QA somente quando a pergunta mencionar problema, divergência ou risco conhecido.
 4. Não consulte o Movidesk quando o conhecimento interno já responder à dúvida. Consulte-o somente se a pessoa pedir um caso real, exemplo operacional concreto, estado de chamado ou evidência de tickets.
 
-Quando aplicável, siga o protocolo transversal de evidência definido pelo roteador da Beta ANL.
+Quando aplicável, siga o protocolo transversal de evidência definido pelo skill `beta`.
 
 ## Saída / Formato da resposta
 

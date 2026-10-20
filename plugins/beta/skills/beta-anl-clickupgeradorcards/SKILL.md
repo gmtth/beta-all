@@ -2,7 +2,7 @@
 name: beta-anl-clickupgeradorcards
 description: Criar, consolidar e revisar cards do ClickUp com análise funcional, rastreabilidade e solicitação clara para desenvolvimento.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -91,7 +91,7 @@ Considere, nesta ordem:
 2. modelagem funcional consolidada ou documento indicado como fonte atual;
 3. conteúdo atual do card, quando estiver sendo revisado;
 4. evidências, exemplos, prints, anexos e informações fornecidas;
-5. Knowledge Master e demais fontes internas previstas pelo Router;
+5. Knowledge Master e demais fontes internas previstas pelo `beta`;
 6. Movidesk, quando fatos operacionais contribuírem materialmente;
 7. ClickUp, somente quando houver ferramenta disponível e a consulta for útil;
 8. histórico anterior, apenas como apoio.

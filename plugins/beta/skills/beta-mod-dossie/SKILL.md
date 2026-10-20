@@ -1,8 +1,8 @@
 ---
 name: beta-mod-dossie
-description: Manter, revisar e atualizar o Dossiê de Contexto da Modelagem da família Beta MOD. Usar quando o usuário chamar @beta-mod-dossie, quando a orquestração Beta precisar registrar ou consolidar entendimento vigente, estado, destino, substituições, divergências, impactos e alertas de publicação, ou quando for necessário criar/atualizar o único arquivo persistente DOSSIE_CONTEXTO_MODELAGEM.md. Não produzir modelagem final, não decidir regra funcional e não incorporar conhecimento de outros módulos.
+description: Manter, revisar e atualizar o Dossiê de Contexto da Modelagem da família Beta MOD. Usar quando o usuário chamar @beta-mod-dossie, quando a orquestração de `beta` precisar registrar ou consolidar entendimento vigente, estado, destino, substituições, divergências, impactos e alertas de publicação, ou quando for necessário criar/atualizar o único arquivo persistente DOSSIE_CONTEXTO_MODELAGEM.md. Não produzir modelagem final, não decidir regra funcional e não incorporar conhecimento de outros módulos.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório

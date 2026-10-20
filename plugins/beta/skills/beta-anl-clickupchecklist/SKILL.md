@@ -2,7 +2,7 @@
 name: beta-anl-clickupchecklist
 description: Após o usuário confirmar que uma rodada de QA terminou, atualizar somente o comentário mais recente intitulado exatamente “Checklist de testes” no ClickUp, usando o identificador Execução QA e o estado informado de cada item. Manter pendentes itens com problema, não executados, bloqueados ou incertos e concluir somente itens confirmados como sucesso na rodada atual. Exigir tarefa, rodada e estados claros; nunca criar checklist nem alterar outro conteúdo.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 # beta-anl-clickupchecklist
@@ -60,7 +60,7 @@ Nunca editar um comentário diferente do comentário-alvo determinado acima.
 
 ## Como identificar o item citado em um comentário de problema
 
-Para comentários estruturados do novo fluxo, usar como fonte autoritativa os campos `Execução QA` e `Item do checklist`. O identificador deve corresponder à rodada recebida no handoff, e o item deve corresponder literalmente a um item do checklist. Para registros legados explicitamente indicados como atuais pela Beta, aplicar os padrões abaixo.
+Para comentários estruturados do novo fluxo, usar como fonte autoritativa os campos `Execução QA` e `Item do checklist`. O identificador deve corresponder à rodada recebida no handoff, e o item deve corresponder literalmente a um item do checklist. Para registros legados explicitamente indicados como atuais por `beta`, aplicar os padrões abaixo.
 
 Reconhecer estes padrões:
 
@@ -101,7 +101,7 @@ Para cada item existente no comentário de checklist, considere somente o estado
 - usar `- [ ]` para item com problema, não executado, bloqueado, não validado ou incerto;
 - usar `- [x]` somente se o usuário/Beta confirmar que o item foi executado com sucesso na rodada atual e a execução completa terminou com todos os problemas relatados;
 
-Um problema registrado em rodada anterior não impede marcar como concluído um item que foi reexecutado com sucesso na rodada atual. Se os estados ou a confirmação de execução completa não forem suficientes, não presumir sucesso: peça esclarecimento antes da edição. Se nenhum problema ocorreu, só marcar os itens como concluídos quando houver confirmação explícita de sucesso integral no contexto da Beta.
+Um problema registrado em rodada anterior não impede marcar como concluído um item que foi reexecutado com sucesso na rodada atual. Se os estados ou a confirmação de execução completa não forem suficientes, não presumir sucesso: peça esclarecimento antes da edição. Se nenhum problema ocorreu, só marcar os itens como concluídos quando houver confirmação explícita de sucesso integral no contexto de `beta`.
 
 Aplicar a mesma regra à seção `MENUS` quando ela existir.
 

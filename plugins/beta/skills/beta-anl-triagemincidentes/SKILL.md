@@ -2,7 +2,7 @@
 name: beta-anl-triagemincidentes
 description: Triar erros, falhas e divergências isolando sintomas, escopo, evidências e hipóteses sem fechar diagnóstico prematuramente.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -55,7 +55,7 @@ Se já houver evidência suficiente, avance sem prolongar a coleta.
 
 Ticket demonstra o que foi registrado ou observado. Não determina isoladamente comportamento esperado ou causa raiz.
 
-Quando aplicável, siga o protocolo transversal de evidência definido pelo roteador da Beta ANL.
+Quando aplicável, siga o protocolo transversal de evidência definido pelo skill `beta`.
 
 ## Classificação
 

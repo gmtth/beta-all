@@ -2,7 +2,7 @@
 name: beta-mod-permissoes
 description: Analisar permissões e segurança funcional na família Beta MOD. Usar em modelagens com autenticação, autorização, papéis, senha, biometria, RFID, dados sensíveis, ações administrativas, alteração por terceiro, acesso entre empresas ou necessidade de diferenciar interface e backend. Retornar riscos e regras confirmadas sem inventar papéis, permissões ou arquitetura.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -206,7 +206,7 @@ Sinalizar somente quando a ausência puder alterar:
 
 Não criar pendência por preferência técnica sem impacto funcional.
 
-## Saída para a Beta
+## Saída para `beta`
 
 Retornar somente os itens aplicáveis:
 

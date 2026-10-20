@@ -35,7 +35,7 @@ Não usar somente data de modificação.
 |---|---|---|
 | Compatível | Mesmo significado funcional | Consolidar sem criar divergência |
 | Complementar | Uma fonte detalha sem contradizer | Preservar o detalhamento compatível |
-| Divergência funcional | Resultados, gatilhos, dados, permissões, mensagens ou processamento incompatíveis | Não escolher silenciosamente; devolver à Beta |
+| Divergência funcional | Resultados, gatilhos, dados, permissões, mensagens ou processamento incompatíveis | Não escolher silenciosamente; devolver a `beta` |
 | Regra ausente | Uma fonte não define ponto material | Não preencher por inferência |
 | Substituída | Há decisão posterior confirmada | Manter apenas como histórico de rastreabilidade |
 | Evidência desatualizada | A fonte descreve estado anterior ou imagem antiga | Não usar como vigente |

@@ -2,7 +2,7 @@
 name: beta-anl-regrasnegocio
 description: Explicar regras funcionais confirmadas, suas condições, dependências, exceções e efeitos, sem inventar comportamento.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -40,7 +40,7 @@ Se o contexto já for suficiente, prossiga sem criar perguntas desnecessárias.
 
 A conclusão normativa deve permanecer sustentada pelo Knowledge Master. Se tickets divergirem da regra confirmada, trate a divergência como possível incidente, configuração específica ou contexto ainda não explicado.
 
-Quando aplicável, siga também o protocolo transversal de evidência definido pelo roteador da Beta ANL.
+Quando aplicável, siga também o protocolo transversal de evidência definido pelo skill `beta`.
 
 ## Saída / Formato da resposta
 

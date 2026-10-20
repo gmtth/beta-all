@@ -2,7 +2,7 @@
 name: beta-anl-movidesk
 description: Consultar e sintetizar dados reais do Movidesk ou executar consultas diretas pelo MCP Beta MOV, com filtros, escopo, paginação, segurança somente leitura e limites de evidência bem definidos.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 ## Protocolo transversal obrigatório
@@ -29,12 +29,12 @@ Exemplos:
 
 Não use como primária apenas porque o pedido menciona ticket, chamado ou Movidesk.
 
-Se o objetivo final for investigar problema, determinar regra, explicar funcionamento ou criar testes, use a skill correspondente e trate o Movidesk como apoio conforme o Router.
+Se o objetivo final for investigar problema, determinar regra, explicar funcionamento ou criar testes, use a skill correspondente e trate o Movidesk como apoio conforme o `beta`.
 
 ## Objetivo
 Transformar uma solicitação operacional em busca segura e útil no Movidesk, recuperar somente os dados necessários e apresentar resultados comparáveis e acionáveis.
 
-Esta skill recupera fatos operacionais e pode resumir padrões observáveis. Não converte tickets em regra funcional, causa raiz ou comportamento esperado. As regras globais de evidência são definidas pelo Router.
+Esta skill recupera fatos operacionais e pode resumir padrões observáveis. Não converte tickets em regra funcional, causa raiz ou comportamento esperado. As regras globais de evidência são definidas pelo `beta`.
 
 ## Guided prompting
 Pergunte somente quando faltar informação que altere materialmente a consulta e não puder ser inferida com segurança.
@@ -80,7 +80,7 @@ Consulte o Knowledge Master apenas quando for necessário interpretar:
 - estados;
 - conceitos funcionais presentes nos tickets.
 
-Siga o protocolo transversal de evidência do Router.
+Siga o protocolo transversal de evidência do `beta`.
 
 ## Método
 1. identificar o objetivo operacional;

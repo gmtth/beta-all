@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "sites:sync": "node scripts/sync-sites-checkout.mjs"
+  },
   "devDependencies": {
     "supabase": "^2.121.0"
   }

@@ -14,6 +14,14 @@ export type KnowledgeAdminOverview = {
   recentImports: Array<{ ticketId: string | null; title: string | null; actorEmail: string | null; chunkCount: number; createdAt: string | null }>;
 };
 
+export type KnowledgeOverviewDiagnostic = "available" | "configuration_missing" | "rpc_not_found" | "permission_denied" | "rate_limited" | "service_error" | "request_rejected" | "timeout" | "network_error" | "invalid_response";
+
+export class KnowledgeOverviewError extends Error {
+  constructor(readonly diagnostic: Exclude<KnowledgeOverviewDiagnostic, "available">) {
+    super("Supabase admin overview is unavailable.");
+  }
+}
+
 export class SupabaseKnowledgeStore implements KnowledgeStore {
   private configuration() {
     const projectUrl = process.env.SUPABASE_URL?.trim();
@@ -57,23 +65,48 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
   }
 
   async getAdminOverview(): Promise<KnowledgeAdminOverview> {
-    const { base, secretKey } = this.configuration();
+    let base: URL;
+    let secretKey: string;
+    try {
+      ({ base, secretKey } = this.configuration());
+    } catch {
+      throw new KnowledgeOverviewError("configuration_missing");
+    }
     const endpoint = new URL("/rest/v1/rpc/get_knowledge_admin_overview", base);
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        apikey: secretKey,
-        Authorization: `Bearer ${secretKey}`,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "Content-Profile": "beta",
-      },
-      body: "{}",
-      signal: AbortSignal.timeout(10_000),
-    });
-    if (!response.ok) throw new Error(`Supabase overview failed with HTTP ${response.status}.`);
-    const payload: unknown = await response.json();
-    const data = payload && typeof payload === "object" && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "Content-Profile": "beta",
+        },
+        body: "{}",
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (error) {
+      const diagnostic = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError") ? "timeout" : "network_error";
+      throw new KnowledgeOverviewError(diagnostic);
+    }
+    if (!response.ok) {
+      const diagnostic = response.status === 404 ? "rpc_not_found"
+        : response.status === 401 || response.status === 403 ? "permission_denied"
+          : response.status === 429 ? "rate_limited"
+            : response.status >= 500 ? "service_error" : "request_rejected";
+      await response.body?.cancel();
+      throw new KnowledgeOverviewError(diagnostic);
+    }
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new KnowledgeOverviewError("invalid_response");
+    }
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new KnowledgeOverviewError("invalid_response");
+    const data = payload as Record<string, unknown>;
     const sources = Array.isArray(data.sources) ? data.sources.slice(0, 10).map((value) => {
       const row = value && typeof value === "object" ? value as Record<string, unknown> : {};
       return {

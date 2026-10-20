@@ -3,12 +3,38 @@
 import { useCallback, useEffect, useState } from "react";
 
 type User = { email: string; role: string; active: number; created_at: number; scopes: string[]; activeTokenCount: number; latestTokenExpiry: number | null };
+type ConnectionDiagnostic = "configuration_missing" | "invalid_url" | "available" | "invalid_credentials" | "schema_unavailable" | "rate_limited" | "api_error" | "request_rejected" | "timeout" | "network_error";
+type KnowledgeDiagnostic = "available" | "configuration_missing" | "rpc_not_found" | "permission_denied" | "rate_limited" | "service_error" | "request_rejected" | "timeout" | "network_error" | "invalid_response";
 type Overview = {
-  connection: { status: "online" | "offline"; configured: boolean; latencyMs: number | null };
-  knowledge: { status: "available" | "unavailable"; data: null | { sources: Array<{ id: string | null; code: string | null; name: string | null; active: boolean; recordCount: number; chunkCount: number }>; recordCount: number; chunkCount: number; recentImports: Array<{ ticketId: string | null; title: string | null; actorEmail: string | null; chunkCount: number; createdAt: string | null }> } };
+  connection: { status: "online" | "offline"; configured: boolean; latencyMs: number | null; diagnostic: ConnectionDiagnostic };
+  knowledge: { status: "available" | "unavailable"; diagnostic: KnowledgeDiagnostic; data: null | { sources: Array<{ id: string | null; code: string | null; name: string | null; active: boolean; recordCount: number; chunkCount: number }>; recordCount: number; chunkCount: number; recentImports: Array<{ ticketId: string | null; title: string | null; actorEmail: string | null; chunkCount: number; createdAt: string | null }> } };
 };
 
 const dateTime = (value: number | string | null) => value === null ? "—" : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(typeof value === "number" ? new Date(value) : new Date(value));
+const connectionDiagnostics: Record<ConnectionDiagnostic, string> = {
+  configuration_missing: "Configuração do servidor ausente",
+  invalid_url: "URL do Supabase inválida",
+  available: "Data API do schema Beta acessível",
+  invalid_credentials: "Credencial do servidor recusada",
+  schema_unavailable: "Schema beta ou tabela sem acesso",
+  rate_limited: "Supabase limitou as consultas",
+  api_error: "Erro no serviço Supabase",
+  request_rejected: "Consulta recusada pela Data API",
+  timeout: "Tempo limite da Data API excedido",
+  network_error: "Não foi possível alcançar a Data API",
+};
+const knowledgeDiagnostics: Record<KnowledgeDiagnostic, string> = {
+  available: "RPC de métricas acessível",
+  configuration_missing: "Faltam variáveis de conexão no servidor",
+  rpc_not_found: "RPC ausente; aplique a migration 20261020150000",
+  permission_denied: "Sem permissão para executar a RPC; revise o grant de service_role",
+  rate_limited: "Supabase limitou a consulta das métricas",
+  service_error: "Erro temporário no serviço Supabase",
+  request_rejected: "Consulta da RPC recusada pelo Supabase",
+  timeout: "Tempo limite da RPC excedido",
+  network_error: "Não foi possível alcançar a RPC do Supabase",
+  invalid_response: "Resposta inesperada da RPC de métricas",
+};
 
 export default function UserAdminPanel() {
   const [email, setEmail] = useState("");
@@ -50,16 +76,17 @@ export default function UserAdminPanel() {
       <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
       <div className="connection-card">
         <span className={`connection-indicator ${overview?.connection.status === "online" ? "is-online" : "is-offline"}`} />
-        <div className="connection-copy"><strong>{!overview ? "Verificando conexão" : overview.connection.status === "online" ? "Conexão disponível" : "Conexão indisponível"}</strong><span>{overview?.connection.configured ? "Data API do schema Beta" : "Configuração do servidor ausente"}</span></div>
+        <div className="connection-copy"><strong>{!overview ? "Verificando conexão" : overview.connection.status === "online" ? "Conexão disponível" : "Conexão indisponível"}</strong><span>{overview ? connectionDiagnostics[overview.connection.diagnostic] : "Consultando Data API do schema Beta"}</span></div>
         <span className="connection-latency">{overview?.connection.latencyMs === null || !overview ? "—" : `${overview.connection.latencyMs} ms`}</span>
       </div>
+      {overview ? <div className="diagnostic-row"><span>Diagnóstico dos indicadores</span><strong className={overview.knowledge.status === "available" ? "diagnostic-ok" : "diagnostic-attention"}>{knowledgeDiagnostics[overview.knowledge.diagnostic]}</strong></div> : null}
       {knowledge ? <>
         <div className="metric-grid"><div className="metric-card"><span>FONTES ATIVAS</span><strong>{knowledge.sources.filter((source) => source.active).length}</strong></div><div className="metric-card"><span>REGISTROS INDEXADOS</span><strong>{knowledge.recordCount.toLocaleString("pt-BR")}</strong></div><div className="metric-card"><span>TRECHOS INDEXADOS</span><strong>{knowledge.chunkCount.toLocaleString("pt-BR")}</strong></div></div>
         <div className="admin-data-grid">
           <section className="data-card"><h3>Fontes cadastradas</h3>{knowledge.sources.length ? knowledge.sources.map((source) => <div className="source-row" key={source.id ?? source.code}><div><strong>{source.name ?? source.code ?? "Fonte"}</strong><span>{source.active ? "Ativa" : "Inativa"}</span></div><span>{source.recordCount} registros · {source.chunkCount} trechos</span></div>) : <p className="quiet-message">Nenhuma fonte cadastrada.</p>}</section>
           <section className="data-card"><h3>Importações recentes</h3>{knowledge.recentImports.length ? knowledge.recentImports.map((item, index) => <div className="source-row import-row" key={`${item.ticketId}-${item.createdAt}-${index}`}><div><strong>{item.title ?? `Chamado ${item.ticketId ?? ""}`}</strong><span>Movidesk {item.ticketId ? `· ${item.ticketId}` : ""} · {item.chunkCount} trechos · por {item.actorEmail ?? "analista"}</span></div><span>{dateTime(item.createdAt)}</span></div>) : <p className="quiet-message">Nenhuma importação registrada.</p>}</section>
         </div>
-      </> : <p className="quiet-message">{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Confira se a migration do painel foi aplicada no Supabase." : "Carregando indicadores do conhecimento…"}</p>}
+      </> : <p className="quiet-message">{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Consulte o diagnóstico acima para identificar o próximo passo." : "Carregando indicadores do conhecimento…"}</p>}
     </section>
 
     <section className="admin-section" aria-labelledby="team-title">

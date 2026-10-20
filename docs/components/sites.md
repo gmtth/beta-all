@@ -16,4 +16,8 @@ A origem `work/movidesk-site` refere-se a outro projeto Sites (`appgprj_6a7e285d
 
 ## Próxima publicação
 
-A importação para o monorepo não publica alterações. Antes de mudar a origem de publicação, verificar o empacotamento a partir do diretório canônico, preservar a audiência atual e registrar SHA e versão publicada. Manter a configuração de produção atual até confirmar o novo fluxo e a compatibilidade do cliente MCP.
+A importação para o monorepo não publica alterações. A origem do Sites segue separada do GitHub; `mcp/movidesk/.openai/hosting.json` associa o código canônico ao mesmo projeto, mas não muda o remote gerenciado pelo Sites.
+
+Para reduzir cópias manuais, `npm run sites:sync -- "<checkout_path>"` sincroniza os arquivos rastreados do componente para um checkout limpo aberto pelo helper oficial. O modo `--dry-run` mostra apenas as contagens. O sincronizador valida o `project_id`, preserva `.git`, `.openai/` e arquivos ignorados/não rastreados, e recusa checkout com alterações rastreadas. Em seguida, o helper oficial executa `node <plugin-root>/scripts/build-site.mjs`, faz commit/push e empacota o mesmo estado; as ferramentas Sites salvam e implantam a versão. O fluxo não foi executado nesta alteração.
+
+Antes de publicar, preservar a audiência atual e registrar SHA, versão e deployment. Manter a configuração de produção atual até confirmar o novo fluxo e a compatibilidade do cliente MCP.

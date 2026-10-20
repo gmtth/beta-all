@@ -14,8 +14,8 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 |---|---|---|---|
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
 | MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; dossier completo junto ao componente |
-| Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel publicado no Sites v75; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
-| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Publicação atual documentada; origem de publicação a partir do monorepo precisa ser validada |
+| Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos ampliados publicado no Sites v78; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
+| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; sincronizador local criado para levar fontes do monorepo a um checkout Sites limpo; ainda não executado |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
 

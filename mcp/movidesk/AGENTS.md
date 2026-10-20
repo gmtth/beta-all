@@ -83,6 +83,14 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 - O endpoint MCP publicado é `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`. A barra final faz parte da configuração. A raiz do Site é a página/OAuth, não o endpoint de ferramentas.
 - Não alterar audiência, credenciais, bindings, OAuth ou domínio como efeito colateral de uma mudança funcional.
 
+### Sincronização do monorepo para o checkout Sites
+
+- A fonte canônica é `mcp/movidesk/` no monorepo. O checkout remoto do Sites é separado do `origin` GitHub.
+- Depois de abrir um checkout limpo pelo helper oficial do Sites, sincronize-o a partir da raiz `beta-all` com `npm run sites:sync -- "<checkout_path>"`. Use `--dry-run` antes quando quiser conferir a contagem de cópias e remoções.
+- O comando valida o ID do projeto em `.openai/hosting.json`, exige o remote de origem do Sites e recusa alterações rastreadas locais no checkout. Preserva `.git`, `.openai/`, arquivos ignorados e arquivos locais não rastreados; remove arquivos rastreados obsoletos e copia os arquivos rastreados do componente.
+- O sincronizador exclui arquivos de documentação/histórico, testes e cópias em `work/` e `legado/`. Nunca copie `.env` ou credenciais.
+- Após sincronizar, use o helper oficial com o build `node <plugin-root>/scripts/build-site.mjs`, `archivePath` absoluto e `source` da abertura. O helper faz o commit/push e empacota o mesmo estado. Em seguida use as ferramentas nativas Sites para salvar e implantar a versão; o sincronizador não publica nem guarda credenciais.
+
 ## Contratos das ferramentas
 
 - Ferramentas existentes mantêm seus contratos aditivos; leitura do Movidesk continua sem mutação. A ferramenta de ingestão Supabase é a única escrita autorizada e deve permanecer separada por escopo, limitada ao ID pedido, idempotente e auditada. Não remover ou renomear campos públicos sem decisão explícita.

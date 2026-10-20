@@ -68,6 +68,17 @@ npm run validate:semantic-catalog
 node_modules/.bin/tsx.cmd --test tests/semantic-catalog.test.ts tests/mcp-tools.characterization.test.ts tests/movidesk-analysis.test.ts tests/movidesk-timeline.test.ts tests/movidesk-insights.test.ts tests/rendered-html.test.mjs tests/oauth-clients.test.ts tests/knowledge-tools.test.ts tests/supabase-knowledge.test.ts
 ```
 
+## Publicação pelo monorepo
+
+O GitHub (`beta-all`) e o repositório-fonte gerenciado pelo Sites são separados. Depois de abrir um checkout limpo com o helper oficial do Sites, volte à raiz do monorepo e rode:
+
+```bash
+npm run sites:sync -- "<checkout_path>" --dry-run
+npm run sites:sync -- "<checkout_path>"
+```
+
+O sincronizador valida se o checkout pertence ao mesmo projeto Sites, copia os arquivos rastreados do MCP e remove arquivos rastreados obsoletos. Preserva a identidade `.openai/hosting.json`, Git e arquivos locais ignorados/não rastreados. Depois, o helper oficial executa o build, faz commit/push e empacota; a versão ainda precisa ser salva e implantada pelas ferramentas Sites. O sincronizador não lê nem armazena tokens.
+
 Alterações no catálogo devem atualizar o YAML e o snapshot JSON correspondente, mantendo `schema_version` e `ruleset_version`. Toda regra nova deve ter caso positivo e, quando aplicável, caso negativo.
 
 ## Estado do projeto

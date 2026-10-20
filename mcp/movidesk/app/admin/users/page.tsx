@@ -10,6 +10,5 @@ export default async function UsersPage() {
   return <main className="shell"><div className="ambient ambient-one" /><div className="ambient ambient-two" /><section className="card admin-card">
     <header className="brandbar internal-brandbar"><a className="back-link" href="/">← Voltar ao acesso</a></header>
     <UserAdminPanel />
-    <footer className="card-footer"><span>Alterações protegidas pela conta master</span><span className="version">BETA / ACCESS CONTROL</span></footer>
   </section></main>;
 }

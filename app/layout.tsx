@@ -13,11 +13,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Movidesk | Acesso seguro",
-  description: "Acesso seguro ao Movidesk pelo conector oficial.",
+  title: "Beta MCP | Acesso seguro",
+  description: "Acesso seguro às integrações do MCP da Beta.",
   icons: {
-    icon: "/favicon.png",
-    shortcut: "/favicon.png",
+    icon: "/beta-logo.svg",
+    shortcut: "/beta-logo.svg",
   },
 };
 
@@ -36,3 +36,4 @@ export default function RootLayout({
     </html>
   );
 }
+

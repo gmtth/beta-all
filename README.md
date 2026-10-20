@@ -60,7 +60,7 @@ Essas variáveis ainda precisam ser configuradas e verificadas no ambiente Sites
 Requisito: Node.js `>=22.13.0`.
 
 ```bash
-npm install
+npm ci
 npm run dev
 npm run build
 npm run validate:semantic-catalog

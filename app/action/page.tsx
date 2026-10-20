@@ -12,4 +12,3 @@ export default async function ActionPage() {
     <footer className="card-footer"><span>Configuração protegida pela autenticação do ChatGPT</span><span className="version">BETA / GPT ACTION</span></footer>
   </section></main>;
 }
-

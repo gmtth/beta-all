@@ -72,7 +72,7 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 
 ## Git, PR e publicação
 
-- Não incluir `source-bundle` nem arquivos gerados/temporários em commits sem autorização específica. Se já estiverem modificados, preserve-os e informe.
+- Não incluir arquivos gerados/temporários em commits sem autorização específica. Preserve alterações locais pré-existentes; quando um componente legado for retirado do projeto, registre no `DOSSIER.md` o escopo e o estado dos dados locais preservados.
 - Não usar reset destrutivo, checkout destrutivo ou remoção recursiva para “limpar” o repositório.
 - Toda PR deve indicar escopo, testes executados e riscos residuais.
 - Um push não significa merge; uma PR aberta não significa deploy; uma versão salva não significa deploy concluído. Só declarar cada etapa após confirmação direta.
@@ -538,4 +538,3 @@ Antes de responder ou agir, a LLM deve identificar explicitamente:
 8. **próxima ação segura:** somente dentro da autorização atual.
 
 Ao resumir o projeto, use a ordem: objetivo → arquitetura → ferramentas → fases → estado publicado → pendências → histórico. Ao relatar uma entrega, não misture intenção com resultado e não use “publicado” como sinônimo de “commitado”.
-

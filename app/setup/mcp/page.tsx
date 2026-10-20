@@ -12,4 +12,3 @@ export default async function McpSetupPage() {
     <footer className="card-footer"><span>Configuração protegida pela autenticação do ChatGPT</span><span className="version">BETA / MCP ACCESS</span></footer>
   </section></main>;
 }
-

@@ -79,6 +79,8 @@ Arquivos `references/origem-*.md` são fontes de rastreabilidade e não devem se
 
 O manifesto do plugin é `.codex-plugin/plugin.json`. O diretório `skills/`, `.mcp.json`, `assets/`, `references/`, `scripts/`, `tests/` e este `AGENTS.md` fazem parte do projeto e devem acompanhar o commit destinado ao GitHub.
 
+O marketplace compartilhado tem sua fonte canônica em `../../.agents/plugins/marketplace.json`, na raiz do monorepo `gmtth/beta-all`, e aponta para este diretório. Faça mudanças neste pacote dentro do monorepo; depois de enviadas ao GitHub, elas chegam ao workspace pela sincronização do marketplace. A sincronização não autoriza os analistas no MCP: cada pessoa continua precisando de acesso ao plugin e autorização OAuth individual. Como este pacote declara MCP em `.mcp.json`, confirme a disponibilidade no cliente pretendido; a importação pode marcar o plugin como Desktop only.
+
 Antes de publicar:
 
 1. executar todas as validações;

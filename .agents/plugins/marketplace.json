@@ -1,0 +1,15 @@
+{
+  "name": "beta-team",
+  "interface": {
+    "displayName": "Beta — equipe"
+  },
+  "plugins": [
+    {
+      "name": "suite-beta",
+      "source": {
+        "source": "local",
+        "path": "./plugins/beta"
+      }
+    }
+  ]
+}

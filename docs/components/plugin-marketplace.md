@@ -18,7 +18,7 @@ Um administrador do workspace ChatGPT deve:
 6. Autorizar a conexão GitHub e revisar o resultado da importação.
 7. Ajustar a política de instalação e os papéis que podem usar o plugin.
 
-O marketplace sincroniza do GitHub automaticamente em ciclos diários. Para aplicar uma atualização sem esperar, o administrador abre **Admin Console → Plugins → Marketplaces → beta-team → Sync now**. A sincronização atualiza o pacote do plugin; ela não conecta a conta GitHub dos analistas, não concede acesso ao MCP e não realiza a autorização OAuth individual.
+O marketplace sincroniza do GitHub automaticamente em ciclos diários. Para aplicar uma atualização sem esperar, o administrador abre **Admin Console → Plugins → Marketplaces → Beta → Sync now**. A sincronização atualiza o pacote do plugin; ela não conecta a conta GitHub dos analistas, não concede acesso ao MCP e não realiza a autorização OAuth individual.
 
 ## Autenticação e acesso dos analistas
 

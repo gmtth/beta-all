@@ -26,6 +26,14 @@ O checkout `D:\Google Drive\Documents\ChatGPT\MCP Movidesk` tinha cinco commits 
 
 Os ZIPs RC1/RC2, os diretórios extraídos e o pacote de staging `_suite-beta-package-rc2` foram copiados sem mover os originais para `legacy/artifacts/releases/`. `SHA256SUMS.txt` registra hashes para conferência.
 
+## Snapshots locais do Sites
+
+O `work/movidesk-site` é uma origem Sites antiga, distinta do projeto Beta MCP publicado, e foi importado com seu histórico como `legacy/source-archives/movidesk-site-artifact/`. Os dois snapshots locais `work/sites-beta-mcp-20261020` e `work/sites-beta-mcp-20261020-v2` também foram importados como históricos subtree em `legacy/source-archives/sites-beta-mcp-snapshot-v1/` e `...-v2/`. O pacote local sem `.git` em `work/oauth-proxy` e artefatos locais de `source-bundle` foram preservados em `legacy/artifacts/site-snapshots/`, excluindo dependências/caches reproduzíveis.
+
+O projeto Sites `Beta MCP` permanece publicado na versão 73 (commit de fonte `5c26eac6ca78b2eb71093b246efc7b9afe0e0efb`). A versão Sites arquivada tem 98 arquivos e 1.894.400 bytes. O clone local do snapshot `work/oauth-proxy` não contém a funcionalidade `knowledge_list_sources` e, portanto, não foi tratado como fonte ativa; o runtime atual foi importado do `main` GitHub em `mcp/movidesk/`.
+
+O arquivo `SOURCE_IMPORTS.tsv` registra o SHA completo e o prefixo de destino para cada subtree. Os manifestos de `legacy/artifacts/releases/` e `legacy/artifacts/site-snapshots/` registram hashes dos artefatos sem Git.
+
 ## Limites
 
 - Dados reais do Movidesk/ClickUp e credenciais Supabase não foram exportados ao Git.

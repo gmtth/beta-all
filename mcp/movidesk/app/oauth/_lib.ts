@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS, clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, oauthClient, permissionLabelForScopes, OAUTH_SCOPE, OFFLINE_ACCESS_SCOPE, SUPPORTED_OAUTH_SCOPES, SUPPORTED_RESOURCE_SCOPES, validRedirectForClient, validateAuthorizationRequest, oauthTokenFailure, type OAuthTokenFailure } from "./clients";
+import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS } from "./token-lifetime";
 
 const encoder = new TextEncoder();
 export const db = () => env.DB as D1Database;
@@ -35,6 +36,8 @@ export async function ensureSchema() {
     db().prepare("CREATE TABLE IF NOT EXISTS oauth_tokens (token_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT, scope TEXT NOT NULL, resource TEXT, family_id TEXT, expires_at INTEGER NOT NULL)"),
     db().prepare("CREATE TABLE IF NOT EXISTS oauth_refresh_tokens (token_hash TEXT PRIMARY KEY, family_id TEXT NOT NULL, client_id TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT NOT NULL, scope TEXT NOT NULL, resource TEXT NOT NULL, expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL, consumed_at INTEGER, replaced_by_hash TEXT, revoked_at INTEGER)"),
     db().prepare("CREATE INDEX IF NOT EXISTS oauth_refresh_tokens_family_idx ON oauth_refresh_tokens(family_id)"),
+    db().prepare("CREATE TABLE IF NOT EXISTS oauth_settings (setting_key TEXT PRIMARY KEY NOT NULL, setting_value INTEGER NOT NULL CHECK (setting_value BETWEEN 60000 AND 2592000000))"),
+    db().prepare("INSERT OR IGNORE INTO oauth_settings (setting_key, setting_value) VALUES ('access_token_lifetime_ms', ?)").bind(DEFAULT_ACCESS_TOKEN_LIFETIME_MS),
     db().prepare("CREATE TABLE IF NOT EXISTS oauth_users (email TEXT PRIMARY KEY, role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)"),
   ];
   await db().batch(statements);

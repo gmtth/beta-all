@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS, MAX_ACCESS_TOKEN_LIFETIME_MS, MIN_ACCESS_TOKEN_LIFETIME_MS } from "./oauth/token-lifetime";
 
 type User = { email: string; role: string; active: number; created_at: number; scopes: string[]; activeTokenCount: number; latestTokenExpiry: number | null };
 type ConnectionDiagnostic = "configuration_missing" | "invalid_url" | "available" | "invalid_credentials" | "schema_unavailable" | "rate_limited" | "api_error" | "request_rejected" | "timeout" | "network_error";
@@ -75,18 +76,27 @@ export default function UserAdminPanel() {
   const [overview, setOverview] = useState<Overview | null>(null);
   const [toolMetricsResponse, setToolMetricsResponse] = useState<{ status: "available" | "unavailable"; data: ToolMetrics | null } | null>(null);
   const [message, setMessage] = useState("");
+  const [tokenLifetimeDraft, setTokenLifetimeDraft] = useState(String(DEFAULT_ACCESS_TOKEN_LIFETIME_MS));
+  const [tokenLifetimeMessage, setTokenLifetimeMessage] = useState("");
+  const [savingTokenLifetime, setSavingTokenLifetime] = useState(false);
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const results = await Promise.allSettled([fetch("/api/admin/users", { cache: "no-store" }), fetch("/api/admin/overview", { cache: "no-store" }), fetch("/api/admin/tool-metrics", { cache: "no-store" })]);
-      const [userResult, overviewResult, metricsResult] = results;
+      const results = await Promise.allSettled([fetch("/api/admin/users", { cache: "no-store" }), fetch("/api/admin/overview", { cache: "no-store" }), fetch("/api/admin/tool-metrics", { cache: "no-store" }), fetch("/api/admin/token-lifetime", { cache: "no-store" })]);
+      const [userResult, overviewResult, metricsResult, tokenLifetimeResult] = results;
       if (userResult.status === "fulfilled" && userResult.value.ok) setUsers(await userResult.value.json());
       if (overviewResult.status === "fulfilled" && overviewResult.value.ok) setOverview(await overviewResult.value.json());
       if (metricsResult.status === "fulfilled" && metricsResult.value.ok) setToolMetricsResponse(await metricsResult.value.json());
       else setToolMetricsResponse({ status: "unavailable", data: null });
+      if (tokenLifetimeResult.status === "fulfilled" && tokenLifetimeResult.value.ok) {
+        const settings = await tokenLifetimeResult.value.json() as { accessTokenLifetimeMs?: number };
+        if (Number.isSafeInteger(settings.accessTokenLifetimeMs)) setTokenLifetimeDraft(String(settings.accessTokenLifetimeMs));
+      } else {
+        setTokenLifetimeMessage("Não foi possível carregar a configuração de expiração.");
+      }
     } finally {
       setLoading(false);
     }
@@ -108,6 +118,27 @@ export default function UserAdminPanel() {
     const data = await response.json(); setBusy("");
     if (!response.ok) { setMessage(data.error ?? "Não foi possível remover."); return; }
     setMessage("Acesso removido."); await load();
+  }
+
+  async function saveTokenLifetime(event: React.FormEvent) {
+    event.preventDefault(); setTokenLifetimeMessage("");
+    const accessTokenLifetimeMs = Number(tokenLifetimeDraft);
+    if (!Number.isSafeInteger(accessTokenLifetimeMs) || accessTokenLifetimeMs < MIN_ACCESS_TOKEN_LIFETIME_MS || accessTokenLifetimeMs > MAX_ACCESS_TOKEN_LIFETIME_MS) {
+      setTokenLifetimeMessage(`Informe um inteiro entre ${MIN_ACCESS_TOKEN_LIFETIME_MS} e ${MAX_ACCESS_TOKEN_LIFETIME_MS} ms.`);
+      return;
+    }
+    setSavingTokenLifetime(true);
+    try {
+      const response = await fetch("/api/admin/token-lifetime", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accessTokenLifetimeMs }) });
+      const data = await response.json() as { accessTokenLifetimeMs?: number; error?: string };
+      if (!response.ok) { setTokenLifetimeMessage(data.error ?? "Não foi possível salvar a expiração."); return; }
+      setTokenLifetimeDraft(String(data.accessTokenLifetimeMs ?? accessTokenLifetimeMs));
+      setTokenLifetimeMessage("Validade salva. Será aplicada aos próximos access tokens emitidos.");
+    } catch {
+      setTokenLifetimeMessage("Não foi possível salvar a configuração. Tente novamente.");
+    } finally {
+      setSavingTokenLifetime(false);
+    }
   }
 
   const knowledge = overview?.knowledge.data;
@@ -156,6 +187,17 @@ export default function UserAdminPanel() {
           {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong>{toolTitle(item.toolName)}</strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
         </section>
       </div>}
+    </section>
+
+    <section className="admin-section" aria-labelledby="token-lifetime-title">
+      <div className="section-title"><div><span className="panel-heading">SEGURANÇA DA SESSÃO</span><h2 id="token-lifetime-title">Expiração do access token</h2></div></div>
+      <p className="section-description">Define a validade em milissegundos para access tokens novos e renovados. Tokens já emitidos mantêm a expiração atual; refresh tokens continuam com validade própria de até 90 dias.</p>
+      <form onSubmit={saveTokenLifetime} className="user-form">
+        <div className="input-wrap"><input aria-label="Validade do access token em milissegundos" type="number" min={MIN_ACCESS_TOKEN_LIFETIME_MS} max={MAX_ACCESS_TOKEN_LIFETIME_MS} step="1" value={tokenLifetimeDraft} onChange={(event) => setTokenLifetimeDraft(event.target.value)} required /><span aria-hidden="true">ms</span></div>
+        <button type="submit" disabled={savingTokenLifetime}>{savingTokenLifetime ? "Salvando…" : "Salvar validade"}</button>
+      </form>
+      <p className="quiet-message">Limite permitido: {MIN_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} a {MAX_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms. O padrão é {DEFAULT_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms.</p>
+      {tokenLifetimeMessage ? <p className="form-message" role="status">{tokenLifetimeMessage}</p> : null}
     </section>
 
     <section className="admin-section" aria-labelledby="team-title">

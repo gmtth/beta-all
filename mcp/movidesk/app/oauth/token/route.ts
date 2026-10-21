@@ -1,6 +1,5 @@
 import { env } from "cloudflare:workers";
 import {
-  ACCESS_TOKEN_TTL_SECONDS,
   OFFLINE_ACCESS_SCOPE,
   REFRESH_TOKEN_TTL_SECONDS,
   canonicalResource,
@@ -14,6 +13,7 @@ import {
   validRedirectForClient,
 } from "../_lib";
 import { createAuthorizationCodeGrant, rotateRefreshToken } from "../token-grants";
+import { getAccessTokenLifetimeMs } from "../token-lifetime";
 
 function validateClientCredentials(clientId: string, clientSecret: string, clientKind: "mcp" | "gpt-action") {
   const expectedSecret = clientSecretFor(clientId, process.env);
@@ -40,7 +40,8 @@ export async function POST(request: Request) {
     await ensureSchema();
     const replacementAccessToken = randomToken();
     const replacementRefreshToken = randomToken();
-    const accessExpiresAt = now + ACCESS_TOKEN_TTL_SECONDS * 1000;
+    const accessTokenLifetimeMs = await getAccessTokenLifetimeMs(env.DB);
+    const accessExpiresAt = now + accessTokenLifetimeMs;
     const rotated = await rotateRefreshToken(env.DB, {
       tokenHash: await hash(refreshToken),
       replacementRefreshTokenHash: await hash(replacementRefreshToken),
@@ -55,7 +56,7 @@ export async function POST(request: Request) {
     return json({
       access_token: replacementAccessToken,
       token_type: "Bearer",
-      expires_in: ACCESS_TOKEN_TTL_SECONDS,
+      expires_in: Math.ceil(accessTokenLifetimeMs / 1000),
       refresh_token: replacementRefreshToken,
       refresh_token_expires_in: Math.floor((rotated.refreshExpiresAt - now) / 1000),
       scope: rotated.scope,
@@ -91,7 +92,8 @@ export async function POST(request: Request) {
   const accessToken = randomToken();
   const familyId = client.kind === "mcp" && row.scope.split(/\s+/).includes(OFFLINE_ACCESS_SCOPE) ? randomToken() : undefined;
   const refreshToken = familyId ? randomToken() : undefined;
-  const accessExpiresAt = now + ACCESS_TOKEN_TTL_SECONDS * 1000;
+  const accessTokenLifetimeMs = await getAccessTokenLifetimeMs(env.DB);
+  const accessExpiresAt = now + accessTokenLifetimeMs;
   const refreshExpiresAt = familyId ? now + REFRESH_TOKEN_TTL_SECONDS * 1000 : undefined;
   const issued = await createAuthorizationCodeGrant(env.DB, {
     codeHash: await hash(code),
@@ -112,7 +114,7 @@ export async function POST(request: Request) {
   return json({
     access_token: accessToken,
     token_type: "Bearer",
-    expires_in: ACCESS_TOKEN_TTL_SECONDS,
+    expires_in: Math.ceil(accessTokenLifetimeMs / 1000),
     ...(refreshToken && refreshExpiresAt ? {
       refresh_token: refreshToken,
       refresh_token_expires_in: REFRESH_TOKEN_TTL_SECONDS,

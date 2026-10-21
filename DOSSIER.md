@@ -52,7 +52,7 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - Publicação Sites v83 concluída com status `succeeded`, deployment `appgdep_6ad8d27565208191984e249fbed0e4c2`, fonte Sites `1020fc078f7414868b44209a4c80097e9b0831f4`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A audiência pública existente foi preservada; v83 inclui o botão “Deslogar” por conta.
 - O envio e empacotamento exigiram cópia temporária isolada do helper: o build Vinext passou, mas o helper instalado falhou no quoting do npm, caminho auxiliar do pacote e localização do tar no Windows. Nenhum arquivo do plugin instalado foi alterado. A correção permanente do workflow segue pendente no dossier MCP.
 - Falta mesclar a PR #3 e executar smoke test autenticado como master no painel publicado; ainda não foi testada uma alteração real do TTL na interface em produção.
-- O botão “Deslogar” foi publicado no Sites v83 e conferido visualmente. A alteração no monorepo segue sem commit/push ao GitHub; falta concluir esse registro e validar reautenticação com conta de teste. Ver o dossier MCP.
+- O botão “Deslogar” foi publicado no Sites v83 e conferido visualmente. O commit `1f22bff` foi enviado à branch `codex/admin-access-token-expiration`, atualizando a PR #3, ainda aberta e não mesclada. Falta validar revogação e reautenticação com conta de teste. Ver o dossier MCP.
 
 ## Migração e rastreabilidade
 
@@ -99,7 +99,7 @@ Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 teste
 | Prioridade | Item | Estado / condição para conclusão |
 |---|---|---|
 | Alta | Mesclar a PR #3 da configuração da validade de access tokens e validar o campo como master. | Código publicado no Sites v82 (`1c8a611c656c2582dcc87a4b17d93422fe58f464`); branch GitHub `codex/admin-access-token-expiration`, PR #3 aberta. Após merge, conferir que o painel carrega o valor, salvar um TTL de teste e confirmar resposta persistida; restaurar o valor desejado pelo master. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
-| Alta | Enviar ao GitHub a implementação do botão “Deslogar” e atualizar a PR #3; validar reautenticação em conta de teste. | Sites v83 publicado e conferido visualmente; teste automatizado confirma revogação, mas falta commit/push no monorepo e teste real com conta descartável. |
+| Alta | Validar revogação e reautenticação com uma conta de teste descartável. | Commit `1f22bff` enviado à branch `codex/admin-access-token-expiration`; PR #3 atualizada e ainda aberta. Sites v83 publicado e conferido visualmente; testes automatizados confirmam revogação. |
 | Alta | Validar o ciclo nativo de reconexão OAuth no ChatGPT. | Etapas 1–5 foram mescladas pela PR #2 e publicadas no Sites v81; falta testar expiração, refresh, revogação, reconexão e repetição da operação em conversa real. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
 | Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |
 | Média | Corrigir o workflow Windows de build/empacotamento do Sites. | A publicação v81 exigiu ajustes temporários no helper copiado para resolver quoting do `npm` e encontrar `tar.exe`; fazer o wrapper do monorepo concluir build, pacote e publicação sem editar a instalação do plugin. |

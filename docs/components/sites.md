@@ -4,7 +4,7 @@ O código do Site e do endpoint MCP HTTP está em `mcp/movidesk/`. A raiz public
 
 ## Site em produção
 
-Em 2026-10-20, a integração Sites retornou o projeto `Beta MCP` ativo, com versão publicada 73 e deployment `appgdep_6ad73a9f28388191bb62480b2b452ec5`. A versão 73 registra o commit-fonte `5c26eac6ca78b2eb71093b246efc7b9afe0e0efb`, arquivo de publicação de 98 arquivos e 1.894.400 bytes. O dossier MCP registra que esse commit da origem Cloudflare Artifact contém os arquivos de runtime/documentação do `main` GitHub observado naquela publicação.
+Em 2026-10-20, a integração Sites confirmou o projeto `Beta MCP` ativo e público, com versão publicada 80 e deployment `appgdep_6ad7ffa179f88191bf045ab6570e161c`. A versão 80 registra o commit-fonte Sites `f0e56004251435d2b3b07b8c516857c7f3a4f4de` e um pacote validado de 1.955.840 bytes. O deploy foi confirmado como `succeeded`; a audiência permaneceu pública.
 
 O armazenamento de fonte usado pela publicação do Sites é separado do GitHub e não veio vinculado como remote ao resultado de leitura do projeto. A versão publicada continua disponível como versão Sites para rollback. O conteúdo-fonte equivalente do `main` está em `mcp/movidesk/`; a publicação não foi alterada durante esta consolidação.
 
@@ -16,4 +16,16 @@ A origem `work/movidesk-site` refere-se a outro projeto Sites (`appgprj_6a7e285d
 
 ## Próxima publicação
 
-A importação para o monorepo não publica alterações. Antes de mudar a origem de publicação, verificar o empacotamento a partir do diretório canônico, preservar a audiência atual e registrar SHA e versão publicada. Manter a configuração de produção atual até confirmar o novo fluxo e a compatibilidade do cliente MCP.
+### Telemetria operacional do MCP
+
+O painel `/admin/users` mantém as métricas de uso e falhas no D1 vinculado ao Worker Sites. A rota `/api/admin/tool-metrics` exige conta master e consulta eventos agregados do MCP; ela é independente da rota de indicadores Supabase. Os dados registrados são ferramenta, resultado (sucesso/erro), código de erro de uma lista segura e horário. Não são persistidos usuário, argumentos, resultado ou mensagem de erro original. A retenção automática é de 90 dias; os gráficos exibem os últimos 30 dias e os dez erros recentes. A migration `mcp/movidesk/drizzle/0001_mcp_tool_events.sql` documenta a tabela e índices; o Worker também garante a criação da tabela. Essa implementação foi publicada na v80, pelo commit Sites `f0e56004251435d2b3b07b8c516857c7f3a4f4de`; ainda não confirmei o recebimento de eventos reais nos gráficos.
+
+A importação para o monorepo não publica alterações. A origem do Sites segue separada do GitHub; `mcp/movidesk/.openai/hosting.json` associa o código canônico ao mesmo projeto, mas não muda o remote gerenciado pelo Sites.
+
+Para evitar abrir o helper na raiz do monorepo por engano, `npm run sites:workflow -- --helper "<caminho-absoluto-site-workflow.mjs>" --project-id "<project_id>"` inicia o processo em uma pasta temporária isolada e encaminha o stdin sem gravar credenciais. O checkout retornado fica preservado para sincronização/publicação; workspaces vazios são removidos. No Windows, o wrapper localiza o Git Bash, inclui os diretórios do Git Bash e do Node no `PATH` e converte o `archivePath` para o formato POSIX esperado pelo empacotador; a saída devolve o caminho Windows original. Se o Git Bash não estiver no local padrão, use `SITES_BASH_BIN` para apontar a `bash.exe`. Depois, `npm run sites:sync -- "<checkout_path>"` sincroniza somente os caminhos de runtime/build. O modo `--dry-run` mostra as contagens. O sincronizador valida o `project_id`, preserva `.git`, `.openai/`, arquivos locais, documentos/testes/históricos no checkout, e recusa alterações rastreadas locais. Em 2026-10-20, o dry-run e a sincronização passaram; 61 arquivos foram copiados e nenhum rastreado obsoleto foi removido. O build Vinext passou usando dependências locais já instaladas. O helper oficial fez commit/push e gerou o pacote; a versão 80 foi salva e implantada com sucesso.
+
+### Pré-voo de publicação
+
+Ao receber `source` e `archivePath`, o wrapper valida que o resultado de abertura e `.openai/hosting.json` correspondem ao `project_id` selecionado, que o caminho é a raiz Git do checkout e fica fora do monorepo, que o helper de empacotamento está presente e que a pasta de destino existe, permite gravação, ainda não contém o arquivo e fica fora do checkout (inclusive após resolver symlinks no diretório pai). No Windows, confirma o Git Bash antes de iniciar a preparação. Para builds Vinext, compara `package.json`, `package-lock.json` e a versão principal do Node; se a instalação não estiver compatível, executa `npm ci` dentro do checkout isolado. Se `node_modules` for symlink/junction, não executa instalação destrutiva; reutiliza o Vinext disponível ou bloqueia com orientação. O comando `node <plugin-root>/scripts/build-site.mjs` é incluído automaticamente antes do commit/push quando a lista `commands` não o contém. Falha em qualquer pré-voo, instalação ou comando mantém o push sem iniciar.
+
+Antes de publicar, preservar a audiência atual e registrar SHA, versão e deployment. Manter a configuração de produção atual até confirmar o novo fluxo e a compatibilidade do cliente MCP.

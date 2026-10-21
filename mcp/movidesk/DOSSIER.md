@@ -8,13 +8,13 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 
 | Pergunta | Resposta canônica |
 |---|---|
-| O que existe? | MCP Movidesk somente leitura, com consultas, timeline, análises, similaridade, recorrência e listagem inicial de fontes Supabase (`knowledge_list_sources`). |
+| O que existe? | Ferramentas de consulta/análise Movidesk e catálogo Supabase validados; importação explícita/auditada publicada na versão 74; painel admin e autorização OAuth temporizada publicados na versão 75; rótulo redundante removido na v76; cabeçalhos internos simplificados e rodapé removido na v77; diagnósticos Supabase confirmados na v79; métricas MCP no D1 publicadas na versão 80. |
 | Onde roda? | O Site consolidado contém OAuth/PKCE, REST interno e a rota MCP `/mcp/` no Worker. O antigo servidor autônomo `source-bundle` foi removido da árvore de código nesta limpeza; deployments externos não foram verificados. |
 | Qual é a regra de segurança? | Não mutar tickets; não expor segredo/PII; não publicar sem confirmar manifesto e deployment. |
 | Qual é a fonte semântica? | YAML legível + snapshot JSON validado; grupos semânticos têm papéis separados. |
 | O que está estabilizado? | Fases 0–2, 3A, 3B e implementação de 3C, conforme o estado/evidência de cada seção. |
-| O que ainda precisa ser confirmado? | Publicação da nova versão, variáveis/permissões Supabase no Sites, solicitação de `knowledge:read` pelo cliente e smoke test; eventual uso/deployment independente do servidor legado em `source-bundle`. |
-| Qual o próximo caminho? | Fase 4 (hardening/publicação), depois calibração, observabilidade e encerramento da beta. |
+| O que ainda precisa ser confirmado? | Reautorizar scopes no cliente MCP e importar/testar o ticket piloto; busca de trechos continua pendente. |
+| Qual o próximo caminho? | Reautorizar a conexão com os três scopes, confirmar a ferramenta de importação e adicionar somente o chamado explicitamente solicitado; depois implementar busca lexical. |
 | O que nunca inferir? | Commit ≠ merge; merge ≠ deploy; deploy ≠ manifesto ativo; teste local ≠ produção. |
 
 ### Arquivo histórico opcional
@@ -32,13 +32,25 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 
 ## Resumo canônico atual
 
-- **Objetivo:** MCP somente leitura para consulta e análise factual de tickets Movidesk.
+- **Objetivo:** consultar/analisar tickets Movidesk sem alterá-los e copiar chamados explicitamente solicitados para a base interna Supabase.
 - **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites. O MCP do Site roda no Worker consolidado (`worker/index.ts`, `worker/mcp.ts`, `worker/mcp-tools.ts`). `knowledge_list_sources` está no `main` após a PR #42, mas não foi confirmado em versão Sites. O antigo `source-bundle` foi removido da árvore do repositório nesta limpeza; deployment externo não identificado.
 - **Endpoint MCP:** `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` — a barra final é obrigatória.
-- **Raiz local:** `D:\Google Drive\Documents\ChatGPT\MCP Movidesk`.
-- **Branch funcional observada:** `codex/phase3b-similarity`.
-- **HEAD local observado:** `392c2f8` (`Document consolidated MCP runtime`). O `main` remoto está em `a2a40b280c7e3308837de9c059d774b7e1657fc6` após as PRs #42 e #43.
-- **Último runtime publicado confirmado nesta trilha:** versão 71, deployment `appgdep_6ad6d7cdb298819190fe5958612c9ac1`, fonte `a895d3068c11abbab269955427611f5c642744a1`. A versão 72 foi registrada como sincronização documental com fonte `510a60d6dc2c51497e977426c11929e8e06da9f4`; não há evidência de novo runtime nesse sync. `knowledge_list_sources` da PR #42 não foi confirmado publicado.
+- **Raiz local canônica:** `D:\Google Drive\Documents\ChatGPT\Beta\beta-all\mcp\movidesk`.
+- **Branch da implementação atual:** `codex/knowledge-ticket-ingestion` no monorepo `beta-all`.
+- **HEAD local do monorepo:** atualização de implementação `c695d1e` (`Add audited Movidesk ticket ingestion`) na branch remota `codex/knowledge-ticket-ingestion`. O `main` remoto continua em `a2a40b280c7e3308837de9c059d774b7e1657fc6` após as PRs #42 e #43; a branch de implementação não foi mesclada.
+- **Último runtime publicado confirmado:** versão 80, deployment `appgdep_6ad7ffa179f88191bf045ab6570e161c`, fonte Site `f0e56004251435d2b3b07b8c516857c7f3a4f4de`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. Deploy concluído com `succeeded` em 2026-10-20; a audiência permaneceu pública. A versão 80 inclui o painel de métricas MCP no D1 do Sites.
+- **Workflow Sites pelo monorepo:** `npm run sites:workflow` abre o helper oficial em workspace temporário isolado, evitando confundir a raiz `beta-all` com o checkout. `scripts/sync-sites-checkout.mjs` sincroniza os caminhos do runtime/build com validação do `project_id`; o helper cuida de commit/push e as ferramentas Sites salvam/implantam. O wrapper valida pré-requisitos e destino do pacote, instala dependências bloqueadas pelo lockfile quando necessário, inclui Git Bash e Node no `PATH` do empacotamento, garante o build antes do commit/push e protege junctions de `node_modules`. A v80 foi publicada a partir do commit sincronizado `f0e56004251435d2b3b07b8c516857c7f3a4f4de`.
+- **Diagnóstico administrativo Supabase (v78):** a verificação separa conectividade da Data API e disponibilidade de `get_knowledge_admin_overview()`. O painel informa categorias seguras para configuração, acesso, timeout e falhas temporárias. Indicadores Supabase permanecem independentes da telemetria MCP abaixo.
+- **Telemetria MCP para o painel (publicada na v80):** todas as ferramentas registradas na rota MCP são envolvidas para gravar sucesso/erro, nome da ferramenta, categoria de erro permitida e horário no D1 do próprio Sites. O painel consulta uma rota master separada de `/api/admin/overview`: gráfico de uso por ferramenta, erros diários em 30 dias e dez erros mais recentes. Retenção de até 90 dias. Não grava argumentos, respostas, texto bruto de erro nem identidade; não usa Supabase para essas métricas. A migration reproduzível fica em `drizzle/0001_mcp_tool_events.sql`; o Worker também cria a tabela sob demanda. Build e deployment confirmados; a presença de eventos reais ainda não verificada.
+- **Identidade da conta exibida na página inicial:** o e-mail não é fixo no JSX. `app/chatgpt-auth.ts` lê `oai-authenticated-user-id` e `oai-authenticated-user-email` dos cabeçalhos da requisição; `app/page.tsx` exige essa identidade e exibe `user.email`. A captura enviada pelo usuário mostra `matheusgregoviski@gmail.com`; o código confirma a leitura dinâmica, mas não inspeciona independentemente os cabeçalhos da requisição ao vivo.
+- A tela OAuth envia o formulário automaticamente depois de dez segundos, com opções visíveis para autorizar imediatamente ou cancelar.
+
+### Melhoria do fluxo de publicação Sites — 2026-10-20
+
+- **Pedido:** automatizar o pré-voo para evitar falhas de dependências/build ou de empacotamento depois que o fluxo avançar para commit/push.
+- **Decisão:** `scripts/run-sites-workflow.mjs` verifica correspondência do `project_id` com o resultado de abertura e o manifesto local, helpers de build/package, Git Bash no Windows e pasta de pacote absoluta, existente, gravável, nova e fora do checkout. Se `node_modules` estiver ausente/desatualizado, executa `npm ci` no checkout isolado, com fingerprint dos manifests e versão principal do Node; se for link/junction, não o modifica. Garante o comando `build-site.mjs` entre as etapas do helper antes do commit/push.
+- **Evidência:** `node --check scripts/run-sites-workflow.mjs`, `npm run sites:workflow -- --help` e `git diff --check` passaram em 2026-10-20. O `git diff --check` emitiu apenas avisos de conversão LF/CRLF do Git no Windows. Nenhum workflow real, commit, push ou deploy foi iniciado por esta alteração.
+- **Estado:** implementado localmente; fluxo real com Sites ainda não executado. Não confundir verificação estática com publicação validada.
 - **MCP na versão publicada:** o código-fonte dessa versão contém `worker/index.ts` chamando `handleMcp` e `worker/mcp.ts` implementando `POST /mcp`. A integração nativa MCP do Sites reportou `has_mcp: false`; isso comprova a implementação personalizada no Worker, não uma declaração MCP nativa da plataforma.
 - **`source-bundle`:** o antigo servidor independente foi removido da árvore de código por esta limpeza, pois o MCP do Site é implementado no Worker consolidado. O código local removido está preservado em `work/legacy-preservation/`; a alteração não desliga serviços externos. Deployment autônomo externo permanece não identificado.
 - **Limitação de verificação:** não foi possível fazer smoke test HTTP direto ao endpoint publicado nesta checagem. A implementação e o deployment da versão 70 foram verificados por código e metadados Sites.
@@ -1578,7 +1590,7 @@ O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Bet
 - **Limites encontrados:** não há coluna vetorial nem índice vetorial, policies RLS, funções/RPCs ou triggers no resultado. Portanto `pgvector` está instalado, mas busca semântica e híbrida ainda não existem no banco.
 - **Permissões:** RLS está habilitado sem policies. `service_role` tem `USAGE` no schema e privilégios DML completos nas tabelas. `anon` e `authenticated` também têm grants DML nas tabelas, mas não têm `USAGE` no schema `beta`; reduzir essas ACLs de tabela por least privilege. A consulta de catálogo não confirma a configuração separada de exposição da Data API.
 - **Segredo:** em resposta de 2026-10-20, o usuário confirmou a rotação da chave exposta e a atualização de `SUPABASE_SECRET_KEY` no Sites. O valor permaneceu mascarado e não foi consultado. A validade efetiva da variável depende de teste via MCP.
-- **Próximo passo:** teste end-to-end de `knowledge_list_sources`; depois, definir e revisar grants mínimos antes de qualquer alteração no Supabase. Não aplicar mudanças de produção apenas com base na inspeção.
+- **Próximo passo:** após o teste end-to-end bem-sucedido da listagem, definir e revisar grants mínimos antes de qualquer alteração no Supabase. Não aplicar mudanças de produção apenas com base na inspeção.
 
 ## Primeiro teste MCP da consulta de fontes (2026-10-20)
 
@@ -1586,6 +1598,13 @@ O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Bet
 - **Leitura técnica:** a ferramenta devolve essa mensagem quando `authorizeOAuthScope` não encontra token válido com `knowledge:read` e conta ainda ativa. Isso não indica, por si só, falha da chave Supabase nem consulta ao banco; o reader não segue para a chamada à Data API quando a autorização falha.
 - **Código local:** `worker/mcp.ts` registra a ferramenta protegida por `knowledge:read`; `app/oauth/clients.ts` permite esse escopo ao cliente MCP; `app/oauth/authorize/route.ts` salva o escopo concedido no token. Verificação de fonte local, não confirmação do deployment.
 - **Próxima ação:** desconectar/reconectar a conta MCP no ChatGPT para obter novo consentimento incluindo `knowledge:read`, conferir a conta exibida na autorização e repetir a consulta. Se persistir, verificar se o e-mail continua ativo em `oauth_users` no banco do Site e confirmar que o deployment contém o código com esse escopo. Não solicitar token ou segredo ao usuário.
+
+## Reautorização e leitura MCP concluídas (2026-10-20)
+
+- **Resultado informado pelo usuário:** após reconectar, a lista retornou três fontes: Movidesk, ClickUp e Documentos administrativos.
+- **Conclusão:** a chamada `knowledge_list_sources` passou pela autorização `knowledge:read`, consultou o catálogo do Supabase via runtime Sites e retornou as fontes esperadas. Isso confirma conectividade e chave funcional para essa consulta de leitura no deployment ativo.
+- **Limite:** não valida busca de trechos, ingestão, embeddings, controles de classificação, grants mínimos ou histórico de conversas. Nenhum registro documental/chamado foi consultado nesta ferramenta.
+- **Próxima etapa:** revisar permissões/grants e versionar o schema antes de carregar dados reais; depois implementar e validar busca diagnóstica híbrida.
 
 ## Limpeza do servidor legado `source-bundle` (2026-10-19)
 
@@ -1670,3 +1689,16 @@ A tela OAuth da PR #42 foi preservada integralmente; a alteração da #41 nesse 
 A pedido do usuário, foi investigado o commit `dae3d5f48c641fb2e4c835802ec3566c134f9701` (`Remove obsolete Movidesk plugin package`), antes associado à branch local `agent/phase3a-hotfix-parser-context`. A checagem local confirmou que o commit é ancestral de `main` e da branch de trabalho; a comparação pelo GitHub confirmou que o `main` remoto também o contém (base `dae3d5f`, `main` 73 commits à frente, zero atrás). Portanto, o commit não estava órfão e não foi apagado da história compartilhada.
 
 A referência local `agent/phase3a-hotfix-parser-context` foi removida (`git branch -D`), pois seu único commit específico já estava preservado por `main` e pela branch ativa. A tentativa não forçada `git branch -d` foi recusada por a referência upstream própria ainda não conter o commit; a verificação de ancestralidade no `main` remoto justificou a remoção somente da referência local. Nenhum branch remoto foi alterado. As alterações não commitadas da árvore de trabalho foram preservadas.
+
+## Ingestão explícita de chamado para a base (2026-10-20)
+
+- **Pedido:** implementar o fluxo para usar o chamado Movidesk `20260702000000016` como primeiro teste de gravação no Supabase.
+- **Contrato implementado localmente:** ferramenta `knowledge_import_movidesk_ticket` requer `movidesk:read` e `knowledge:write`, aceita somente ID numérico e deve ser usada apenas após solicitação explícita de inclusão. Revalida token/expiração/scopes/conta ativa; o e-mail autenticado é a identidade de auditoria. Todos os analistas ativos `master`/`support` são elegíveis; GPT Action não recebe escopo de escrita.
+- **Transformação:** usa assunto, descrição, interações e campos técnicos allowlisted; remove e-mails, CPF/CNPJ, telefone rotulado e URLs com padrões determinísticos; exclui dados estruturados de autor/solicitante/cliente; fixa classificação interna, limita tamanho e divide em trechos. Isso não equivale a anonimização completa, portanto o conteúdo permanece interno.
+- **Persistência:** RPC transacional `beta.upsert_movidesk_knowledge_record` faz upsert por fonte+ID, substitui trechos atomicamente e registra e-mail autenticado, hash, contagem e data na auditoria. DML direto não é concedido ao `service_role`; apenas execução da RPC. Rollback desativa a RPC sem apagar dados/auditoria.
+- **Estado inicial:** implementação e testes foram preparados na branch `codex/knowledge-ticket-ingestion`. O usuário aplicou a migration `20261020140000` após dry-run listar somente esse arquivo.
+- **GitHub:** commit `c695d1e` foi enviado à branch `codex/knowledge-ticket-ingestion` no repositório `gmtth/beta-all`; não foi aberta PR nem mesclada.
+- **Publicação:** versão 74 salva e implantada no Site em 2026-10-20. Commit da origem Sites: `f8955ac8c286a47f1b8e42b757365eb12cf948ef`; deployment `appgdep_6ad7b935b2e08191b2b8ab60f55d51df`; URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. `has_mcp: false` descreve a integração nativa do Sites; o endpoint customizado `/mcp/` continua implementado no Worker.
+- **Verificação:** build executado no checkout da origem Sites; deployment retornou `succeeded`. GET aos metadados OAuth publicados confirmou `movidesk:read knowledge:read knowledge:write`. Não houve chamada autenticada da ferramenta, reautorização de token nem importação do ticket `20260702000000016`.
+- **Próximo passo:** cada analista precisa reconectar/reautorizar o MCP com os scopes necessários; então verificar a ferramenta e importar o ticket piloto por solicitação explícita. Não declarar sucesso da ingestão antes da confirmação do retorno e da persistência.
+- **Referências:** arquitetura em `docs/architecture/knowledge-base.md`; migration/rollback em `infra/supabase/`.

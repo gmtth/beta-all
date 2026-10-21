@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, MCP_CLIENT_ID, OAUTH_SCOPE, permissionLabelForScopes, validateAuthorizationRequest, validRedirectForClient } from "../app/oauth/clients.js";
+import { GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, OAUTH_SCOPE, permissionLabelForScopes, validateAuthorizationRequest, validRedirectForClient } from "../app/oauth/clients.js";
 
 const env = {};
 const actionRedirect = "https://chat.openai.com/aip/action-123/oauth/callback";
@@ -31,8 +31,16 @@ test("MCP accepts separate Movidesk and knowledge read scopes, while GPT Action 
   assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, combined, "", "", env), false);
 });
 
+test("MCP can request the separate knowledge writer scope; GPT Action cannot", () => {
+  const combined = `${OAUTH_SCOPE} ${KNOWLEDGE_WRITE_SCOPE}`;
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, KNOWLEDGE_WRITE_SCOPE, "challenge", "S256", env), true);
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, combined, "challenge", "S256", env), true);
+  assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, KNOWLEDGE_WRITE_SCOPE, "", "", env), false);
+  assert.equal(validateAuthorizationRequest(GPT_ACTION_CLIENT_ID, "code", actionRedirect, combined, "", "", env), false);
+});
+
 test("MCP rejects unsupported or duplicate scopes", () => {
-  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, "knowledge:write", "challenge", "S256", env), false);
+  assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, "knowledge:admin", "challenge", "S256", env), false);
   assert.equal(validateAuthorizationRequest(MCP_CLIENT_ID, "code", mcpRedirect, `${KNOWLEDGE_READ_SCOPE} ${KNOWLEDGE_READ_SCOPE}`, "challenge", "S256", env), false);
 });
 
@@ -47,4 +55,5 @@ test("consent labels match the scopes being granted", () => {
   assert.equal(permissionLabelForScopes(OAUTH_SCOPE), "Movidesk · leitura de tickets");
   assert.equal(permissionLabelForScopes(KNOWLEDGE_READ_SCOPE), "Base de conhecimento · leitura");
   assert.equal(permissionLabelForScopes(`${OAUTH_SCOPE} ${KNOWLEDGE_READ_SCOPE}`), "Movidesk · leitura de tickets + Base de conhecimento · leitura");
+  assert.equal(permissionLabelForScopes(KNOWLEDGE_WRITE_SCOPE), "Base de conhecimento · inclusão de chamados");
 });

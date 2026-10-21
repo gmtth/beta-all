@@ -2,7 +2,8 @@ export const GPT_ACTION_CLIENT_ID = "movidesk-gpt-action";
 export const MCP_CLIENT_ID = "movidesk-mcp-app";
 export const OAUTH_SCOPE = "movidesk:read";
 export const KNOWLEDGE_READ_SCOPE = "knowledge:read";
-export const SUPPORTED_OAUTH_SCOPES = [OAUTH_SCOPE, KNOWLEDGE_READ_SCOPE] as const;
+export const KNOWLEDGE_WRITE_SCOPE = "knowledge:write";
+export const SUPPORTED_OAUTH_SCOPES = [OAUTH_SCOPE, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE] as const;
 
 export type OAuthClient = {
   id: string;
@@ -82,6 +83,7 @@ export function permissionLabelForScopes(scope: string) {
   const labels: string[] = [];
   if (requested.has(OAUTH_SCOPE)) labels.push("Movidesk · leitura de tickets");
   if (requested.has(KNOWLEDGE_READ_SCOPE)) labels.push("Base de conhecimento · leitura");
+  if (requested.has(KNOWLEDGE_WRITE_SCOPE)) labels.push("Base de conhecimento · inclusão de chamados");
   return labels.join(" + ");
 }
 

@@ -66,7 +66,7 @@ As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pas
 - Não transformar ticket em regra, requisito, comportamento esperado ou causa raiz isoladamente.
 - Não transformar hipótese em diagnóstico.
 - Manter Dossiê, QA, filtro de publicação e artefatos conforme as regras do modo MOD.
-- Operar conectores em somente leitura quando assim definido pela skill ou MCP.
+- Operar conectores em somente leitura quando assim definido pela skill ou MCP. A exceção atual é a importação explícita de um chamado para a base interna Supabase, descrita na skill Movidesk; ela nunca altera o chamado de origem.
 - Não simular acesso a Movidesk, ClickUp, Figma ou qualquer outro conector.
 - `beta-anl-clickupchecklist` só pode ser invocada com link explícito de tarefa ou comentário do ClickUp e só pode alterar o comentário de checklist determinado pelo seu contrato.
 - `beta-mod-sites` permanece isolada do backend, API, banco, autenticação e ambientes reais do CENCIHUB.
@@ -80,7 +80,7 @@ O arquivo `.mcp.json` declara o servidor `movidesk` em modo HTTP:
 https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/
 ```
 
-Preserve a barra final de `/mcp/`. A integração é somente leitura e não deve conter tokens ou segredos no repositório.
+Preserve a barra final de `/mcp/`. As consultas ao Movidesk são somente leitura; a única escrita permitida é a importação explícita e auditada de chamados para a base interna, conforme a skill Movidesk e os escopos OAuth `movidesk:read`, `knowledge:read` e `knowledge:write`. Nunca incluir tokens ou segredos no repositório.
 
 ## Validação local
 

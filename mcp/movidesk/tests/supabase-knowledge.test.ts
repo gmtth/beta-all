@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SupabaseKnowledgeReader } from "../worker/supabase-knowledge";
+import { SupabaseKnowledgeStore } from "../worker/supabase-knowledge";
+import type { MovideskKnowledgeRecord } from "../worker/knowledge-ingest";
 
 test("Supabase source listing uses the beta schema and returns only bounded metadata", async () => {
   const previousUrl = process.env.SUPABASE_URL;
@@ -17,7 +18,7 @@ test("Supabase source listing uses the beta schema and returns only bounded meta
   };
 
   try {
-    const result = await new SupabaseKnowledgeReader().listSources();
+    const result = await new SupabaseKnowledgeStore().listSources();
     assert.equal(requestUrl?.pathname, "/rest/v1/source_system");
     assert.equal(requestUrl?.searchParams.get("select"), "id,name");
     assert.equal(requestUrl?.searchParams.get("limit"), "10");
@@ -25,6 +26,44 @@ test("Supabase source listing uses the beta schema and returns only bounded meta
     assert.equal(requestHeaders?.get("apikey"), "unit-test-secret");
     assert.deepEqual(result, [{ id: "movidesk", name: "Movidesk" }]);
     assert.equal(JSON.stringify(result).includes("must not escape"), false);
+  } finally {
+    globalThis.fetch = previousFetch;
+    if (previousUrl === undefined) delete process.env.SUPABASE_URL;
+    else process.env.SUPABASE_URL = previousUrl;
+    if (previousKey === undefined) delete process.env.SUPABASE_SECRET_KEY;
+    else process.env.SUPABASE_SECRET_KEY = previousKey;
+  }
+});
+
+test("Movidesk ticket import calls the narrow beta RPC and returns only bounded metadata", async () => {
+  const previousUrl = process.env.SUPABASE_URL;
+  const previousKey = process.env.SUPABASE_SECRET_KEY;
+  const previousFetch = globalThis.fetch;
+  let requestUrl: URL | undefined;
+  let requestHeaders: Headers | undefined;
+  let requestBody: any;
+  process.env.SUPABASE_URL = "https://example-project.supabase.co";
+  process.env.SUPABASE_SECRET_KEY = "unit-test-secret";
+  globalThis.fetch = async (input, init) => {
+    requestUrl = new URL(String(input));
+    requestHeaders = new Headers(init?.headers);
+    requestBody = JSON.parse(String(init?.body));
+    return Response.json({ record_id: "42", chunk_count: 2 });
+  };
+  const record: MovideskKnowledgeRecord = {
+    external_id: "20260702000000016", title: "Máquina offline", status: "Fechado",
+    source_created_at: null, source_updated_at: null, attributes: { category: "Hardware" },
+    chunks: [{ ordinal: 0, section_title: "Descrição inicial", content: "Máquina sem conexão" }, { ordinal: 1, section_title: "Interação 1", content: "Reinício realizado" }],
+    content_hash: "a".repeat(64),
+  };
+  try {
+    const result = await new SupabaseKnowledgeStore().importMovideskTicket(record, "analista@example.com");
+    assert.equal(requestUrl?.pathname, "/rest/v1/rpc/upsert_movidesk_knowledge_record");
+    assert.equal(requestHeaders?.get("Content-Profile"), "beta");
+    assert.equal(requestHeaders?.get("apikey"), "unit-test-secret");
+    assert.equal(requestBody.p_external_id, "20260702000000016");
+    assert.equal(requestBody.p_actor_email, "analista@example.com");
+    assert.deepEqual(result, { recordId: "42", chunkCount: 2 });
   } finally {
     globalThis.fetch = previousFetch;
     if (previousUrl === undefined) delete process.env.SUPABASE_URL;

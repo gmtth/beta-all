@@ -4,7 +4,7 @@
 
 **Componente:** `plugins/beta/`
 
-**Manifesto:** `suite-beta`, versão `1.0.3`
+**Manifesto:** `suite-beta`, versão `1.0.4`
 
 ## Resumo e escopo
 
@@ -17,12 +17,12 @@ Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se
 ## Estado atual
 
 - O pacote contém 20 skills: a orquestradora `beta` e 19 skills especializadas ANL/MOD.
-- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão `1.0.3`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
+- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão `1.0.4`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
 - O Knowledge Master vigente é [`CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`](./references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md). Ele resolve duas referências quebradas com anchors explícitos; o snapshot `v001` está preservado sem alteração. O relatório correspondente está em [`KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md`](./references/KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md).
-- Dezoito skills estão na revisão `metadata.version`: `"3"`; `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"` por não terem sido alteradas nesta rodada. A contagem inicial foi `"1"`; os incrementos seguem a regra definida em [`AGENTS.md`](./AGENTS.md).
+- Dezesseis skills estão na revisão `metadata.version` `"3"`; `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"`; `beta` e `beta-anl-movidesk` passaram à revisão `"4"` para documentar a ingestão explícita. A contagem inicial foi `"1"`; os incrementos seguem a regra definida em [`AGENTS.md`](./AGENTS.md).
 - Os metadados das skills incluem nomes técnicos e exibidos vigentes, descrições, prompts, política de invocação, cores e logos. As skills ClickUp Cards e ClickUp Checklist compartilham brand color `#754FF6` e os logos small/large, copiados para cada pasta para manter o pacote autossuficiente.
 - `beta-anl-clickupchecklist` tem prompt padrão coerente com sua restrição de atualizar apenas o comentário mais recente “Checklist de testes” e com as informações necessárias da rodada.
-- A integração configurada em `.mcp.json` aponta para `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` e é descrita como somente leitura. O endpoint e o estado publicado são acompanhados pelo dossier MCP; a configuração no plugin não prova conectividade end-to-end.
+- A integração configurada em `.mcp.json` aponta para `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`. Consultas ao Movidesk permanecem somente leitura; a importação explicitamente solicitada de chamados para a base interna é uma escrita restrita e auditada, descrita na skill `beta-anl-movidesk`. Endpoint, publicação e migração são acompanhados pelo dossier MCP; a configuração local não prova conectividade end-to-end.
 - O marketplace GitHub **Beta** está configurado na raiz do monorepo para apontar a este pacote. A importação/sincronização no workspace e o uso pelos quatro analistas ainda precisam ser confirmados; consulte [`plugin-marketplace.md`](../../docs/components/plugin-marketplace.md).
 - Os validadores `validate_beta_anl_skills.py` e `validate_beta_routing_cases.py` foram executados em 2026-10-20 após os ajustes de referências técnicas, snapshot, metadados e versionamento; ambos passaram sem erros (20 skills e 24 casos de roteamento).
 
@@ -117,6 +117,7 @@ As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de
 | 2026-10-20, validação e versão | Os validadores de skills e roteamento passaram sem erros. O manifesto foi incrementado para `1.0.2` para registrar esta atualização do dossier; as versões das skills não mudaram. | Saída recente de `python scripts/validate_beta_anl_skills.py` e `python scripts/validate_beta_routing_cases.py`; `.codex-plugin/plugin.json`. |
 | 2026-10-20, referências técnicas e Knowledge Master | Referências internas a skills foram padronizadas com identificadores técnicos. Links quebrados no snapshot foram resolvidos em nova versão `v002`, preservando `v001` e os hashes das seis fontes. Dezoito skills passaram à revisão `"3"`; o manifesto passou a `1.0.3`. | Skills e referências alteradas; `references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`; relatório de integridade correspondente. |
 | 2026-10-20, metadados | O prompt padrão de ClickUp Checklist foi preenchido; o manifesto foi ajustado para descrição de 29 caracteres e três prompts; ClickUp Cards recebeu os logos e a cor de ClickUp Checklist. | `.codex-plugin/plugin.json`, arquivos `agents/openai.yaml` e assets nas duas skills ClickUp. |
+| 2026-10-20, importação explícita de conhecimento | A skill Beta agora permite importar chamados ao Supabase somente após pedido explícito, sem alterar o Movidesk. `beta` e `beta-anl-movidesk` passaram à revisão `"4"`; o manifesto passou a `1.0.4`. | Skills, instruções MCP do Sites e documentação operacional; implementação/publicação continuam no estado do dossier MCP. |
 | Integração MCP | `.mcp.json` configura o endpoint documentado do Sites/MCP, mas isso não comprova conectividade ou publicação end-to-end. | `.mcp.json`, `docs/components/sites.md` e `mcp/movidesk/DOSSIER.md`. |
 
 Não há evidência suficiente para atribuir data ou motivação a toda a evolução anterior do plugin. Para casos históricos específicos, consultar o arquivo de origem e o repositório preservado; não deduzir intenção apenas a partir de uma alteração de código.
@@ -127,7 +128,7 @@ Não há evidência suficiente para atribuir data ou motivação a toda a evolu�
 |---|---|---|
 | Sincronização/importação do marketplace Beta no workspace | Pendente de confirmação | Configurar/confirmar o marketplace e verificar a disponibilidade da skill para os analistas. |
 | Dependência declarativa ClickUp | Pendente de verificação do formato/runtime | Identificar e validar a conexão ClickUp suportada; então declarar `dependencies.tools` sem inventar endpoints ou IDs. |
-| Conectividade MCP/Supabase em produção | Acompanhada pelo dossier MCP/Supabase | Confirmar a autorização `knowledge:read` e chamada end-to-end; não inferir sucesso da configuração local. |
+| Importação MCP/Supabase em produção | Runtime publicado na versão 74; ainda pendente de uso autenticado | Reautorizar scopes no cliente MCP e confirmar a importação do ticket piloto; não inferir sucesso da configuração local. |
 | Busca diagnóstica completa | Pendente em MCP/base | Ingestão, busca híbrida, filtros de classificação, reranking, citações e avaliação permanecem etapas separadas. |
 
 ## Fontes de verdade

@@ -1,6 +1,6 @@
 interface:
   display_name: "Movidesk"
-  short_description: "Consulta direta, somente leitura, do Movidesk."
+  short_description: "Consulta tickets e importa casos autorizados para a base Beta."
   icon_small: "./assets/fundo.png"
   icon_large: "./assets/fundo.png"
   brand_color: "#FF2A28"
@@ -10,7 +10,7 @@ dependencies:
   tools:
     - type: "mcp"
       value: "movidesk"
-      description: "Servidor MCP somente leitura do Movidesk"
+      description: "MCP Movidesk para consultas e importação explícita na base Beta"
       transport: "streamable_http"
       url: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/"
 

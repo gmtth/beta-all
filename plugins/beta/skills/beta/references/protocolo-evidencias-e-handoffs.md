@@ -90,7 +90,7 @@ Não publique pendência, divergência não resolvida, contexto interno ou regra
 
 - **ANL → MOD**: quando investigação, QA, dúvida ou ticket revelar regra, requisito, fluxo, permissão, processamento, relatório ou decisão funcional ainda não consolidada.
 - **MOD → ANL**: quando a modelagem precisar de explicação funcional, incidente, teste, resultado de QA, card ou evidência operacional.
-- **MOD → Movidesk ANL**: somente para consulta real, somente leitura, quando o fato operacional for necessário.
+- **MOD → Movidesk ANL**: somente para consulta real, em leitura, quando o fato operacional for necessário. Importar para a base compartilhada só quando solicitado explicitamente.
 - **ANL → MOD → ANL**: quando uma decisão funcional precisar ser fechada antes de produzir testes, resultado ou card.
 
 Não faça transição somente porque uma skill relacionada existe. Preserve a intenção primária.
@@ -99,7 +99,7 @@ Não faça transição somente porque uma skill relacionada existe. Preserve a i
 
 - Use somente conectores realmente disponíveis na sessão.
 - Não simule consultas, resultados, permissões ou alterações.
-- Respeite o modo somente leitura dos conectores operacionais.
+- Respeite o modo somente leitura dos conectores operacionais, exceto ações explicitamente permitidas pela skill correspondente. A importação Movidesk → Supabase exige pedido explícito e não altera o chamado de origem.
 - Nunca solicite ou exponha tokens, segredos ou credenciais.
 - Diferencie ausência de resultado, filtro inválido, falta de permissão e indisponibilidade.
 - Se uma fonte necessária estiver indisponível, mantenha a lacuna como `Pendente` ou `Divergente` e informe a limitação quando ela afetar a conclusão.

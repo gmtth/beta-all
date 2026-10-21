@@ -1,8 +1,8 @@
 ---
 name: beta-anl-movidesk
-description: Consultar e sintetizar dados reais do Movidesk ou executar consultas diretas pelo MCP Beta MOV, com filtros, escopo, paginação, segurança somente leitura e limites de evidência bem definidos.
+description: Consultar e sintetizar dados reais do Movidesk ou importar explicitamente chamados selecionados para a base interna pelo MCP Beta MOV, com filtros, escopo, segurança e limites de evidência bem definidos.
 metadata:
-  version: "3"
+  version: "4"
 ---
 
 ## Protocolo transversal obrigatório
@@ -12,6 +12,8 @@ Antes de responder, aplique o [protocolo compartilhado](../beta/references/proto
 # beta-anl-movidesk
 
 Esta skill reúne a consulta analítica e a operação direta do MCP Beta MOV. Use o modo analítico para recuperar, comparar e sintetizar dados; use o modo direto quando o pedido exigir uma Action específica do Movidesk. Consulte a fonte original em `references/origem-SKILL_CONSULTA_MOVIDESK-v003.md` quando houver dúvida de rastreabilidade.
+
+Além da consulta, esta skill pode copiar um chamado para a base compartilhada somente quando o analista pedir explicitamente para adicioná-lo/importá-lo à base. Essa operação grava uma cópia interna indexável e auditada no Supabase; não altera o chamado no Movidesk. Exige `movidesk:read` e `knowledge:write`; para listar fontes da base também é necessário `knowledge:read`. Não importe tickets como efeito colateral de uma consulta, análise, diagnóstico ou pedido para “guardar” sem confirmação inequívoca de que se trata da base compartilhada.
 
 ## Quando usar
 Use como skill primária quando a intenção principal for consultar, localizar, listar, filtrar, recuperar, comparar ou resumir dados reais de tickets do Movidesk.
@@ -26,10 +28,13 @@ Exemplos:
 - resumir tickets retornados;
 - produzir visão operacional de volume, distribuição, pendências ou padrões observáveis;
 - recuperar histórico/interações quando necessário.
+- importar um chamado específico para a base compartilhada, somente quando o analista pedir isso explicitamente.
 
 Não use como primária apenas porque o pedido menciona ticket, chamado ou Movidesk.
 
 Se o objetivo final for investigar problema, determinar regra, explicar funcionamento ou criar testes, use a skill correspondente e trate o Movidesk como apoio conforme o `beta`.
+
+Uma consulta ou diagnóstico não autoriza por si só a gravação na base. Se o pedido para guardar o caso estiver ambíguo, esclareça se o analista quer importar o chamado para a base compartilhada antes de chamar a ferramenta de escrita.
 
 ## Objetivo
 Transformar uma solicitação operacional em busca segura e útil no Movidesk, recuperar somente os dados necessários e apresentar resultados comparáveis e acionáveis.
@@ -336,5 +341,5 @@ Escolha a ferramenta adequada:
 
 - Endpoint: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`;
 - manter a barra final de `/mcp/`;
-- escopo: `movidesk:read`;
+- escopos: `movidesk:read` para consultas e origem da importação; `knowledge:read` para listar fontes; `knowledge:write` para inclusão explícita na base;
 - fluxo: Authorization Code com PKCE S256.

@@ -1,4 +1,12 @@
 type ServiceStatus = "online" | "offline";
+export type SupabaseConnectionDiagnostic = "configuration_missing" | "invalid_url" | "available" | "invalid_credentials" | "schema_unavailable" | "rate_limited" | "api_error" | "request_rejected" | "timeout" | "network_error";
+
+export type SupabaseConnectionHealth = {
+  status: ServiceStatus;
+  configured: boolean;
+  latencyMs: number | null;
+  diagnostic: SupabaseConnectionDiagnostic;
+};
 
 async function isHealthy(url: URL, headers: HeadersInit) {
   try {
@@ -25,26 +33,44 @@ async function movideskStatus(): Promise<ServiceStatus> {
   return (await isHealthy(url, { Accept: "application/json" })) ? "online" : "offline";
 }
 
-async function supabaseStatus(): Promise<ServiceStatus> {
+export async function checkSupabaseConnection(): Promise<SupabaseConnectionHealth> {
   const baseUrl = process.env.SUPABASE_URL;
-  const apiKey = process.env.SUPABASE_ANON_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!baseUrl || !apiKey) return "offline";
+  const apiKey = process.env.SUPABASE_SECRET_KEY;
+  if (!baseUrl || !apiKey) return { status: "offline", configured: false, latencyMs: null, diagnostic: "configuration_missing" };
 
+  const started = performance.now();
   try {
     const base = new URL(baseUrl);
-    if (base.protocol !== "https:") return "offline";
-    const url = new URL("/rest/v1/", base.origin);
-    return (await isHealthy(url, {
-      Accept: "application/openapi+json",
+    if (base.protocol !== "https:" || !base.hostname.endsWith(".supabase.co")) {
+      return { status: "offline", configured: true, latencyMs: null, diagnostic: "invalid_url" };
+    }
+    const url = new URL("/rest/v1/source_system", base);
+    url.searchParams.set("select", "id");
+    url.searchParams.set("limit", "1");
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(4_000),
+      cache: "no-store",
+      headers: {
+      Accept: "application/json",
+      "Accept-Profile": "beta",
       apikey: apiKey,
       Authorization: `Bearer ${apiKey}`,
-    })) ? "online" : "offline";
-  } catch {
-    return "offline";
+      },
+    });
+    await response.body?.cancel();
+    const diagnostic: SupabaseConnectionDiagnostic = response.ok ? "available"
+      : response.status === 401 || response.status === 403 ? "invalid_credentials"
+        : response.status === 404 || response.status === 406 ? "schema_unavailable"
+          : response.status === 429 ? "rate_limited"
+            : response.status >= 500 ? "api_error" : "request_rejected";
+    return { status: response.ok ? "online" : "offline", configured: true, latencyMs: Math.round(performance.now() - started), diagnostic };
+  } catch (error) {
+    const diagnostic: SupabaseConnectionDiagnostic = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError") ? "timeout" : "network_error";
+    return { status: "offline", configured: true, latencyMs: Math.round(performance.now() - started), diagnostic };
   }
 }
 
 export async function getIntegrationStatuses() {
-  const [movidesk, supabase] = await Promise.all([movideskStatus(), supabaseStatus()]);
-  return { movidesk, supabase };
+  const [movidesk, supabase] = await Promise.all([movideskStatus(), checkSupabaseConnection()]);
+  return { movidesk, supabase: supabase.status };
 }

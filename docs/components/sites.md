@@ -4,9 +4,9 @@ O código do Site e do endpoint MCP HTTP está em `mcp/movidesk/`. A raiz public
 
 ## Site em produção
 
-Em 2026-10-20, a integração Sites confirmou o projeto `Beta MCP` ativo e público, com versão publicada 80 e deployment `appgdep_6ad7ffa179f88191bf045ab6570e161c`. A versão 80 registra o commit-fonte Sites `f0e56004251435d2b3b07b8c516857c7f3a4f4de` e um pacote validado de 1.955.840 bytes. O deploy foi confirmado como `succeeded`; a audiência permaneceu pública.
+Em 2026-10-21, a integração Sites confirmou o projeto `Beta MCP` ativo e público, com versão publicada 81 e deployment `appgdep_6ad8ad335d608191813118e780180e4d`. A versão 81 registra o commit-fonte Sites `a231c84b31124890aec03f03c6d92daa93d7db86`; o deploy foi confirmado como `succeeded` e a audiência permaneceu pública. Ela inclui a implementação de reconexão OAuth descrita em `mcp/movidesk/DOSSIER.md`. A migration D1 de refresh tokens foi empacotada, mas o schema D1 não foi inspecionado depois da publicação e o ciclo de reconexão não foi validado em conversa real do ChatGPT.
 
-O armazenamento de fonte usado pela publicação do Sites é separado do GitHub e não veio vinculado como remote ao resultado de leitura do projeto. A versão publicada continua disponível como versão Sites para rollback. O conteúdo-fonte equivalente do `main` está em `mcp/movidesk/`; a publicação não foi alterada durante esta consolidação.
+O armazenamento de fonte usado pela publicação do Sites é separado do GitHub e não veio vinculado como remote ao resultado de leitura do projeto. A versão publicada continua disponível como versão Sites para rollback. O runtime foi sincronizado do monorepo para um checkout isolado, empacotado e publicado; o commit-fonte Sites é separado do commit GitHub.
 
 ## Snapshots e origens antigas
 
@@ -14,7 +14,7 @@ O checkout MCP local contém snapshots Git das versões do Site e um pacote `wor
 
 A origem `work/movidesk-site` refere-se a outro projeto Sites (`appgprj_6a7e285d4458819182045de12c19a44a`), diferente do projeto `Beta MCP` atual. Seu código fica no legado; não substituir uma origem pela outra.
 
-## Próxima publicação
+## Fluxo de publicação
 
 ### Telemetria operacional do MCP
 

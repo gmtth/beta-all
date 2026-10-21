@@ -1,6 +1,6 @@
 # Dossier da Beta — índice do contexto
 
-Atualizado em 2026-10-20. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
+Atualizado em 2026-10-21. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
 
 ## Objetivo do produto
 
@@ -15,7 +15,7 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
 | MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; dossier completo junto ao componente |
 | Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos Supabase publicado no Sites v79; gráficos MCP no D1 publicados na v80; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
-| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; `sites:workflow` isola o helper e faz pré-voo; versão 80 publicada com sucesso |
+| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; `sites:workflow` isola o helper e faz pré-voo; versão 81 publicada com sucesso |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
 
@@ -35,6 +35,14 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - Os eventos não contêm identidade, argumentos, conteúdo de retorno nem mensagens brutas de erro. A tabela é declarada em Drizzle e possui migration própria; o Worker também garante criação idempotente.
 - Estado: commit GitHub `f013830` enviado à branch `codex/knowledge-ticket-ingestion`; fonte Sites `f0e56004251435d2b3b07b8c516857c7f3a4f4de`; versão 80 implantada com sucesso em deployment `appgdep_6ad7ffa179f88191bf045ab6570e161c`. Ainda não confirmado que chamadas reais estejam aparecendo nos gráficos. Ver `mcp/movidesk/DOSSIER.md` para detalhes.
 - O commit `2d05b69` corrige o `PATH` enviado pelo wrapper Sites no Windows, incluindo Node para o empacotador Bash. O workflow completo foi concluído com esse ajuste.
+
+### Reconexão OAuth publicada no MCP/Sites (2026-10-21)
+
+- O GitHub PR #2 foi mesclado em `main` por squash. Commit: `aaf93342c211d74d24a54f9be43722d1374a8952`.
+- O runtime foi sincronizado a partir do monorepo e publicado no Site Beta MCP como versão 81, deployment `appgdep_6ad8ad335d608191813118e780180e4d`, status `succeeded`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`.
+- O commit de fonte independente do Sites é `a231c84b31124890aec03f03c6d92daa93d7db86`; o build Vinext passou antes de empacotar e publicar. A migration D1 `0002_oauth_refresh_tokens.sql` foi incluída no pacote; a presença das tabelas no D1 não foi inspecionada separadamente após o deploy.
+- A versão adiciona `securitySchemes` por ferramenta, metadados OAuth, desafio de reconexão e refresh token rotativo. O ciclo de reconexão em uma conversa real do ChatGPT continua sem validação.
+- O helper Sites instalado teve incompatibilidade no Windows ao montar o comando npm e localizar `tar.exe`. Para concluir a publicação foi usada uma cópia temporária dos helpers com ajustes de quoting e caminho do tar; nada foi alterado no plugin instalado. Corrigir esse caminho no workflow do monorepo antes da próxima publicação.
 
 ## Migração e rastreabilidade
 
@@ -74,14 +82,15 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 
 ### Verificação da branch de reconexão OAuth — 2026-10-21
 
-Na branch local `codex/oauth-reconnection-step-1`, após corrigir a expectativa antiga da página, `npm test` passou (build e 10 testes), a suíte TypeScript passou (87 testes) e o lint direcionado aos arquivos novos OAuth passou. `tsc --noEmit` e o lint completo continuam falhando por limitações de tipos Worker e dívida técnica em outras áreas; o backlog correspondente está no dossier MCP. Esta branch ainda não foi publicada nem validada no ChatGPT real.
+Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 testes), os testes TypeScript e lint direcionado passaram conforme registrado no dossier MCP. A branch foi integrada à `main` pela PR #2; o runtime foi publicado como Sites v81 com sucesso. `tsc --noEmit` e o lint completo continuam com falhas preexistentes de tipos Worker e outras áreas; o ciclo nativo de reconexão no ChatGPT e a aplicação da migration D1 ainda precisam de confirmação direta.
 
 ## Próximos passos
 
 | Prioridade | Item | Estado / condição para conclusão |
 |---|---|---|
-| Alta | Completar a reconexão OAuth do MCP. | Etapas 1–5 foram verificadas localmente na branch `codex/oauth-reconnection-step-1`; ainda faltam publicação/migration e ciclo real de reconexão no ChatGPT. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
+| Alta | Validar o ciclo nativo de reconexão OAuth no ChatGPT. | Etapas 1–5 foram mescladas pela PR #2 e publicadas no Sites v81; falta testar expiração, refresh, revogação, reconexão e repetição da operação em conversa real. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
 | Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |
+| Média | Corrigir o workflow Windows de build/empacotamento do Sites. | A publicação v81 exigiu ajustes temporários no helper copiado para resolver quoting do `npm` e encontrar `tar.exe`; fazer o wrapper do monorepo concluir build, pacote e publicação sem editar a instalação do plugin. |
 | Alta | Retomar piloto e busca da base compartilhada. | Importação piloto, busca híbrida e validação de permissões continuam pendentes; ver [`infra/supabase/DOSSIER.md`](infra/supabase/DOSSIER.md#próximos-passos) e o dossier MCP. |
 | Média | Confirmar disponibilidade do marketplace Beta e conexão ClickUp do plugin. | Pendências mantidas no [`plugins/beta/DOSSIER.md`](plugins/beta/DOSSIER.md#próximos-passos). |
 

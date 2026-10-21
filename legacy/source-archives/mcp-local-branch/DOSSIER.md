@@ -1552,3 +1552,7 @@ O `source-bundle` contém um servidor MCP independente e mais antigo. O Site Bet
 - Não foi possível executar uma chamada HTTP direta de smoke test ao endpoint publicado nesta verificação. A confirmação é da implementação no código-fonte da versão publicada e do estado do deployment, não de uma sessão MCP ativa nem da lista de ferramentas entregue ao cliente.
 - Não foi verificado se `source-bundle` está implantado como serviço autônomo fora do Site. Não remover nem desligar eventual serviço externo sem localizar o deployment correspondente.
 - A conclusão sobre não ser dependência do Site consolidado não equivale, por si só, à autorização para apagar o diretório/submódulo do repositório. Uma remoção deve ser tratada como mudança Git separada e considerar consumidores externos.
+
+## Próximos passos (nota de arquivo histórico)
+
+Este dossier pertence a uma branch arquivada e não é um backlog ativo. Consulte o [dossier MCP canônico](../../../mcp/movidesk/DOSSIER.md) e o [dossier raiz](../../../DOSSIER.md) para as tarefas atuais. Não use as pendências históricas abaixo como autorização para executar trabalho.

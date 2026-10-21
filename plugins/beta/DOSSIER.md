@@ -122,7 +122,7 @@ As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de
 
 Não há evidência suficiente para atribuir data ou motivação a toda a evolução anterior do plugin. Para casos históricos específicos, consultar o arquivo de origem e o repositório preservado; não deduzir intenção apenas a partir de uma alteração de código.
 
-## Pendências
+## Próximos passos
 
 | Item | Estado | Condição para concluir |
 |---|---|---|
@@ -130,6 +130,8 @@ Não há evidência suficiente para atribuir data ou motivação a toda a evolu�
 | Dependência declarativa ClickUp | Pendente de verificação do formato/runtime | Identificar e validar a conexão ClickUp suportada; então declarar `dependencies.tools` sem inventar endpoints ou IDs. |
 | Importação MCP/Supabase em produção | Runtime publicado na versão 74; ainda pendente de uso autenticado | Reautorizar scopes no cliente MCP e confirmar a importação do ticket piloto; não inferir sucesso da configuração local. |
 | Busca diagnóstica completa | Pendente em MCP/base | Ingestão, busca híbrida, filtros de classificação, reranking, citações e avaliação permanecem etapas separadas. |
+
+Ao confirmar a conclusão de um item, retire-o desta lista e registre a evidência no histórico. A implementação de OAuth e a migration/runtime atuais são acompanhadas em [`mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md#próximos-passos) e [`infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md#próximos-passos).
 
 ## Fontes de verdade
 

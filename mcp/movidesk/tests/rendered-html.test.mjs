@@ -9,19 +9,24 @@ test("the proxy renders its branded access page", async () => {
   const page = await read("app/page.tsx");
   const layout = await read("app/layout.tsx");
   assert.match(page, /Movidesk/);
-  assert.match(page, /Acesso seguro|conector/i);
+  assert.match(page, /Conecte o ChatGPT às ferramentas da sua equipe/i);
   assert.match(layout, /Movidesk \\| Acesso seguro/);
-  assert.match(layout, /favicon\.png/);
+  assert.match(layout, /beta-logo\.svg/);
   assert.doesNotMatch(page, /codex-preview/);
 });
 
-test("OAuth metadata advertises only the implemented PKCE flow", async () => {
-  const metadata = await read("app/.well-known/oauth-authorization-server/route.ts");
-  assert.match(metadata, /authorization_code/);
+test("OAuth metadata advertises the implemented MCP refresh and PKCE flow", async () => {
+  const route = await read("app/.well-known/oauth-authorization-server/route.ts");
+  const metadata = await read("app/oauth/metadata.ts");
+  const actionMetadata = await read("app/.well-known/openid-configuration/route.ts");
+  assert.match(route, /authorizationServerMetadata/);
+  assert.match(metadata, /authorization_code.*refresh_token/);
   assert.match(metadata, /S256/);
+  assert.match(metadata, /scopes_supported: \[\.\.\.scopes\]/);
   assert.match(metadata, /authorization_response_iss_parameter_supported: true/);
   assert.match(metadata, /client_id_metadata_document_supported: true/);
-  assert.doesNotMatch(metadata, /refresh_token|client_secret_post/);
+  assert.match(actionMetadata, /authorization_code/);
+  assert.doesNotMatch(actionMetadata, /refresh_token|offline_access/);
 });
 
 test("the REST proxy remains read-only and protects its token boundary", async () => {

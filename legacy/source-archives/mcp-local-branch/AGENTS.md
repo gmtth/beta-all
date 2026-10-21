@@ -538,3 +538,7 @@ Antes de responder ou agir, a LLM deve identificar explicitamente:
 8. **próxima ação segura:** somente dentro da autorização atual.
 
 Ao resumir o projeto, use a ordem: objetivo → arquitetura → ferramentas → fases → estado publicado → pendências → histórico. Ao relatar uma entrega, não misture intenção com resultado e não use “publicado” como sinônimo de “commitado”.
+
+## Adendo de governança — próximos passos (2026-10-21)
+
+Este arquivo pertence a um snapshot de branch arquivada. Para trabalho atual, use o backlog do dossier canônico [MCP Movidesk](../../../mcp/movidesk/DOSSIER.md) e o [dossier raiz](../../../DOSSIER.md), não crie tarefas correntes neste snapshot. Registre tarefas futuras com contexto/evidência e condição de conclusão; ao resolvê-las, retire-as do backlog ativo e registre evidência. Lembre o usuário ocasionalmente quando forem relevantes. Este adendo não altera as instruções históricas acima.

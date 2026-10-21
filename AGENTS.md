@@ -31,6 +31,15 @@ Este `AGENTS.md` é a entrada e o roteador do monorepositório: estabelece regra
 - Não reescreva snapshots, exports de conversa, arquivos em `legacy/` nem fontes de rastreabilidade para fazer parecer que sempre refletiram a decisão atual. Novas decisões entram nos documentos ativos e apontam para a evidência pertinente.
 - Se documentos ativos discordarem, identifique data, escopo e evidência; aplique a precedência explícita. Se ela não resolver conflito material, registre-o como divergente e não o transforme em fato confirmado.
 
+### Próximos passos nos dossiers
+
+- Todo dossier ativo deve ter uma seção `## Próximos passos`. O dossier raiz mantém a lista transversal; cada dossier de componente mantém as ações próprias e pode apontar para o raiz, sem duplicar itens.
+- Ao identificar trabalho de desenvolvimento, validação, documentação ou infraestrutura que ainda precise ser retomado, ou quando o usuário pedir, registre-o nessa seção com descrição acionável, prioridade, evidência/contexto e condição de conclusão. Não registre como pendente algo já verificado como resolvido.
+- Em tarefas futuras relacionadas, lembre ocasionalmente o usuário dos itens ainda abertos, especialmente ao planejar ou concluir trabalho do mesmo componente; evite lembretes repetitivos sem relação com a tarefa.
+- Quando um item for comprovadamente resolvido, remova-o da lista ativa e registre a evidência de conclusão no estado/histórico apropriado do dossier.
+- Próximos passos são backlog, não autorização para executá-los. Respeite o pedido e os limites de publicação, Git, acesso e dados definidos para cada tarefa.
+- `legacy/` e `docs/migration/source-documents/` são snapshots históricos. Não atualize seus dossiers como se fossem estado atual; quando uma instrução preservada precisar apontar para esta rotina, faça apenas um adendo datado e deixe claro qual dossier canônico está ativo.
+
 O roteiro de consolidação mais abaixo é mantido como registro de execução e proveniência. O estado posterior da consolidação no dossier raiz e no inventário de migração informa o que foi concluído; etapas históricas não devem ser repetidas sem necessidade.
 
 ## Objetivo
@@ -119,7 +128,7 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 - O checkout MCP local em `codex/phase3b-similarity` (`392c2f8`) e seu diff não commitado permanecem intactos no workspace de origem; o branch, patch e seis arquivos não rastreados foram preservados em `legacy/` para reconciliação, sem aplicar o estado antigo sobre o `main` remoto.
 - Todos os 14 repositórios do `.gitmodules` do `suite-beta`, além de `legacy-movimcp`, `skill-clickup-checklist` e `skill-clickup-sprint-export`, têm cópia/história em `legacy/source-archives/`. Os dois repositórios ClickUp não foram ativados no plugin.
 - O Site `Beta MCP` está ativo na versão Sites 73 (deployment `appgdep_6ad73a9f28388191bb62480b2b452ec5`), com fonte `5c26eac6`. A origem Cloudflare Artifact é separada do GitHub; os snapshots locais e o antigo projeto Sites foram preservados em `legacy/`. Nenhum Site foi republicado.
-- Validação executada: plugin (`validate_beta_anl_skills.py` e `validate_beta_routing_cases.py`) passou; catálogo semântico MCP passou; build MCP passou. A suíte MCP teve 71/72 casos aprovados; `tests/rendered-html.test.mjs` falhou porque a expectativa de texto diverge da página existente na origem `main` importada (os arquivos têm hashes iguais à origem). `npm ci` reportou 35 vulnerabilidades na árvore de dependências; nenhuma correção automática foi aplicada.
+- Snapshot de validação da importação (2026-10-20): plugin (`validate_beta_anl_skills.py` e `validate_beta_routing_cases.py`), catálogo semântico e build MCP passaram; a suíte MCP teve 71/72 casos aprovados devido à expectativa antiga de `tests/rendered-html.test.mjs`. Essa expectativa foi alinhada e a suíte passou na revisão OAuth de 2026-10-21; veja o registro atual em `mcp/movidesk/DOSSIER.md`. `npm ci` reportou 35 vulnerabilidades naquela execução; nenhuma correção automática foi aplicada, e o estado atual da árvore não foi reavaliado neste ciclo.
 - Quatro manifestos de hashes de artefatos/snapshots foram conferidos. A árvore atual não tem gitlinks e a busca por padrões comuns de credenciais no conteúdo e na história retornou zero correspondências; isso não substitui uma auditoria exaustiva de segredos.
 - O catálogo Supabase foi obtido em 2026-10-20. Baseline de schema e migration incremental de grants estão preparados em `infra/supabase/migrations/`, ainda não aplicados; revisar o fluxo para registrar baseline e rollback antes de qualquer alteração no projeto existente.
 - Corte operacional realizado após a validação: `gmtth/plugin-beta` foi tornado privado e arquivado; `gmtth/movidesk-mcp-oauth`, `gmtth/skill-clickup-checklist` e `gmtth/skill-clickup-sprint-export` foram arquivados e já são privados. `gmtth/beta-all` segue privado e ativo. Repositórios de skills já arquivados e o antigo `suite-beta` permanecem preservados conforme inventário.
@@ -201,6 +210,14 @@ beta-all/                              # único clone/repos de trabalho após a 
 - Antes de cada commit, revisar o diff e o estado do Git. Incluir somente alterações relacionadas ao trabalho autorizado; nunca incluir segredos, dados operacionais, arquivos temporários/gerados ou alterações preexistentes do usuário sem relação com a tarefa.
 - Essa autorização cobre apenas o commit local. Push, publicação/deploy, merge e alterações remotas continuam exigindo pedido explícito do usuário.
 - Se o trabalho estiver incompleto, o diff não puder ser atribuído com segurança ou houver risco de registrar conteúdo sensível, adiar o commit e explicar o motivo.
+
+### Preferência por commits diretos em `main`
+
+- Para mudanças pequenas, de baixo risco e escopo claro, preferir commit direto em `main` quando a branch estiver disponível e as regras do repositório permitirem. Evitar criar PR apenas por rotina nesses casos.
+- Usar branch de trabalho e PR quando a mudança for ampla, envolver vários componentes, alterar segurança/OAuth, permissões, schema ou migrações, exigir revisão independente, ou quando o usuário pedir esse fluxo.
+- Nunca contornar proteção de branch, revisão obrigatória ou controles do repositório; não reescrever histórico nem fazer force-push.
+- Antes de escolher o fluxo, conferir branch atual, estado do working tree e regras remotas. Não trocar de branch com alterações não relacionadas ou estado que possa ser perdido; preservar o trabalho em andamento.
+- Commit direto em `main` não autoriza push, merge remoto ou deploy. Essas ações continuam separadas e dependem de pedido explícito conforme a seção de cadência de commits.
 
 ### Sequência de execução antes da importação
 

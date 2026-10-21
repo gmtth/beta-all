@@ -71,3 +71,18 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - O push foi validado por clone limpo no Windows. Não há gitlinks/submódulos ativos; os 400 itens cobertos pelos quatro manifestos SHA-256 conferem com os bytes preservados.
 - A configuração do plugin aponta para o endpoint publicado do MCP/Sites. O Site `Beta MCP` continua na versão 73; nenhuma publicação foi feita durante o corte. A publicação futura deve partir do diretório apropriado no monorepo.
 - O catálogo real Supabase foi fornecido sem linhas de dados e usado para preparar baseline e hardening de grants em `infra/supabase/migrations/`, mais um rollback. Nada foi aplicado; ainda falta definir o fluxo de baseline para o banco existente e revisar/aplicar a migration incremental com controle de rollback.
+
+### Verificação da branch de reconexão OAuth — 2026-10-21
+
+Na branch local `codex/oauth-reconnection-step-1`, após corrigir a expectativa antiga da página, `npm test` passou (build e 10 testes), a suíte TypeScript passou (87 testes) e o lint direcionado aos arquivos novos OAuth passou. `tsc --noEmit` e o lint completo continuam falhando por limitações de tipos Worker e dívida técnica em outras áreas; o backlog correspondente está no dossier MCP. Esta branch ainda não foi publicada nem validada no ChatGPT real.
+
+## Próximos passos
+
+| Prioridade | Item | Estado / condição para conclusão |
+|---|---|---|
+| Alta | Completar a reconexão OAuth do MCP. | Etapas 1–5 foram verificadas localmente na branch `codex/oauth-reconnection-step-1`; ainda faltam publicação/migration e ciclo real de reconexão no ChatGPT. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
+| Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |
+| Alta | Retomar piloto e busca da base compartilhada. | Importação piloto, busca híbrida e validação de permissões continuam pendentes; ver [`infra/supabase/DOSSIER.md`](infra/supabase/DOSSIER.md#próximos-passos) e o dossier MCP. |
+| Média | Confirmar disponibilidade do marketplace Beta e conexão ClickUp do plugin. | Pendências mantidas no [`plugins/beta/DOSSIER.md`](plugins/beta/DOSSIER.md#próximos-passos). |
+
+Este é o índice transversal do backlog. As condições de conclusão e evidências detalhadas permanecem nos dossiers canônicos dos componentes; itens resolvidos devem sair daqui e da lista do componente na mesma atualização.

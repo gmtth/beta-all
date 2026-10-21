@@ -49,12 +49,17 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 | Histórico/telemetria e governança | Pendente | Definir papéis, minimização, retenção, correção/exclusão, backup e recuperação |
 | Produção | Não aprovada por este dossier | Revisar limites do plano, backup/restore, disponibilidade, segurança e monitoramento |
 
-## Próxima sequência recomendada
+## Próximos passos
 
-1. Reautorizar a conexão MCP de cada analista com `movidesk:read`, `knowledge:read` e `knowledge:write`.
-2. Confirmar a ferramenta de importação e testar a importação explícita do ticket piloto.
-3. Implementar busca de trechos, depois busca vetorial/híbrida e citações.
-4. Definir política de importação em lote, retenção, backup e recuperação antes de expandir o piloto.
+| Prioridade | Item | Estado / condição para conclusão |
+|---|---|---|
+| Alta | Reautorizar as contas MCP com os scopes necessários e testar a importação explícita do chamado piloto `20260702000000016`. | Requer runtime publicado com a migration de ingestão e o scope `knowledge:write`; conferir a resposta da ferramenta e os metadados do registro/trechos sem expor dados pessoais. |
+| Alta | Implementar busca de trechos e busca lexical/vetorial híbrida com citações rastreáveis. | Definir filtros de classificação, limites, reranking e comportamento para ambiguidade; validar com casos anonimizados representativos. |
+| Média | Definir sincronização em lote para ClickUp e documentos administrativos. | Especificar atualização incremental, idempotência, remoções, retries, quarentena e auditoria antes de importar em massa. |
+| Média | Fechar política operacional de retenção, backup e recuperação. | Testar exportação e restauração e rever limites/disponibilidade do plano antes de ampliar o piloto. |
+| Média | Aplicar a migration dos indicadores agregados do painel administrativo, se ainda necessária. | Confirmar o estado remoto antes de aplicar; validar RPC e painel end-to-end sem retornar conteúdo de tickets. |
+
+Quando algum item for concluído, remova-o desta lista e registre a evidência em `## Prontidão por etapa` ou no histórico apropriado.
 
 ## Painel administrativo e refinamento da conexão (2026-10-20)
 

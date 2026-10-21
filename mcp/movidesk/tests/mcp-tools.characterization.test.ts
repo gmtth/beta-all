@@ -104,6 +104,26 @@ test("characterization: stable Movidesk tools remain registered", () => {
   assert.equal(tools.has("movidesk_get_ticket_timeline"), true);
 });
 
+test("every Movidesk MCP tool declares its required OAuth scope", () => {
+  const tools = setup({});
+  for (const name of [
+    "movidesk_get_ticket",
+    "movidesk_get_ticket_timeline",
+    "movidesk_summarize_ticket",
+    "movidesk_classify_ticket_issue",
+    "movidesk_search_tickets",
+    "movidesk_list_open_tickets",
+    "movidesk_search_ticket_content",
+    "movidesk_find_similar_tickets",
+    "movidesk_detect_recurrent_issues",
+    "movidesk_search_people",
+    "movidesk_list_services",
+  ]) {
+    const config = tools.get(name)?.config as { securitySchemes?: unknown } | undefined;
+    assert.deepEqual(config?.securitySchemes, [{ type: "oauth2", scopes: ["movidesk:read"] }], name);
+  }
+});
+
 test("detect_recurrent_issues groups problem terms with trend, status and client counts", async () => {
   const data = new Map<string, unknown>([
     ["1", { id: 1, protocol: "p1", subject: "Sensor offline", description: "Sensor da gaveta offline", status: "Resolvido", clientId: "A", createdDate: "2026-08-01" }],

@@ -1,5 +1,5 @@
 import { getChatGPTUser, chatGPTSignInPath } from "../../chatgpt-auth";
-import { allowedScopes, canonicalResource, db, ensureSchema, getUserRole, json, randomToken, hash, oauthClient, permissionLabelForScopes, validateAuthorizationRequest } from "../_lib";
+import { canonicalResource, db, ensureSchema, getUserRole, json, randomToken, hash, oauthClient, permissionLabelForScopes, validateAuthorizationRequest } from "../_lib";
 
 function escapeHtml(value: string) { return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char] ?? char); }
 function bad(message: string) { return json({ error: "invalid_request", error_description: message }, { status: 400 }); }

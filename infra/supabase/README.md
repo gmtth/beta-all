@@ -43,10 +43,8 @@ Configurar no ambiente do servidor apenas `SUPABASE_URL` e `SUPABASE_SECRET_KEY`
 
 O acesso service-role ignora RLS. A autorização do usuário, classificação, filtros por cliente e limites de contexto devem ser aplicados pelo backend antes de responder. Manter operações estreitas e seleção explícita de colunas.
 
-## Próximas etapas
+## Próximos passos
 
-1. Publicar o runtime do MCP que implementa a RPC e as ferramentas de conhecimento; confirmar versão/deployment.
-2. Reautorizar a conexão MCP com `movidesk:read`, `knowledge:read` e `knowledge:write`.
-3. Importar explicitamente o chamado piloto `20260702000000016`; conferir o resumo de importação e a presença do registro/trechos no Supabase sem expor conteúdo pessoal.
+A lista ativa de tarefas, suas prioridades e condições de conclusão fica em [`DOSSIER.md#próximos-passos`](./DOSSIER.md#próximos-passos). Atualize esse backlog ao identificar trabalho novo e retire itens somente após confirmar a resolução.
 4. Implementar busca lexical/híbrida de trechos, filtros de acesso e citações antes de usar a base para diagnósticos.
 5. Definir política de ingestão em lote, atualização/removação de origem, retenção, backups e recuperação.

@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, oauthClient, permissionLabelForScopes, OAUTH_SCOPE, SUPPORTED_OAUTH_SCOPES, validRedirectForClient, validateAuthorizationRequest } from "./clients";
+import { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS, clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, oauthClient, permissionLabelForScopes, OAUTH_SCOPE, OFFLINE_ACCESS_SCOPE, SUPPORTED_OAUTH_SCOPES, SUPPORTED_RESOURCE_SCOPES, validRedirectForClient, validateAuthorizationRequest, oauthTokenFailure, type OAuthTokenFailure } from "./clients";
 
 const encoder = new TextEncoder();
 export const db = () => env.DB as D1Database;
@@ -32,7 +32,9 @@ export function masterEmails() { return (process.env.OAUTH_MASTER_EMAILS ?? "").
 export async function ensureSchema() {
   const statements = [
     db().prepare("CREATE TABLE IF NOT EXISTS oauth_codes (code_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, redirect_uri TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT, scope TEXT NOT NULL, resource TEXT, code_challenge TEXT, code_challenge_method TEXT, expires_at INTEGER NOT NULL)"),
-    db().prepare("CREATE TABLE IF NOT EXISTS oauth_tokens (token_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT, scope TEXT NOT NULL, resource TEXT, expires_at INTEGER NOT NULL)"),
+    db().prepare("CREATE TABLE IF NOT EXISTS oauth_tokens (token_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT, scope TEXT NOT NULL, resource TEXT, family_id TEXT, expires_at INTEGER NOT NULL)"),
+    db().prepare("CREATE TABLE IF NOT EXISTS oauth_refresh_tokens (token_hash TEXT PRIMARY KEY, family_id TEXT NOT NULL, client_id TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT NOT NULL, scope TEXT NOT NULL, resource TEXT NOT NULL, expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL, consumed_at INTEGER, replaced_by_hash TEXT, revoked_at INTEGER)"),
+    db().prepare("CREATE INDEX IF NOT EXISTS oauth_refresh_tokens_family_idx ON oauth_refresh_tokens(family_id)"),
     db().prepare("CREATE TABLE IF NOT EXISTS oauth_users (email TEXT PRIMARY KEY, role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)"),
   ];
   await db().batch(statements);
@@ -43,23 +45,33 @@ export async function ensureSchema() {
     "ALTER TABLE oauth_codes ADD COLUMN resource TEXT",
     "ALTER TABLE oauth_tokens ADD COLUMN user_email TEXT",
     "ALTER TABLE oauth_tokens ADD COLUMN resource TEXT",
+    "ALTER TABLE oauth_tokens ADD COLUMN family_id TEXT",
   ]) { try { await db().prepare(statement).run(); } catch { /* already migrated */ } }
   for (const email of masterEmails()) await db().prepare("INSERT OR IGNORE INTO oauth_users (email, role, active, created_at) VALUES (?, 'master', 1, ?)").bind(email, Date.now()).run();
 }
 export async function getUserRole(email: string) { return (await db().prepare("SELECT role FROM oauth_users WHERE email = ? AND active = 1").bind(email.trim().toLowerCase()).first<{ role: string }>())?.role ?? null; }
-export async function getAuthorizedOAuthPrincipal(accessToken: string, requiredScopes: string[]) {
-  if (!requiredScopes.length || requiredScopes.some((scope) => !(SUPPORTED_OAUTH_SCOPES as readonly string[]).includes(scope))) return null;
+export type OAuthPrincipal = { email: string; role: string };
+export type OAuthPrincipalAuthorization = { authorized: true; principal: OAuthPrincipal } | { authorized: false; error: OAuthTokenFailure };
+
+export async function authorizeOAuthPrincipal(accessToken: string, requiredScopes: string[], expectedResource: string, expectedClientKind?: "mcp" | "gpt-action"): Promise<OAuthPrincipalAuthorization> {
+  if (!accessToken || !requiredScopes.length || requiredScopes.some((scope) => !(SUPPORTED_RESOURCE_SCOPES as readonly string[]).includes(scope))) return { authorized: false, error: "invalid_token" };
   await ensureSchema();
-  const row = await db().prepare("SELECT scope, expires_at, user_email FROM oauth_tokens WHERE token_hash = ?")
+  const row = await db().prepare("SELECT client_id, scope, expires_at, user_email, resource FROM oauth_tokens WHERE token_hash = ?")
     .bind(await hash(accessToken))
-    .first<{ scope: string; expires_at: number; user_email: string | null }>();
-  if (!row || row.expires_at < Date.now() || requiredScopes.some((scope) => !row.scope.split(" ").includes(scope))) return null;
-  if (!row.user_email) return null;
+    .first<{ client_id: string; scope: string; expires_at: number; user_email: string | null; resource: string | null }>();
+  const error = oauthTokenFailure(row, requiredScopes, expectedResource, Date.now(), expectedClientKind);
+  if (!row || error === "invalid_token") return { authorized: false, error: "invalid_token" };
   const role = await getUserRole(row.user_email);
-  return role ? { email: row.user_email.trim().toLowerCase(), role } : null;
+  if (!role) return { authorized: false, error: "invalid_token" };
+  if (error) return { authorized: false, error };
+  return { authorized: true, principal: { email: row.user_email.trim().toLowerCase(), role } };
 }
-export async function authorizeOAuthScope(accessToken: string, requiredScope: string) { return Boolean(await getAuthorizedOAuthPrincipal(accessToken, [requiredScope])); }
-export { clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, oauthClient, OAUTH_SCOPE, SUPPORTED_OAUTH_SCOPES, permissionLabelForScopes, validRedirectForClient, validateAuthorizationRequest };
+export async function getAuthorizedOAuthPrincipal(accessToken: string, requiredScopes: string[], expectedResource: string, expectedClientKind?: "mcp" | "gpt-action") {
+  const result = await authorizeOAuthPrincipal(accessToken, requiredScopes, expectedResource, expectedClientKind);
+  return result.authorized ? result.principal : null;
+}
+export async function authorizeOAuthScope(accessToken: string, requiredScope: string, expectedResource: string) { return Boolean(await getAuthorizedOAuthPrincipal(accessToken, [requiredScope], expectedResource)); }
+export { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS, clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, oauthClient, OAUTH_SCOPE, OFFLINE_ACCESS_SCOPE, SUPPORTED_OAUTH_SCOPES, SUPPORTED_RESOURCE_SCOPES, permissionLabelForScopes, validRedirectForClient, validateAuthorizationRequest, oauthTokenFailure };
 export function allowedScopes() { return [...SUPPORTED_OAUTH_SCOPES]; }
 export function canonicalResource(origin: string) { return `${origin}/mcp/`; }
 export function isMaster(role: string | null) { return role === "master"; }

@@ -241,3 +241,7 @@ beta-all/                              # único clone/repos de trabalho após a 
 - Segredos só em variáveis protegidas do servidor. Não gravar valores secretos em `AGENTS.md`, outros arquivos ou saídas de terminal.
 - Para cada mudança de integração, testar autenticação/autorização negativa e positiva, limites de consulta, mensagens de erro sanitizadas e comportamento com fonte vazia/indisponível.
 - Não fazer merge, publicação em produção, mudança de permissões ou alteração destrutiva de dados sem pedido/autoridade correspondente do usuário.
+
+## Adendo de governança — próximos passos (2026-10-21)
+
+Este arquivo é um snapshot histórico preservado. Para trabalho atual, mantenha as tarefas na seção `## Próximos passos` do dossier canônico da Beta ([raiz](../../../../DOSSIER.md)); tarefas específicas vão para o dossier ativo do componente. Ao identificar nova tarefa futura, registre-a com contexto/evidência e condição de conclusão; quando resolvida, retire-a do backlog e registre a evidência. Lembre o usuário ocasionalmente quando o item for relevante. Este adendo não altera as instruções históricas acima.

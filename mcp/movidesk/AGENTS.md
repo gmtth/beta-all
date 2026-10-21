@@ -68,18 +68,18 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 1. Ler `AGENTS.md`, `DOSSIER.md`, o status do Git e as instruções locais aplicáveis.
 2. Definir o escopo exato: arquivos permitidos, contrato preservado, risco e evidência necessária.
 3. Reproduzir ou caracterizar o comportamento antes da alteração quando houver defeito.
-4. Fazer a menor mudança coerente, preferencialmente em uma branch `codex/...` dedicada.
+4. Fazer a menor mudança coerente. Para mudanças pequenas e de baixo risco, preferir commit direto em `main` quando permitido; usar branch `codex/...` e PR para mudanças amplas, de segurança/OAuth, permissões, schema/migrações, entre componentes, ou quando uma revisão independente for necessária. Nunca contornar proteção de branch.
 5. Adicionar ou atualizar testes de regressão através da interface pública da ferramenta.
 6. Executar testes focados, suíte relevante, validação do catálogo e build quando aplicável.
 7. Revisar o diff para garantir que somente o escopo autorizado foi alterado.
-8. Somente com pedido explícito: commitar, fazer push, abrir PR, mesclar e publicar.
+8. Commits locais podem seguir a autorização explícita do usuário ou a cadência permanente registrada no `AGENTS.md` raiz. Push, abrir PR, merge e publicação/deploy são ações remotas distintas e exigem pedido explícito.
 9. Após merge/deploy, verificar o resultado por evidência direta e atualizar `DOSSIER.md` com estado, commit/PR, versão publicada e limitações.
 
 ## Git, PR e publicação
 
 - Não incluir arquivos gerados/temporários em commits sem autorização específica. Preserve alterações locais pré-existentes; quando um componente legado for retirado do projeto, registre no `DOSSIER.md` o escopo e o estado dos dados locais preservados.
 - Não usar reset destrutivo, checkout destrutivo ou remoção recursiva para “limpar” o repositório.
-- Toda PR deve indicar escopo, testes executados e riscos residuais.
+- Não abrir PR apenas por rotina quando uma mudança pequena e de baixo risco puder ser commitada diretamente em `main` e as regras do repositório permitirem. Quando houver PR, indicar escopo, testes executados e riscos residuais.
 - Um push não significa merge; uma PR aberta não significa deploy; uma versão salva não significa deploy concluído. Só declarar cada etapa após confirmação direta.
 - O endpoint MCP publicado é `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`. A barra final faz parte da configuração. A raiz do Site é a página/OAuth, não o endpoint de ferramentas.
 - Não alterar audiência, credenciais, bindings, OAuth ou domínio como efeito colateral de uma mudança funcional.
@@ -93,6 +93,21 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 - O comando valida o ID do projeto em `.openai/hosting.json`, exige um checkout Git limpo de alterações rastreadas e recusa checkout dentro da fonte canônica. O helper do Sites pode criar o clone sem remote Git configurado. Preserva `.git`, `.openai/`, arquivos ignorados e arquivos locais não rastreados; sincroniza apenas caminhos usados pelo runtime/build (`app/`, `worker/`, `config/`, `public/`, `db/`, `drizzle/`, `build/` e manifests), removendo obsoletos somente nesses caminhos.
 - Documentação, testes, históricos e cópias em `work/`/`legado/` no checkout Sites são preservados sem sincronização. Nunca copie `.env` ou credenciais.
 - Após sincronizar, rode `npm run sites:workflow` novamente e envie o build `node <plugin-root>/scripts/build-site.mjs`, `archivePath` absoluto e `source` da abertura pelo stdin. O helper faz o commit/push e empacota o mesmo estado. Em seguida use as ferramentas nativas Sites para salvar e implantar a versão; o sincronizador não publica nem guarda credenciais.
+
+## Padrão obrigatório de autenticação das ferramentas MCP
+
+Toda ferramenta MCP protegida deve seguir este contrato. Uma ferramenta nova não pode ser considerada pronta se omitir qualquer parte aplicável abaixo:
+
+- Declarar `securitySchemes: [{ type: "oauth2", scopes: [...] }]` na configuração da própria ferramenta e confirmar que o campo aparece no nível raiz do objeto correspondente no `tools/list` efetivamente serializado. Os scopes devem corresponder exatamente aos exigidos no servidor: ferramentas Movidesk usam `movidesk:read`; `knowledge_list_sources` usa `knowledge:read`; `knowledge_import_movidesk_ticket` usa `movidesk:read` e `knowledge:write`. Não declarar um scope mais amplo que o necessário. A versão fixada do SDK omite esse campo; usar `worker/tool-security-schemes.ts` como adaptador e manter teste do contrato wire para que uma futura atualização do SDK não remova a declaração.
+- Validar no backend o token, recurso/audiência, expiração, scopes e estado ativo do usuário antes de devolver dados ou iniciar escrita. Usar `getAuthorizedOAuthPrincipal` como caminho comum; não consultar `oauth_tokens` diretamente em ferramentas ou rotas. Para os tokens opacos atuais, validar o hash no armazenamento e comparar o `resource` persistido com o URI canônico do MCP. Se JWT for adotado no futuro, validar assinatura, emissor, audiência, expiração e scopes. Nunca confiar em identidade, papel ou escopos fornecidos como argumentos da ferramenta.
+- Centralizar validação e mapeamento de falhas em helpers compartilhados (`authorizeOAuthPrincipal` e `mcpAuthorizationError`). Para uma chamada de ferramenta sem token válido, expirado, revogado ou sem autorização necessária, devolver `isError: true` e `_meta["mcp/www_authenticate"]` com desafio Bearer, `resource_metadata` apontando para o Protected Resource Metadata correto e parâmetros `error` e `error_description`. Usar `invalid_token` para token ausente/inválido/expirado/revogado e `insufficient_scope` quando o usuário não tiver scope; incluir o scope exigido no segundo caso. Não converter falha de banco/infraestrutura em desafio de autenticação e não revelar credenciais ou detalhes internos.
+- Para erros no transporte HTTP antes de alcançar uma ferramenta, responder com status 401 e `WWW-Authenticate` referenciando o mesmo `resource_metadata`; incluir o código e a descrição do erro de autenticação. Retornar 403 para um usuário autenticado sem permissão quando o protocolo/cliente não exigir um desafio de nova autorização.
+- Publicar Protected Resource Metadata em `/.well-known/oauth-protected-resource` com o URI canônico do recurso e ao menos um `authorization_servers`; publicar metadados de descoberta OAuth coerentes com os grants, scopes e endpoints realmente implementados. `offline_access` pode ser anunciado nos scopes suportados pelo servidor OAuth para permitir que clientes MCP solicitem refresh, mas não deve aparecer em `scopes_supported` do recurso nem nos desafios `WWW-Authenticate`. Os metadados devem ser verificados no Site publicado, não somente no código.
+- Renovar access tokens expirados por refresh token somente quando houver `offline_access` consentido por cliente MCP. Armazenar somente hash do refresh token e vinculá-lo à família, usuário ativo, cliente, scopes e recurso originais. Cada uso deve girar o token de forma atômica e invalidar o anterior; detectar reutilização deve revogar a família e seus access tokens. Não ampliar scopes nem trocar o recurso durante refresh. Refresh tokens têm validade máxima de 90 dias, não renovada pela rotação; access tokens continuam válidos por 30 dias. Clientes GPT Action não recebem refresh tokens nesta implementação. Se a renovação falhar ou não existir, sinalizar reconexão com o desafio MCP; não criar loops de reautorização.
+- Testar os metadados de cada ferramenta e os erros de autorização sem token, com token expirado/revogado e com scope insuficiente. Após publicar, validar pelo cliente ChatGPT se a interface nativa de vinculação aparece, se a autorização retorna e se a operação original funciona após nova chamada.
+- Registrar falhas de autenticação apenas com categorias técnicas seguras. Nunca gravar access tokens, refresh tokens, códigos OAuth ou mensagens brutas com credenciais.
+
+O plano sequencial, evidências atuais e critério de conclusão estão em [`DOSSIER.md`](./DOSSIER.md#plano-de-implementação-da-reconexão-oauth-no-chatgpt). Não marcar a reconexão como concluída até passar o ciclo no ChatGPT após deployment.
 
 ## Contratos das ferramentas
 
@@ -312,13 +327,13 @@ Esta seção transforma as decisões acumuladas na conversa em regras operaciona
 
 ### Governança de código e fases
 
-8. **Cada fase deve ter branch própria quando houver trabalho de implementação.**
-   - **Motivo:** isolamento, revisão, rollback e associação clara entre decisão e diff.
-   - **Conseqüência:** usar `codex/<fase>-<escopo>`, atualizar a base antes do PR e não misturar fases sem autorização.
+8. **Escolher o fluxo Git pelo risco e pelas regras do repositório.**
+   - **Motivo:** mudanças pequenas não precisam carregar o custo de PRs de rotina, enquanto alterações de alto impacto ainda se beneficiam de isolamento e revisão.
+   - **Conseqüência:** preferir commit direto em `main` para mudanças pequenas e de baixo risco quando permitido; usar `codex/<fase>-<escopo>` e PR para mudanças amplas, sensíveis ou que precisem de revisão. Nunca contornar proteção de branch.
 
-9. **A branch principal deve ser atualizada por PR, não por reescrita destrutiva.**
-   - **Motivo:** preservar auditoria, revisão e a possibilidade de identificar o que entrou em cada release.
-   - **Conseqüência:** não usar `reset --hard`, `checkout --` ou limpeza recursiva para resolver divergências.
+9. **Preservar histórico e separar operações locais das remotas.**
+   - **Motivo:** commits diretos em `main` não devem comprometer rastreabilidade ou segurança.
+   - **Conseqüência:** nunca usar reescrita destrutiva ou contornar proteções. Commit local não implica push, merge remoto ou publicação; cada etapa remota exige autorização explícita.
 
 10. **“Não alterar o que funciona” é uma restrição técnica, não apenas uma preferência.**
     - **Motivo:** o projeto foi validado incrementalmente por ferramentas e tickets reais; mudanças amplas reabrem defeitos já encerrados.
@@ -496,6 +511,8 @@ Relatar sempre nesta ordem: resultado; arquivos alterados; arquivos não alterad
 - **Rollback disponível:** existe release/tag/commit recuperável; não significa que rollback foi executado.
 
 ## Formato recomendado para novos registros no DOSSIER
+
+Mantenha no [`DOSSIER.md`](./DOSSIER.md) a seção `## Próximos passos`. Registre nela tarefas de código, testes, documentação ou operação ainda necessárias, com prioridade, evidência/contexto e condição de conclusão; inclua itens pedidos pelo usuário. Ao confirmar a resolução, retire o item do backlog e registre a evidência no histórico/estado. Lembre o usuário desses itens ocasionalmente quando forem pertinentes ao trabalho em andamento. A lista não autoriza commit, push, merge, migration ou deploy por si só.
 
 Cada entrada nova deve conter:
 

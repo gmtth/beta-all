@@ -114,10 +114,12 @@ Todo dossier ativo deste componente deve seguir esta ordem fixa de seções, usa
 3. `## Decisões vigentes` — decisões aprovadas e regras de referência; distinguir claramente o que está confirmado do que foi substituído.
 4. `## Mapa dos componentes` — diretórios, arquivos e relações necessários para localizar e entender a implementação.
 5. `## Histórico de mudanças` — marcos em ordem cronológica, com data, estado, evidência e impacto; preservar proveniência sem reescrever o passado.
-6. `## Pendências` — questões abertas, estado, condição para conclusão e dependências; não misturar com decisões vigentes.
+6. `## Próximos passos` — backlog ativo, com tarefa, prioridade, evidência/contexto e condição para conclusão; remover itens comprovadamente resolvidos.
 7. `## Fontes de verdade` — links para instruções e fontes canônicas, com ordem de precedência e tratamento de snapshots/legado.
 
 No início do documento, informar a data de atualização e o componente. Use tabelas para mudanças ou estados que precisem ser comparados. Mantenha cada fato na fonte canônica e resuma com links nos demais dossiers; não replique conteúdo operacional completo. Se uma seção não tiver conteúdo, mantenha o título e escreva “Nenhuma pendência conhecida” ou “Sem histórico adicional identificado”, em vez de omiti-la. Orientações sobre como editar dossiers ficam no `AGENTS.md`, não como uma seção extra que altere a ordem fixa.
+
+Ao identificar trabalho futuro ou receber pedido para guardar um item, adicione-o a `## Próximos passos` no dossier canônico. Lembre ocasionalmente os itens em aberto quando a tarefa se relacionar a eles. Ao verificar que um item foi concluído, retire-o dessa seção e registre a evidência em `## Histórico de mudanças` ou `## Estado atual`. Backlog não significa autorização para executar.
 
 ## Empacotamento
 

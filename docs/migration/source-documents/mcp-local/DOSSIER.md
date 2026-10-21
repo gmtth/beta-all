@@ -1647,3 +1647,7 @@ A tela OAuth da PR #42 foi preservada integralmente; a alteração da #41 nesse 
 A pedido do usuário, foi investigado o commit `dae3d5f48c641fb2e4c835802ec3566c134f9701` (`Remove obsolete Movidesk plugin package`), antes associado à branch local `agent/phase3a-hotfix-parser-context`. A checagem local confirmou que o commit é ancestral de `main` e da branch de trabalho; a comparação pelo GitHub confirmou que o `main` remoto também o contém (base `dae3d5f`, `main` 73 commits à frente, zero atrás). Portanto, o commit não estava órfão e não foi apagado da história compartilhada.
 
 A referência local `agent/phase3a-hotfix-parser-context` foi removida (`git branch -D`), pois seu único commit específico já estava preservado por `main` e pela branch ativa. A tentativa não forçada `git branch -d` foi recusada por a referência upstream própria ainda não conter o commit; a verificação de ancestralidade no `main` remoto justificou a remoção somente da referência local. Nenhum branch remoto foi alterado. As alterações não commitadas da árvore de trabalho foram preservadas.
+
+## Próximos passos (nota de arquivo histórico)
+
+Este dossier preserva o estado antigo do projeto e não é um backlog ativo. Consulte o [dossier MCP canônico](../../../../mcp/movidesk/DOSSIER.md) para as tarefas atuais. Não use as pendências históricas abaixo como autorização para executar trabalho.

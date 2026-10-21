@@ -68,3 +68,6 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 - Para cada mudança de integração, testar autenticação/autorização negativa e positiva, limites de consulta, mensagens de erro sanitizadas e comportamento com fonte vazia/indisponível.
 - Não fazer merge, publicação em produção, mudança de permissões ou alteração destrutiva de dados sem pedido/autoridade correspondente do usuário.
 
+## Adendo de governança — próximos passos (2026-10-21)
+
+Este arquivo pertence a um snapshot de branch arquivada. Para trabalho atual, use o backlog do [dossier raiz](../../../DOSSIER.md) e do [dossier MCP canônico](../../../mcp/movidesk/DOSSIER.md), não crie tarefas correntes neste snapshot. Registre tarefas futuras com contexto/evidência e condição de conclusão; ao resolvê-las, retire-as do backlog ativo e registre evidência. Lembre o usuário ocasionalmente quando forem relevantes. Este adendo não altera as instruções históricas acima.

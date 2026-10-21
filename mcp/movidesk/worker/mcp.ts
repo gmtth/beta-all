@@ -3,10 +3,13 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { GET as getTickets } from "../app/api/tickets/route";
 import { GET as getPersons } from "../app/api/persons/route";
 import { GET as getServices } from "../app/api/services/route";
-import { authorizeOAuthScope, getAuthorizedOAuthPrincipal, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, OAUTH_SCOPE, recordMcpToolEvent, SUPPORTED_OAUTH_SCOPES } from "../app/oauth/_lib";
+import { authorizeOAuthPrincipal, canonicalResource, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, OAUTH_SCOPE, recordMcpToolEvent, SUPPORTED_RESOURCE_SCOPES } from "../app/oauth/_lib";
 import { registerKnowledgeTools } from "./knowledge-tools";
 import { SupabaseKnowledgeStore } from "./supabase-knowledge";
 import { registerMovideskTools, type MovideskReader } from "./mcp-tools";
+import { exposeToolSecuritySchemes, type ToolSecurityScheme } from "./tool-security-schemes";
+import { McpAuthorizationFailure, mcpAuthorizationError, missingMcpAuthorizationResponse } from "./oauth-auth-challenge";
+import { protectedResourceMetadata as buildProtectedResourceMetadata } from "../app/oauth/metadata";
 
 const bearerToken = (authorization: string | null) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
 const json = (data: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
@@ -26,13 +29,31 @@ function toolErrorCode(value: unknown): string {
   return value && typeof value === "object" && (value as { isError?: unknown }).isError === true ? "tool_error" : "handler_exception";
 }
 
-function instrumentToolUsage(server: McpServer, context?: TelemetryContext) {
+function instrumentToolUsage(server: McpServer, accessToken: string, resource: string, context?: TelemetryContext) {
+  const schemesByTool = new Map<string, ToolSecurityScheme[]>();
   return {
     registerTool(name: string, config: unknown, handler: (...args: any[]) => Promise<any>) {
+      const schemes = (config as { securitySchemes?: ToolSecurityScheme[] }).securitySchemes;
+      if (schemes) schemesByTool.set(name, schemes);
+      const requiredScopes = schemes?.flatMap((scheme) => scheme.type === "oauth2" ? scheme.scopes : []) ?? [];
+      const explicitlyPublic = Boolean(schemes?.length && schemes.every((scheme) => scheme.type === "noauth"));
       return server.registerTool(name, config as any, async (...args: any[]) => {
         let outcome: "success" | "error" = "success";
         let errorCode: string | null = null;
         try {
+          if (!schemes?.length) {
+            outcome = "error";
+            errorCode = "authorization";
+            return mcpAuthorizationError("invalid_token", resource, []);
+          }
+          if (!explicitlyPublic) {
+            const authorization = await authorizeOAuthPrincipal(accessToken, requiredScopes, resource, "mcp");
+            if (!authorization.authorized) {
+              outcome = "error";
+              errorCode = "authorization";
+              return mcpAuthorizationError(authorization.error, resource, requiredScopes);
+            }
+          }
           const result = await handler(...args);
           if (result?.isError) {
             outcome = "error";
@@ -42,6 +63,7 @@ function instrumentToolUsage(server: McpServer, context?: TelemetryContext) {
         } catch (error) {
           outcome = "error";
           errorCode = toolErrorCode(error);
+          if (error instanceof McpAuthorizationFailure) return mcpAuthorizationError(error.reason, resource, requiredScopes);
           throw error;
         } finally {
           const persistence = recordMcpToolEvent(name, outcome, errorCode);
@@ -50,18 +72,23 @@ function instrumentToolUsage(server: McpServer, context?: TelemetryContext) {
         }
       });
     },
+    exposeSecuritySchemes() { exposeToolSecuritySchemes(server, schemesByTool); },
   };
 }
 
 class LocalMovideskClient implements MovideskReader {
+  constructor(private readonly resourceOrigin: string) {}
+
   private async get(resource: "tickets" | "persons" | "services", params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal) {
-    const url = new URL(`https://movidesk-local.invalid/api/${resource}`);
+    const url = new URL(`/api/${resource}`, this.resourceOrigin);
     for (const [key, value] of Object.entries(params)) if (value !== undefined) url.searchParams.set(key, String(value));
     const request = new Request(url, { headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" }, signal });
     const response = resource === "tickets" ? await getTickets(request) : resource === "persons" ? await getPersons(request) : await getServices(request);
     if (!response) throw new Error("Movidesk route returned no response");
     const text = await response.text();
     const data = text ? JSON.parse(text) : null;
+    if (data && typeof data === "object" && (data as { error?: unknown }).error === "invalid_token") throw new McpAuthorizationFailure("invalid_token");
+    if (data && typeof data === "object" && (data as { error?: unknown }).error === "forbidden") throw new McpAuthorizationFailure("invalid_token");
     if (!response.ok) throw new Error(`Movidesk request failed with HTTP ${response.status}: ${text.slice(0, 500)}`);
     return data;
   }
@@ -79,7 +106,7 @@ class LocalMovideskClient implements MovideskReader {
 }
 
 export function protectedResourceMetadata(origin: string) {
-  return { resource: `${origin}/mcp/`, authorization_servers: [origin], scopes_supported: [...SUPPORTED_OAUTH_SCOPES], bearer_methods_supported: ["header"] };
+  return buildProtectedResourceMetadata(origin, [...SUPPORTED_RESOURCE_SCOPES]);
 }
 
 export async function handleMcp(request: Request, context?: TelemetryContext): Promise<Response | null> {
@@ -90,21 +117,24 @@ export async function handleMcp(request: Request, context?: TelemetryContext): P
   }
   if (pathname !== "/mcp" || request.method !== "POST") return null;
   const accessToken = bearerToken(request.headers.get("authorization"));
-  if (!accessToken) return json({ error: "invalid_token" }, { status: 401, headers: { "www-authenticate": `Bearer resource_metadata="${url.origin}/.well-known/oauth-protected-resource", scope="${SUPPORTED_OAUTH_SCOPES.join(" ")}"` } });
+  if (!accessToken) return missingMcpAuthorizationResponse(canonicalResource(url.origin));
   if (request.headers.get("mcp-method") === "server/discover") {
     let id: string | number | null = null;
     try { id = ((await request.clone().json()) as { id?: string | number | null }).id ?? null; } catch { /* SDK will handle malformed JSON below. */ }
     return json({ jsonrpc: "2.0", id, error: { code: -32601, message: "Method not found: server/discover" } }, { status: 404 });
   }
   const server = new McpServer({ name: "movidesk-mcp", version: "1.1.0" });
-  const instrumentedServer = instrumentToolUsage(server, context);
-  const movideskClient = new LocalMovideskClient();
+  const resource = canonicalResource(url.origin);
+  const instrumentedServer = instrumentToolUsage(server, accessToken, resource, context);
+  const movideskClient = new LocalMovideskClient(url.origin);
   registerMovideskTools(instrumentedServer, movideskClient, accessToken);
   registerKnowledgeTools(instrumentedServer, new SupabaseKnowledgeStore(), {
-    authorizeRead: () => authorizeOAuthScope(accessToken, KNOWLEDGE_READ_SCOPE),
-    authorizeImport: () => getAuthorizedOAuthPrincipal(accessToken, [OAUTH_SCOPE, KNOWLEDGE_WRITE_SCOPE]),
+    resource,
+    authorizeRead: () => authorizeOAuthPrincipal(accessToken, [KNOWLEDGE_READ_SCOPE], resource, "mcp"),
+    authorizeImport: () => authorizeOAuthPrincipal(accessToken, [OAUTH_SCOPE, KNOWLEDGE_WRITE_SCOPE], resource, "mcp"),
     getMovideskTicket: (id) => movideskClient.getTicketForKnowledge(id, accessToken),
   });
+  instrumentedServer.exposeSecuritySchemes();
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   await server.connect(transport);
   return transport.handleRequest(request);

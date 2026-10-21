@@ -13,9 +13,9 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 | Componente | Local canônico | Origem da importação | Estado |
 |---|---|---|---|
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
-| MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; dossier completo junto ao componente |
+| MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; Sites v83 publicado com “Deslogar” por conta; dossier completo junto ao componente |
 | Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos Supabase publicado no Sites v79; gráficos MCP no D1 publicados na v80; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
-| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; versão 82 publicada com sucesso; correção permanente do helper Windows continua pendente |
+| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; versão 83 publicada com sucesso; correção permanente do helper Windows continua pendente |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
 
@@ -49,9 +49,10 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - A PR #3 foi aberta na branch `codex/admin-access-token-expiration`; commit GitHub `efec8f8b8d4468141ce633377785f706be66af27`. A PR continua aberta, não mesclada.
 - O painel master permite configurar em milissegundos a validade de access tokens novos e renovados. O padrão permanece em 30 dias, com limites de um minuto a 30 dias. Tokens já emitidos preservam sua expiração gravada; refresh tokens mantêm a validade própria de até 90 dias.
 - A migration D1 `0003_oauth_settings.sql` e a inicialização idempotente da tabela `oauth_settings` fazem parte do runtime. Testes de migration, padrão, gravação e limites passaram; `npm test` passou (build e 10 testes do projeto) e 11 testes OAuth focados passaram.
-- Publicação Sites v82 concluída com status `succeeded`, deployment `appgdep_6ad8cdba69188191ada8c3b847a86f7f`, fonte Sites `1c8a611c656c2582dcc87a4b17d93422fe58f464`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A audiência pública existente foi preservada.
+- Publicação Sites v83 concluída com status `succeeded`, deployment `appgdep_6ad8d27565208191984e249fbed0e4c2`, fonte Sites `1020fc078f7414868b44209a4c80097e9b0831f4`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A audiência pública existente foi preservada; v83 inclui o botão “Deslogar” por conta.
 - O envio e empacotamento exigiram cópia temporária isolada do helper: o build Vinext passou, mas o helper instalado falhou no quoting do npm, caminho auxiliar do pacote e localização do tar no Windows. Nenhum arquivo do plugin instalado foi alterado. A correção permanente do workflow segue pendente no dossier MCP.
 - Falta mesclar a PR #3 e executar smoke test autenticado como master no painel publicado; ainda não foi testada uma alteração real do TTL na interface em produção.
+- O botão “Deslogar” foi publicado no Sites v83 e conferido visualmente. A alteração no monorepo segue sem commit/push ao GitHub; falta concluir esse registro e validar reautenticação com conta de teste. Ver o dossier MCP.
 
 ## Migração e rastreabilidade
 
@@ -98,6 +99,7 @@ Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 teste
 | Prioridade | Item | Estado / condição para conclusão |
 |---|---|---|
 | Alta | Mesclar a PR #3 da configuração da validade de access tokens e validar o campo como master. | Código publicado no Sites v82 (`1c8a611c656c2582dcc87a4b17d93422fe58f464`); branch GitHub `codex/admin-access-token-expiration`, PR #3 aberta. Após merge, conferir que o painel carrega o valor, salvar um TTL de teste e confirmar resposta persistida; restaurar o valor desejado pelo master. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
+| Alta | Enviar ao GitHub a implementação do botão “Deslogar” e atualizar a PR #3; validar reautenticação em conta de teste. | Sites v83 publicado e conferido visualmente; teste automatizado confirma revogação, mas falta commit/push no monorepo e teste real com conta descartável. |
 | Alta | Validar o ciclo nativo de reconexão OAuth no ChatGPT. | Etapas 1–5 foram mescladas pela PR #2 e publicadas no Sites v81; falta testar expiração, refresh, revogação, reconexão e repetição da operação em conversa real. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
 | Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |
 | Média | Corrigir o workflow Windows de build/empacotamento do Sites. | A publicação v81 exigiu ajustes temporários no helper copiado para resolver quoting do `npm` e encontrar `tar.exe`; fazer o wrapper do monorepo concluir build, pacote e publicação sem editar a instalação do plugin. |

@@ -120,6 +120,22 @@ export default function UserAdminPanel() {
     setMessage("Acesso removido."); await load();
   }
 
+  async function logout(target: User) {
+    if (!window.confirm(`Deslogar ${target.email}? Todos os access tokens, refresh tokens e autorizações pendentes serão invalidados. A conta continuará autorizada e precisará conectar novamente.`)) return;
+    setBusy(target.email); setMessage("");
+    try {
+      const response = await fetch("/api/admin/users/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) { setMessage(data.error ?? "Não foi possível deslogar a conta."); return; }
+      setMessage(`Sessões de ${target.email} encerradas. A conta deverá se autenticar novamente.`);
+      await load();
+    } catch {
+      setMessage("Não foi possível deslogar a conta. Tente novamente.");
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function saveTokenLifetime(event: React.FormEvent) {
     event.preventDefault(); setTokenLifetimeMessage("");
     const accessTokenLifetimeMs = Number(tokenLifetimeDraft);
@@ -205,7 +221,7 @@ export default function UserAdminPanel() {
       <p className="section-description">O acesso é validado pelo servidor. Cada pessoa precisa autorizar sua própria conta; os escopos abaixo vêm dos tokens ativos.</p>
       <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit">Liberar acesso</button></form>
       {message ? <p className="form-message" role="status">{message}</p> : null}
-      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.role === "master" ? "Administrador master" : "Analista"} · {item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.join(" · ") : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === item.email} aria-label={`Remover ${item.email}`}>{busy === item.email ? "…" : "Remover"}</button></div>)}{users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
+      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.role === "master" ? "Administrador master" : "Analista"} · {item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.join(" · ") : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === item.email} aria-label={`Deslogar ${item.email}`}>{busy === item.email ? "…" : "Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === item.email} aria-label={`Remover ${item.email}`}>{busy === item.email ? "…" : "Remover"}</button></div></div>)}{users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
     </section>
   </div>;
 }

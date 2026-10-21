@@ -75,12 +75,19 @@ export default function UserAdminPanel() {
   const [users, setUsers] = useState<User[]>([]);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [toolMetricsResponse, setToolMetricsResponse] = useState<{ status: "available" | "unavailable"; data: ToolMetrics | null } | null>(null);
-  const [message, setMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; tone: "success" | "error" } | null>(null);
   const [tokenLifetimeDraft, setTokenLifetimeDraft] = useState(String(DEFAULT_ACCESS_TOKEN_LIFETIME_MS));
-  const [tokenLifetimeMessage, setTokenLifetimeMessage] = useState("");
   const [savingTokenLifetime, setSavingTokenLifetime] = useState(false);
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
+
+  const notify = useCallback((message: string, tone: "success" | "error") => setToast({ message, tone }), []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timeout = window.setTimeout(() => setToast(null), toast.tone === "error" ? 6500 : 4500);
+    return () => window.clearTimeout(timeout);
+  }, [toast]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,63 +102,73 @@ export default function UserAdminPanel() {
         const settings = await tokenLifetimeResult.value.json() as { accessTokenLifetimeMs?: number };
         if (Number.isSafeInteger(settings.accessTokenLifetimeMs)) setTokenLifetimeDraft(String(settings.accessTokenLifetimeMs));
       } else {
-        setTokenLifetimeMessage("Não foi possível carregar a configuração de expiração.");
+        notify("Não foi possível carregar a configuração de expiração.", "error");
       }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [notify]);
   useEffect(() => { void load(); }, [load]);
 
   async function submit(event: React.FormEvent) {
-    event.preventDefault(); setMessage("");
-    const response = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
-    const data = await response.json();
-    if (!response.ok) { setMessage(data.error ?? "Não foi possível cadastrar."); return; }
-    setEmail(""); setMessage("Acesso liberado. A pessoa deverá autorizar as permissões no ChatGPT."); await load();
+    event.preventDefault(); setToast(null);
+    try {
+      const response = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
+      const data = await response.json();
+      if (!response.ok) { notify(data.error ?? "Não foi possível cadastrar.", "error"); return; }
+      setEmail(""); notify("Acesso liberado. A pessoa deverá autorizar as permissões no ChatGPT.", "success"); await load();
+    } catch {
+      notify("Não foi possível cadastrar. Tente novamente.", "error");
+    }
   }
 
   async function remove(target: User) {
     if (!window.confirm(`Remover o acesso de ${target.email}?`)) return;
-    setBusy(target.email); setMessage("");
-    const response = await fetch("/api/admin/users", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
-    const data = await response.json(); setBusy("");
-    if (!response.ok) { setMessage(data.error ?? "Não foi possível remover."); return; }
-    setMessage("Acesso removido."); await load();
+    setBusy(target.email); setToast(null);
+    try {
+      const response = await fetch("/api/admin/users", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
+      const data = await response.json();
+      if (!response.ok) { notify(data.error ?? "Não foi possível remover.", "error"); return; }
+      notify("Acesso removido.", "success"); await load();
+    } catch {
+      notify("Não foi possível remover. Tente novamente.", "error");
+    } finally {
+      setBusy("");
+    }
   }
 
   async function logout(target: User) {
     if (!window.confirm(`Deslogar ${target.email}? Todos os access tokens, refresh tokens e autorizações pendentes serão invalidados. A conta continuará autorizada e precisará conectar novamente.`)) return;
-    setBusy(target.email); setMessage("");
+    setBusy(target.email); setToast(null);
     try {
       const response = await fetch("/api/admin/users/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
       const data = await response.json() as { error?: string };
-      if (!response.ok) { setMessage(data.error ?? "Não foi possível deslogar a conta."); return; }
-      setMessage(`Sessões de ${target.email} encerradas. A conta deverá se autenticar novamente.`);
+      if (!response.ok) { notify(data.error ?? "Não foi possível deslogar a conta.", "error"); return; }
+      notify(`Sessões de ${target.email} encerradas. A conta deverá se autenticar novamente.`, "success");
       await load();
     } catch {
-      setMessage("Não foi possível deslogar a conta. Tente novamente.");
+      notify("Não foi possível deslogar a conta. Tente novamente.", "error");
     } finally {
       setBusy("");
     }
   }
 
   async function saveTokenLifetime(event: React.FormEvent) {
-    event.preventDefault(); setTokenLifetimeMessage("");
+    event.preventDefault(); setToast(null);
     const accessTokenLifetimeMs = Number(tokenLifetimeDraft);
     if (!Number.isSafeInteger(accessTokenLifetimeMs) || accessTokenLifetimeMs < MIN_ACCESS_TOKEN_LIFETIME_MS || accessTokenLifetimeMs > MAX_ACCESS_TOKEN_LIFETIME_MS) {
-      setTokenLifetimeMessage(`Informe um inteiro entre ${MIN_ACCESS_TOKEN_LIFETIME_MS} e ${MAX_ACCESS_TOKEN_LIFETIME_MS} ms.`);
+      notify(`Informe um inteiro entre ${MIN_ACCESS_TOKEN_LIFETIME_MS} e ${MAX_ACCESS_TOKEN_LIFETIME_MS} ms.`, "error");
       return;
     }
     setSavingTokenLifetime(true);
     try {
       const response = await fetch("/api/admin/token-lifetime", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ accessTokenLifetimeMs }) });
       const data = await response.json() as { accessTokenLifetimeMs?: number; error?: string };
-      if (!response.ok) { setTokenLifetimeMessage(data.error ?? "Não foi possível salvar a expiração."); return; }
+      if (!response.ok) { notify(data.error ?? "Não foi possível salvar a expiração.", "error"); return; }
       setTokenLifetimeDraft(String(data.accessTokenLifetimeMs ?? accessTokenLifetimeMs));
-      setTokenLifetimeMessage("Validade salva. Será aplicada aos próximos access tokens emitidos.");
+      notify("Validade salva. Será aplicada aos próximos access tokens emitidos.", "success");
     } catch {
-      setTokenLifetimeMessage("Não foi possível salvar a configuração. Tente novamente.");
+      notify("Não foi possível salvar a configuração. Tente novamente.", "error");
     } finally {
       setSavingTokenLifetime(false);
     }
@@ -162,6 +179,11 @@ export default function UserAdminPanel() {
   const maxToolCalls = Math.max(1, ...(toolMetrics?.usageByTool.map((item) => item.calls) ?? []));
   const maxDailyErrors = Math.max(1, ...(toolMetrics?.errorsByDay.map((item) => item.count) ?? []));
   return <div className="admin-content">
+    {toast ? <div className={`toast toast-${toast.tone}`} role={toast.tone === "error" ? "alert" : "status"} aria-atomic="true">
+      <span className="toast-icon" aria-hidden="true">{toast.tone === "success" ? "✓" : "!"}</span>
+      <p className="toast-message">{toast.message}</p>
+      <button className="toast-dismiss" type="button" onClick={() => setToast(null)} aria-label="Fechar aviso">×</button>
+    </div> : null}
     <section className="admin-section" aria-labelledby="connection-title">
       <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
       <div className="connection-card">
@@ -213,14 +235,12 @@ export default function UserAdminPanel() {
         <button type="submit" disabled={savingTokenLifetime}>{savingTokenLifetime ? "Salvando…" : "Salvar validade"}</button>
       </form>
       <p className="quiet-message">Limite permitido: {MIN_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} a {MAX_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms. O padrão é {DEFAULT_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms.</p>
-      {tokenLifetimeMessage ? <p className="form-message" role="status">{tokenLifetimeMessage}</p> : null}
     </section>
 
     <section className="admin-section" aria-labelledby="team-title">
       <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div></div>
       <p className="section-description">O acesso é validado pelo servidor. Cada pessoa precisa autorizar sua própria conta; os escopos abaixo vêm dos tokens ativos.</p>
       <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit">Liberar acesso</button></form>
-      {message ? <p className="form-message" role="status">{message}</p> : null}
       <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.role === "master" ? "Administrador master" : "Analista"} · {item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.join(" · ") : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === item.email} aria-label={`Deslogar ${item.email}`}>{busy === item.email ? "…" : "Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === item.email} aria-label={`Remover ${item.email}`}>{busy === item.email ? "…" : "Remover"}</button></div></div>)}{users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
     </section>
   </div>;

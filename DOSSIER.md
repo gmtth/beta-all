@@ -1,6 +1,6 @@
 # Dossier da Beta — índice do contexto
 
-Atualizado em 2026-10-21. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
+Atualizado em 2026-10-22. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
 
 ## Objetivo do produto
 
@@ -13,9 +13,9 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 | Componente | Local canônico | Origem da importação | Estado |
 |---|---|---|---|
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
-| MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; rota de “Deslogar” corrigida e publicada no Sites v84; smoke sem identidade retorna 401, sem revogar tokens |
+| MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; `movidesk_get_ticket` retorna `protocol`; PR #17 integrada e Sites v103 publicado, smoke do ticket 5835 confirmou o protocolo |
 | Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos Supabase publicado no Sites v79; gráficos MCP no D1 publicados na v80; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
-| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; versão 84 publicada com sucesso; correção permanente do helper Windows continua pendente |
+| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; versão 103 publicada com sucesso após merge PR #17; correção permanente do helper Windows continua pendente |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
 

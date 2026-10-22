@@ -6,7 +6,7 @@ const mcpConfig = `{
   "serverUrl": "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/",
   "oauth": {
     "authorizationServer": "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site",
-    "scope": "movidesk:read knowledge:read knowledge:write feedback:write",
+    "scope": "movidesk:read knowledge:read knowledge:write feedback:write offline_access",
     "pkce": "S256"
   }
 }`;
@@ -21,6 +21,7 @@ const tools = [
   { name: "movidesk_search_ticket_content", title: "Pesquisar conteúdo", detail: "Pesquisa no assunto, descrição inicial e interações do ticket.", input: "keyword + escopo, paginação e case_sensitive" },
   { name: "movidesk_find_similar_tickets", title: "Encontrar semelhantes", detail: "Compara conteúdo e sinais estruturados com pontuação explicável.", input: "ticket_id ou keyword, filtros e paginação" },
   { name: "knowledge_list_sources", title: "Listar fontes da base", detail: "Lista as fontes de conhecimento compartilhadas disponíveis.", input: "sem parâmetros; requer knowledge:read" },
+  { name: "knowledge_search", title: "Pesquisar na base de conhecimento", detail: "Pesquisa lexicalmente chamados e documentos já copiados para a base por sintomas, termos e contexto; não consulta as fontes originais ao vivo.", input: "query de 3 a 500 caracteres e até 10 resultados; requer knowledge:read" },
   { name: "knowledge_import_movidesk_ticket", title: "Adicionar chamado à base", detail: "Importa explicitamente um chamado para a base interna compartilhada e registra quem fez a inclusão.", input: "ticket_id; requer movidesk:read e knowledge:write" },
   { name: "beta_record_feedback", title: "Registrar feedback ou lacuna", detail: "Registra um sinal explícito ou uma limitação observada, sem transcript nem raciocínio interno; a captura pode estar desativada no ambiente.", input: "evento estruturado; requer feedback:write e aceite vigente dos termos" },
   { name: "movidesk_detect_recurrent_issues", title: "Detectar recorrências", detail: "Agrupa problemas com evidências por campo, tendência, status, urgência, clientes, concentração e qualidade da amostra.", input: "período, filtros, mínimo de ocorrências e paginação" },
@@ -31,35 +32,43 @@ const tools = [
 const sharedFilters = "id, filter, keyword, from_date, to_date, date_field, responsible_id, responsible_email, owner_team, status, base_status, urgency, category, service, client_id, include_past, select, expand, orderby, top e skip";
 
 const items = [
-  { label: "Endpoint MCP (barra final obrigatória)", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/" },
+  { label: "Endpoint MCP", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/" },
   { label: "OAuth discovery", value: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server" },
   { label: "Client ID", value: "movidesk-mcp-app" },
-  { label: "Scopes MCP", value: "movidesk:read knowledge:read knowledge:write" },
+  { label: "Escopos disponíveis", value: "movidesk:read knowledge:read knowledge:write feedback:write offline_access" },
   { label: "PKCE", value: "S256 obrigatório" },
 ];
 
 function CopyField({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   async function copy() {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("error");
+    }
+    window.setTimeout(() => setCopyStatus("idle"), 2400);
   }
-  return <div className="copy-field"><label>{label}</label><div className="copy-row"><code>{value}</code><button type="button" onClick={copy}>{copied ? "Copiado" : "Copiar"}</button></div></div>;
+  return <div className="copy-field"><label>{label}</label><div className="copy-row"><code title={value}>{value}</code><button type="button" aria-label={`Copiar ${label}`} onClick={copy}>{copyStatus === "copied" ? "Copiado" : copyStatus === "error" ? "Tente novamente" : "Copiar"}</button></div><span className="copy-status" role="status" aria-live="polite">{copyStatus === "error" ? "A cópia foi bloqueada. Selecione o valor para copiá-lo manualmente." : copyStatus === "copied" ? `${label} copiado.` : ""}</span></div>;
 }
 
 export default function McpInstructionsPanel() {
-  const [copiedConfig, setCopiedConfig] = useState(false);
+  const [configCopyStatus, setConfigCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   async function copyConfig() {
-    await navigator.clipboard.writeText(mcpConfig);
-    setCopiedConfig(true);
-    window.setTimeout(() => setCopiedConfig(false), 1600);
+    try {
+      await navigator.clipboard.writeText(mcpConfig);
+      setConfigCopyStatus("copied");
+    } catch {
+      setConfigCopyStatus("error");
+    }
+    window.setTimeout(() => setConfigCopyStatus("idle"), 2400);
   }
-  return <div className="instructions-content">
-    <section className="instruction-block"><div className="section-kicker">01 / ENDPOINT</div><h2>Conecte o servidor MCP</h2><p>Use o endpoint público abaixo ao adicionar um novo conector no ChatGPT. O caminho correto é <strong>POST /mcp/</strong>, com a barra final obrigatória.</p><div className="notice"><span>!</span><div><strong>Não remova a barra final</strong><small>Cadastre exatamente a URL terminada em <code>/mcp/</code>. Sem a barra final, o conector pode não descobrir as ferramentas disponíveis.</small></div></div><div className="copy-grid">{items.map((item) => <CopyField key={item.label} {...item} />)}</div></section>
-    <section className="instruction-block"><div className="section-kicker">02 / AUTORIZAÇÃO</div><h2>OAuth protegido por PKCE</h2><p>O cliente MCP usa Authorization Code com <strong>PKCE S256 obrigatório</strong>. O ChatGPT deve iniciar a descoberta OAuth pelo servidor de autorização; não use as URLs da GPT Action nesta configuração.</p><div className="notice"><span>✓</span><div><strong>Cliente separado da GPT Action</strong><small>Este fluxo usa o Client ID movidesk-mcp-app e mantém a exigência de code_challenge S256.</small></div></div></section>
-    <section className="instruction-block"><div className="section-kicker">03 / FERRAMENTAS</div><h2>Ferramentas disponíveis</h2><p>O servidor publica schemas JSON diretamente no MCP. Consultas ao Movidesk são somente leitura. A única escrita é adicionar explicitamente um chamado à base interna, com autorização e auditoria; ela não altera o ticket de origem.</p><div className="tool-list">{tools.map((tool) => <div className="tool-row" key={tool.name}><div><strong>{tool.title}</strong><code>{tool.name}</code><small>{tool.detail}</small></div><span>{tool.input}</span></div>)}</div><p className="hint">A busca de tickets aceita os filtros: <code>{sharedFilters}</code>. Para usar os recursos da base, autorize também os escopos knowledge indicados no bloco de configuração.</p></section>
-    <section className="instruction-block"><div className="section-kicker">04 / CONFIGURAÇÃO</div><div className="schema-heading"><div><h2>Bloco de referência</h2><p>Use este bloco como referência para validar a configuração do conector.</p></div><button className="schema-copy" type="button" onClick={copyConfig}>{copiedConfig ? "Configuração copiada" : "Copiar configuração"}</button></div><pre className="schema-box config-box"><code>{mcpConfig}</code></pre></section>
-    <section className="instruction-block"><div className="section-kicker">05 / TESTE</div><h2>Teste rápido</h2><p>Depois de conectar e autorizar, peça ao ChatGPT:</p><div className="prompt-example">“Consulte o ticket 12345 e liste tickets abertos desde 2026-08-01 contendo VPN.”</div><p className="hint">Se a autorização falhar sem PKCE, o comportamento está correto: o cliente MCP não deve funcionar sem code_challenge S256.</p></section>
+  return <div className="instructions-content mcp-instructions">
+    <section className="instruction-block mcp-connection"><div className="section-kicker">CONECTOR MCP</div><h1>Conectar a Beta ao ChatGPT</h1><p>No ChatGPT, adicione um servidor MCP personalizado e informe o endpoint abaixo. Depois, escolha OAuth e conclua a autorização. O ChatGPT usa a descoberta do servidor para localizar as ferramentas disponíveis.</p><div className="copy-grid">{items.map((item) => <CopyField key={item.label} {...item} />)}</div><div className="notice"><span aria-hidden="true">✓</span><div><strong>Endpoint de conexão</strong><small>O endereço recomendado termina em <code>/mcp/</code>. O servidor também aceita a rota sem a barra final.</small></div></div></section>
+    <section className="instruction-block"><div className="section-kicker">AUTORIZAÇÃO</div><h2>OAuth com PKCE S256</h2><p>Este conector usa Authorization Code com <strong>PKCE S256 obrigatório</strong>. O OAuth é separado do cliente GPT Action. O escopo concedido depende das permissões habilitadas para sua conta; <code>knowledge:write</code> é necessário apenas para importar chamados. <code>offline_access</code> permite renovar a sessão.</p></section>
+    <section className="instruction-block"><div className="section-kicker">FERRAMENTAS</div><h2>O que a Beta pode fazer</h2><p>Consultas ao Movidesk são somente leitura. No Supabase, a Beta pode pesquisar a cópia indexada, importar chamados quando autorizado e registrar feedback quando essa permissão estiver habilitada. Nenhuma ferramenta altera o ticket original.</p><details className="mcp-tool-disclosure"><summary>Ver {tools.length} ferramentas e permissões</summary><div className="tool-list">{tools.map((tool) => <div className="tool-row" key={tool.name}><div><strong>{tool.title}</strong><code>{tool.name}</code><small>{tool.detail}</small></div><span>{tool.input}</span></div>)}</div></details><p className="hint">Filtros compartilhados de tickets: <code>{sharedFilters}</code>.</p></section>
+    <section className="instruction-block"><div className="section-kicker">REFERÊNCIA TÉCNICA</div><div className="schema-heading"><div><h2>Parâmetros do conector</h2><p>Resumo informativo; não é um arquivo para importar no ChatGPT.</p></div><button className="schema-copy" type="button" aria-label="Copiar parâmetros do conector" onClick={copyConfig}>{configCopyStatus === "copied" ? "Copiado" : configCopyStatus === "error" ? "Tente novamente" : "Copiar"}</button></div><span className="copy-status mcp-config-copy-status" role="status" aria-live="polite">{configCopyStatus === "error" ? "A cópia foi bloqueada; tente novamente neste navegador." : configCopyStatus === "copied" ? "Parâmetros copiados." : ""}</span><details className="mcp-config-disclosure"><summary>Visualizar parâmetros</summary><pre className="schema-box config-box"><code>{mcpConfig}</code></pre></details></section>
+    <section className="instruction-block"><div className="section-kicker">TESTE</div><h2>Confirme a conexão</h2><p>Depois de autorizar, aguarde a descoberta de ferramentas no ChatGPT e teste uma consulta somente leitura, por exemplo:</p><div className="prompt-example">“Consulte o ticket 12345 e resuma os fatos, as ações registradas e as pendências.”</div><p className="hint">Se as ferramentas não aparecerem, confira o resultado da descoberta OAuth, a autorização e o escopo exigido pela ferramenta.</p></section>
   </div>;
 }

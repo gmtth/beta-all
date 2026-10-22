@@ -116,10 +116,12 @@ function parseDatabaseBrowserSchema(value: unknown): DatabaseBrowserSchema | nul
     }
     const indexes: DatabaseBrowserSchema["tables"][number]["indexes"] = [];
     for (const index of item.indexes) {
-      if (!isObject(index) || !Array.isArray(index.columns)) return null;
+      // PostgreSQL's pg_attribute join returns no rows for expression-only
+      // index keys. jsonb_agg then emits null, which is valid catalog data.
+      if (!isObject(index) || (index.columns !== null && !Array.isArray(index.columns))) return null;
       const name = boundedCatalogText(index.name, 120);
       const method = boundedCatalogText(index.method, 32);
-      const columns = index.columns.map((column) => boundedCatalogText(column, 63));
+      const columns = (Array.isArray(index.columns) ? index.columns : []).map((column) => boundedCatalogText(column, 63));
       if (!name || !method || typeof index.unique !== "boolean" || columns.some((column) => !column)) return null;
       indexes.push({ name, method, unique: index.unique, columns: columns as string[] });
     }

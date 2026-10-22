@@ -9,7 +9,7 @@ test("invalid token challenge advertises safe reconnection metadata", () => {
   assert.equal(result.isError, true);
   assert.match(result.content[0].text, /Reconecte sua conta/);
   assert.deepEqual(result._meta["mcp/www_authenticate"], [
-    'Bearer error="invalid_token", error_description="A conexão expirou ou foi revogada. Reconecte sua conta para continuar.", resource_metadata="https://beta.example/.well-known/oauth-protected-resource"',
+    'Bearer error="invalid_token", error_description="A conexao expirou ou foi revogada. Reconecte sua conta para continuar.", resource_metadata="https://beta.example/.well-known/oauth-protected-resource"',
   ]);
 });
 
@@ -19,6 +19,15 @@ test("insufficient scope challenge identifies the missing scopes", () => {
   assert.ok(result._meta["mcp/www_authenticate"][0].includes('error="insufficient_scope"'));
   assert.ok(result._meta["mcp/www_authenticate"][0].includes('scope="knowledge:read"'));
   assert.doesNotMatch(JSON.stringify(result), /token|secret|analyst@example/);
+  assert.match(result.content[0].text, /autorização não inclui as permissões/);
+});
+
+test("all bearer challenge descriptions use ASCII-safe header characters", () => {
+  for (const error of ["invalid_token", "insufficient_scope", "terms_not_accepted"] as const) {
+    const challenge = bearerAuthenticateChallenge(error, "https://beta.example/mcp/", ["knowledge:read"]);
+    assert.match(challenge, /^[\x20-\x7E]+$/);
+    assert.ok(!challenge.includes("\r") && !challenge.includes("\n"));
+  }
 });
 
 test("HTTP 401 uses the same invalid-token challenge and canonical metadata URL", async () => {
@@ -27,6 +36,7 @@ test("HTTP 401 uses the same invalid-token challenge and canonical metadata URL"
   assert.equal(response.status, 401);
   assert.deepEqual(await response.json(), { error: "invalid_token" });
   assert.equal(response.headers.get("www-authenticate"), bearerAuthenticateChallenge("invalid_token", resource));
+  assert.match(response.headers.get("www-authenticate") ?? "", /^[\x20-\x7E]+$/);
   assert.match(response.headers.get("www-authenticate") ?? "", /error="invalid_token"/);
   assert.match(response.headers.get("www-authenticate") ?? "", /error_description="[^"]+"/);
   assert.equal(protectedResourceMetadataUrl(resource), "https://beta.example/.well-known/oauth-protected-resource");

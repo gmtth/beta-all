@@ -36,6 +36,12 @@ export async function getUserScopeGrants(database: ScopeDatabase, email: string,
   return ensureUserScopeDefaults(database, normalizedEmail, now);
 }
 
+/** Admin-configured account grants are the authorization source; request scopes are not an end-user permission request. */
+export async function getEnabledUserScopes(database: ScopeDatabase, email: string, clientScopes: readonly string[] = SUPPORTED_OAUTH_SCOPES, now = Date.now()) {
+  const grants = await getUserScopeGrants(database, email, now);
+  return clientScopes.filter((scope) => grants[scope] === true);
+}
+
 export async function areUserScopesEnabled(database: ScopeDatabase, email: string, scopes: readonly string[], now = Date.now()) {
   const grants = await getUserScopeGrants(database, email, now);
   return scopes.every((scope) => grants[scope] === true);

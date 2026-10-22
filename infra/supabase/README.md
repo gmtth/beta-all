@@ -15,6 +15,7 @@ Para o estado, decisões, evidências e ordem de prontidão, consulte [`DOSSIER.
 - O usuário confirmou que a chamada `knowledge_list_sources` via MCP/Sites retornou Movidesk, ClickUp e Documentos administrativos.
 - A migration `20261022100000_add_knowledge_search.sql` criou `beta.search_knowledge()`, RPC somente leitura com limite de 10 resultados e filtro para registros não excluídos classificados como `internal` ou `shareable`. Só `service_role` pode executá-la; o MCP valida OAuth `knowledge:read`.
 - A migration `20261022110000_rank_one_chunk_per_record.sql` limita cada resposta ao melhor trecho de cada registro, para que vários trechos de um chamado não ocultem outros casos. Foi aplicada remotamente em 2026-10-22.
+- A migration `20261022120000_add_movidesk_protocol_search.sql` persiste o protocolo do Movidesk em `source_record.attributes.protocol` e adiciona busca exata/retorno desse identificador. Foi aplicada no projeto remoto em 2026-10-22. O usuário confirmou o registro `external_id = 5835` → `protocol = 20260702000000016`, com 14 trechos. O runtime MCP com suporte ao metadado está publicado no Site versão 104; a busca live pelo protocolo ainda precisa de teste ponta a ponta.
 - A busca usa `tsvector`/GIN e termos prefixados em OR para tolerar consultas em linguagem natural. Ainda não é busca semântica; não há coluna de embedding, modelo escolhido ou geração de vetores.
 
 ## Migrações reproduzíveis
@@ -23,7 +24,7 @@ Para o estado, decisões, evidências e ordem de prontidão, consulte [`DOSSIER.
 
 ### Adoção no projeto já existente
 
-O workspace local do Supabase CLI está em `infra/supabase/`; execute a partir da raiz do monorepo com `--workdir infra`. A configuração persistente não contém credenciais. Em 2026-10-22, o CLI confirmou as versões `20261020120000` a `20261022110000` em Local e Remote.
+O workspace local do Supabase CLI está em `infra/supabase/`; execute a partir da raiz do monorepo com `--workdir infra`. A configuração persistente não contém credenciais. Em 2026-10-22, o CLI confirmou as versões `20261020120000` a `20261022120000` em Local e Remote.
 
 Histórico de adoção do banco existente:
 

@@ -136,6 +136,8 @@ export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expecte
   if (!sections.length) throw new KnowledgeImportError("ticket_missing_content");
 
   const attributes: Record<string, string> = {};
+  const protocolValue = scalarText(firstValue(ticket, ["protocol", "protocolo"]));
+  if (protocolValue && /^\d{1,30}$/.test(protocolValue)) attributes.protocol = protocolValue;
   const attributeKeys: Array<[string, string[]]> = [
     ["category", ["category", "categoria"]], ["service", ["service", "serviceFirstLevel", "servico"]],
     ["urgency", ["urgency", "urgencyName", "urgencia"]], ["owner_team", ["ownerTeam", "owner_team"]],

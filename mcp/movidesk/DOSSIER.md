@@ -1,5 +1,6 @@
 # Dossiê do projeto MCP Movidesk
 
+
 > **Modo de leitura para LLM:** leia primeiro “Resumo canônico atual”, depois “Regras de autoridade”, “Arquitetura”, “Ferramentas e contratos”, “Fases”, “Estado de entrega” e “Pendências”. Consulte a linha do tempo, ledger de commits e histórico retroativo apenas para rastreabilidade. Em caso de conflito, prevalece a ordem de autoridade definida abaixo.
 
 ## Cartão de contexto rápido
@@ -13,8 +14,8 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 | Qual é a regra de segurança? | Não mutar tickets; não expor segredo/PII; não publicar sem confirmar manifesto e deployment. |
 | Qual é a fonte semântica? | YAML legível + snapshot JSON validado; grupos semânticos têm papéis separados. |
 | O que está estabilizado? | Fases 0–2, 3A, 3B e implementação de 3C, conforme o estado/evidência de cada seção. |
-| O que ainda precisa ser confirmado? | Testar reconexão OAuth em conversa real; implementar etapa 6 de logs seguros/anti-loop; corrigir helper Sites no Windows; integrar/publicar o runtime da busca e testar `knowledge_search`; escolher provedor/modelo para embeddings e busca semântica. |
-| Qual o próximo caminho? | A migration lexical `20261022100000` foi aplicada. Depois de revisar e integrar a branch `codex/knowledge-search`, publicar o runtime correspondente e testar `knowledge_search` com o chamado piloto; depois decidir provedor/modelo para busca semântica. Outros itens OAuth e helper Windows permanecem no backlog. |
+| O que ainda precisa ser confirmado? | Testar reconexão OAuth em conversa real; implementar etapa 6 de logs seguros/anti-loop; corrigir helper Sites no Windows; validar `knowledge_search` por protocolo após a migration aplicada; escolher provedor/modelo para embeddings e busca semântica. |
+| Qual o próximo caminho? | A busca lexical está no runtime publicado v104; a migration `20261022120000` está aplicada e o protocolo `20260702000000016` foi confirmado no registro `5835`. Mesclar a PR #18 para alinhar o monorepo e fazer o teste live de `knowledge_search` por protocolo e por sintomas; depois decidir provedor/modelo para busca semântica. Outros itens OAuth e helper Windows permanecem no backlog. |
 | O que nunca inferir? | Commit ≠ merge; merge ≠ deploy; deploy ≠ manifesto ativo; teste local ≠ produção. |
 
 ### Arquivo histórico opcional
@@ -1810,3 +1811,11 @@ Na branch `feat/admin-telemetry-insights`, a API administrativa agrega os evento
 Não houve migration nem mudança na coleta de eventos. A identidade é usada apenas para a agregação de erros por conta permitida no painel master; sucessos, argumentos, resultados e mensagens brutas continuam fora dessa métrica. P50/P95 usam nearest-rank sobre as durações já registradas e mostram quantas execuções compõem a amostra.
 
 **Verificação local:** `git diff --check`, `npm run build` e `node scripts/validate-semantic-catalog.mjs` passaram. O primeiro build dentro do sandbox falhou ao resolver arquivos locais de `node_modules` (`EPERM`); a execução autorizada fora do sandbox passou. Suítes automatizadas e consulta das novas agregações contra D1 não foram executadas. As alterações estão somente na branch local; não houve commit, push, PR, merge ou publicação.
+
+## Protocolo do chamado na busca indexada — runtime e migration publicados (2026-10-22)
+
+A PR #17 foi integrada em `main` e publicada, expondo `protocol` em `movidesk_get_ticket`; a consulta live confirmou `external_id = 5835` → protocolo `20260702000000016`. A correção de ingestão e retorno do metadado foi publicada no Site Beta MCP versão 104. O usuário confirmou que a reimportação gravou `attributes.protocol = 20260702000000016` no registro `external_id = 5835`, com 14 trechos.
+
+A migration `20261022120000_add_movidesk_protocol_search.sql` foi aplicada no Supabase `ywqoanfqcbcdecmkguze`; a CLI confirmou `20261022120000` em Local e Remote. Ela habilita a busca exata pelo protocolo e o inclui no retorno de `search_knowledge`. A PR #18 (`Persist and search Movidesk ticket protocols`) permanece aberta neste registro; a branch acrescenta o código, testes, migration e esta documentação ao monorepo. A versão de produção 104 foi publicada a partir do fluxo do Sites.
+
+**Verificação conhecida:** testes focados (28) e build passaram na revisão anterior; `git diff --check` passou. A suíte geral `npm test` teve 9 aprovações e 1 falha preexistente de texto antigo na página inicial. O ESLint específico apontou um `no-explicit-any` preexistente em `worker/knowledge-tools.ts:46`. O estado de CI da PR não apresenta workflows/checks associados. A confirmação da linha no Supabase comprova persistência; ainda falta chamar `knowledge_search` pelo protocolo para validar a busca live ponta a ponta.

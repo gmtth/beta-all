@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS, MAX_ACCESS_TOKEN_LIFETIME_MS, MIN_ACCESS_TOKEN_LIFETIME_MS } from "./oauth/token-lifetime";
 import LoadingSpinner from "./loading-spinner";
 
@@ -87,6 +87,8 @@ const toolTitle = (name: string) => toolTitles[name] ?? name;
 const shortDate = (value: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(`${value}T12:00:00Z`));
 const comparisonLabel = (current: number, previous: number) => previous === 0 ? current === 0 ? "sem registros nos dois períodos" : "novo neste período" : `${current > previous ? "+" : ""}${((current - previous) / previous * 100).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% vs período anterior`;
 const comparisonTone = (current: number, previous: number, lowerIsBetter: boolean) => current === previous ? "neutral" : lowerIsBetter ? current > previous ? "negative" : "positive" : "neutral";
+type AdminSectionKey = "team" | "supabase" | "telemetry" | "tokenLifetime";
+const sectionTitles: Record<AdminSectionKey, string> = { team: "Equipe Beta", supabase: "Supabase", telemetry: "Uso e erros", tokenLifetime: "Expiração do access token" };
 
 export default function UserAdminPanel() {
   const [email, setEmail] = useState("");
@@ -97,7 +99,11 @@ export default function UserAdminPanel() {
   const [tokenLifetimeDraft, setTokenLifetimeDraft] = useState(String(DEFAULT_ACCESS_TOKEN_LIFETIME_MS));
   const [savingTokenLifetime, setSavingTokenLifetime] = useState(false);
   const [busy, setBusy] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [openSections, setOpenSections] = useState<Record<AdminSectionKey, boolean>>({ team: false, supabase: false, telemetry: false, tokenLifetime: false });
+  const openSectionsRef = useRef(openSections);
+  const [loadingSections, setLoadingSections] = useState<Record<AdminSectionKey, boolean>>({ team: false, supabase: false, telemetry: false, tokenLifetime: false });
+  const [sectionErrors, setSectionErrors] = useState<Partial<Record<AdminSectionKey, string>>>({});
+  const requests = useRef<Partial<Record<AdminSectionKey, AbortController>>>({});
   const [addingUser, setAddingUser] = useState(false);
   const [recentImportsPage, setRecentImportsPage] = useState(0);
 
@@ -109,29 +115,100 @@ export default function UserAdminPanel() {
     return () => window.clearTimeout(timeout);
   }, [toast]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  function beginRequest(section: AdminSectionKey) {
+    requests.current[section]?.abort();
+    const controller = new AbortController();
+    requests.current[section] = controller;
+    setLoadingSections((current) => ({ ...current, [section]: true }));
+    setSectionErrors((current) => ({ ...current, [section]: undefined }));
+    return controller;
+  }
+
+  function finishRequest(section: AdminSectionKey, controller: AbortController) {
+    if (controller.signal.aborted) return;
+    if (requests.current[section] === controller) requests.current[section] = undefined;
+    setLoadingSections((current) => ({ ...current, [section]: false }));
+  }
+
+  async function loadUsers() {
+    if (!openSectionsRef.current.team) return;
+    const controller = beginRequest("team");
     try {
-      const results = await Promise.allSettled([fetch("/api/admin/users", { cache: "no-store" }), fetch("/api/admin/overview", { cache: "no-store" }), fetch("/api/admin/tool-metrics", { cache: "no-store" }), fetch("/api/admin/token-lifetime", { cache: "no-store" })]);
-      const [userResult, overviewResult, metricsResult, tokenLifetimeResult] = results;
-      if (userResult.status === "fulfilled" && userResult.value.ok) setUsers(await userResult.value.json());
-      if (overviewResult.status === "fulfilled" && overviewResult.value.ok) {
-        setOverview(await overviewResult.value.json());
-        setRecentImportsPage(0);
-      }
-      if (metricsResult.status === "fulfilled" && metricsResult.value.ok) setToolMetricsResponse(await metricsResult.value.json());
-      else setToolMetricsResponse({ status: "unavailable", data: null });
-      if (tokenLifetimeResult.status === "fulfilled" && tokenLifetimeResult.value.ok) {
-        const settings = await tokenLifetimeResult.value.json() as { accessTokenLifetimeMs?: number };
-        if (Number.isSafeInteger(settings.accessTokenLifetimeMs)) setTokenLifetimeDraft(String(settings.accessTokenLifetimeMs));
-      } else {
-        notify("Não foi possível carregar a configuração de expiração.", "error");
-      }
-    } finally {
-      setLoading(false);
+      const response = await fetch("/api/admin/users", { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("Não foi possível carregar as contas autorizadas.");
+      const data = await response.json() as User[];
+      if (!controller.signal.aborted) setUsers(data);
+    } catch {
+      if (!controller.signal.aborted) { setSectionErrors((current) => ({ ...current, team: "Não foi possível carregar as contas autorizadas." })); notify("Não foi possível carregar as contas autorizadas.", "error"); }
+    } finally { finishRequest("team", controller); }
+  }
+
+  async function loadOverview() {
+    if (!openSectionsRef.current.supabase) return;
+    const controller = beginRequest("supabase");
+    try {
+      const response = await fetch("/api/admin/overview", { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("Não foi possível atualizar o painel Supabase.");
+      const data = await response.json() as Overview;
+      if (!controller.signal.aborted) { setOverview(data); setRecentImportsPage(0); }
+    } catch {
+      if (!controller.signal.aborted) { setSectionErrors((current) => ({ ...current, supabase: "Não foi possível carregar os dados do Supabase." })); notify("Não foi possível atualizar o painel Supabase.", "error"); }
+    } finally { finishRequest("supabase", controller); }
+  }
+
+  async function loadToolMetrics() {
+    if (!openSectionsRef.current.telemetry) return;
+    const controller = beginRequest("telemetry");
+    try {
+      const response = await fetch("/api/admin/tool-metrics", { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("Métricas indisponíveis.");
+      const data = await response.json() as { status: "available" | "unavailable"; data: ToolMetrics | null };
+      if (!controller.signal.aborted) setToolMetricsResponse(data);
+    } catch {
+      if (!controller.signal.aborted) { setSectionErrors((current) => ({ ...current, telemetry: "As métricas do MCP estão indisponíveis no momento." })); setToolMetricsResponse({ status: "unavailable", data: null }); }
+    } finally { finishRequest("telemetry", controller); }
+  }
+
+  async function loadTokenLifetime() {
+    if (!openSectionsRef.current.tokenLifetime) return;
+    const controller = beginRequest("tokenLifetime");
+    try {
+      const response = await fetch("/api/admin/token-lifetime", { cache: "no-store", signal: controller.signal });
+      if (!response.ok) throw new Error("Não foi possível carregar a configuração de expiração.");
+      const settings = await response.json() as { accessTokenLifetimeMs?: number };
+      if (!controller.signal.aborted && Number.isSafeInteger(settings.accessTokenLifetimeMs)) setTokenLifetimeDraft(String(settings.accessTokenLifetimeMs));
+    } catch {
+      if (!controller.signal.aborted) { setSectionErrors((current) => ({ ...current, tokenLifetime: "Não foi possível carregar a configuração de expiração." })); notify("Não foi possível carregar a configuração de expiração.", "error"); }
+    } finally { finishRequest("tokenLifetime", controller); }
+  }
+
+  function clearSectionData(section: AdminSectionKey) {
+    setSectionErrors((current) => ({ ...current, [section]: undefined }));
+    if (section === "team") setUsers([]);
+    if (section === "supabase") { setOverview(null); setRecentImportsPage(0); }
+    if (section === "telemetry") setToolMetricsResponse(null);
+    if (section === "tokenLifetime") setTokenLifetimeDraft(String(DEFAULT_ACCESS_TOKEN_LIFETIME_MS));
+  }
+
+  function toggleSection(section: AdminSectionKey) {
+    const willOpen = !openSectionsRef.current[section];
+    const next = { ...openSectionsRef.current, [section]: willOpen };
+    openSectionsRef.current = next;
+    setOpenSections(next);
+    if (willOpen) {
+      if (section === "team") void loadUsers();
+      if (section === "supabase") void loadOverview();
+      if (section === "telemetry") void loadToolMetrics();
+      if (section === "tokenLifetime") void loadTokenLifetime();
+      return;
     }
-  }, [notify]);
-  useEffect(() => { void load(); }, [load]);
+    requests.current[section]?.abort();
+    requests.current[section] = undefined;
+    setLoadingSections((current) => ({ ...current, [section]: false }));
+    clearSectionData(section);
+  }
+
+  useEffect(() => () => { Object.values(requests.current).forEach((controller) => controller?.abort()); }, []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault(); setToast(null); setAddingUser(true);
@@ -139,7 +216,7 @@ export default function UserAdminPanel() {
       const response = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       const data = await response.json();
       if (!response.ok) { notify(data.error ?? "Não foi possível cadastrar.", "error"); return; }
-      setEmail(""); notify("Acesso liberado. A pessoa deverá autorizar as permissões no ChatGPT.", "success"); await load();
+      setEmail(""); notify("Acesso liberado. A pessoa deverá autorizar as permissões no ChatGPT.", "success"); await loadUsers();
     } catch {
       notify("Não foi possível cadastrar. Tente novamente.", "error");
     } finally {
@@ -154,7 +231,7 @@ export default function UserAdminPanel() {
       const response = await fetch("/api/admin/users", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
       const data = await response.json();
       if (!response.ok) { notify(data.error ?? "Não foi possível remover.", "error"); return; }
-      notify("Acesso removido.", "success"); await load();
+      notify("Acesso removido.", "success"); await loadUsers();
     } catch {
       notify("Não foi possível remover. Tente novamente.", "error");
     } finally {
@@ -170,7 +247,7 @@ export default function UserAdminPanel() {
       const data = await response.json() as { error?: string };
       if (!response.ok) { notify(data.error ?? "Não foi possível deslogar a conta.", "error"); return; }
       notify(`Sessões de ${target.email} encerradas. A conta deverá se autenticar novamente.`, "success");
-      await load();
+      await loadUsers();
     } catch {
       notify("Não foi possível deslogar a conta. Tente novamente.", "error");
     } finally {
@@ -187,7 +264,7 @@ export default function UserAdminPanel() {
       if (!response.ok) { notify(data.error ?? "Não foi possível atualizar a permissão.", "error"); return; }
       const reconnect = enabled && !target.tokenScopes.includes(scope);
       notify(enabled ? reconnect ? `Permissão ativada. ${target.email} precisa reconectar para recebê-la no token.` : "Permissão ativada." : "Permissão desativada imediatamente.", "success");
-      await load();
+      await loadUsers();
     } catch {
       notify("Não foi possível atualizar a permissão. Tente novamente.", "error");
     } finally {
@@ -233,15 +310,18 @@ export default function UserAdminPanel() {
       <p className="toast-message">{toast.message}</p>
       <button className="toast-dismiss" type="button" onClick={() => setToast(null)} aria-label="Fechar aviso">×</button>
     </div> : null}
-    <section className="admin-section" aria-labelledby="team-title">
-      <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div></div>
+    <section className={`admin-section admin-section-collapsible${openSections.team ? " is-open" : ""}`} aria-labelledby="team-title">
+      <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div><button className="admin-section-toggle" type="button" aria-expanded={openSections.team} aria-controls="team-section-content" aria-label={`${openSections.team ? "Recolher" : "Expandir"} ${sectionTitles.team}`} onClick={() => toggleSection("team")}><span aria-hidden="true">{openSections.team ? "−" : "+"}</span></button></div>
+      {openSections.team ? <div id="team-section-content" className="admin-section-body" aria-busy={loadingSections.team}>
       <p className="section-description">Gerencie separadamente as permissões de cada conta. Desativar um escopo bloqueia seu uso imediatamente; ativar um escopo ausente do token exige reconexão no ChatGPT.</p>
       <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit" disabled={addingUser}>{addingUser && <LoadingSpinner label="Liberando acesso" compact />}{addingUser ? "Liberando…" : "Liberar acesso"}</button></form>
-      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{loading && users.length === 0 ? <div className="loading-message"><LoadingSpinner label="Carregando contas autorizadas" />Carregando contas…</div> : users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.tokenScopes.length ? item.tokenScopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span><div className="user-scope-controls" aria-label={`Permissões de ${item.email}`}><strong>Permissões</strong>{editableScopes.map((scope) => { const enabled = item.enabledScopes.includes(scope); const busyKey = `scope:${item.email}:${scope}`; const description = scopeDescriptions[scope]; return <label className="scope-toggle" key={scope} title={description} data-tooltip={description}><input type="checkbox" checked={enabled} disabled={Boolean(busy)} aria-label={`${enabled ? "Desativar" : "Ativar"} ${scope} para ${item.email}`} onChange={(event) => void setScope(item, scope, event.target.checked)} /><span className="scope-name">{scope}</span>{busy === busyKey ? <LoadingSpinner label={`Salvando ${scope}`} compact /> : null}</label>; })}</div></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={Boolean(busy)} aria-label={busy === `logout:${item.email}` ? `Deslogando ${item.email}` : `Deslogar ${item.email}`}>{busy === `logout:${item.email}` && <LoadingSpinner label={`Deslogando ${item.email}`} compact />}Deslogar</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={Boolean(busy)} aria-label={busy === `remove:${item.email}` ? `Removendo ${item.email}` : `Remover ${item.email}`}>{busy === `remove:${item.email}` && <LoadingSpinner label={`Removendo ${item.email}`} compact />}Remover</button></div></div>)}{!loading && users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
+      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{loadingSections.team && users.length === 0 ? <div className="loading-message"><LoadingSpinner label="Carregando contas autorizadas" />Carregando contas…</div> : sectionErrors.team ? <div className="empty-state" role="alert">{sectionErrors.team} <button type="button" onClick={() => void loadUsers()}>Tentar novamente</button></div> : users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.tokenScopes.length ? item.tokenScopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span><div className="user-scope-controls" aria-label={`Permissões de ${item.email}`}><strong>Permissões</strong>{editableScopes.map((scope) => { const enabled = item.enabledScopes.includes(scope); const busyKey = `scope:${item.email}:${scope}`; const description = scopeDescriptions[scope]; return <label className="scope-toggle" key={scope} title={description} data-tooltip={description}><input type="checkbox" checked={enabled} disabled={Boolean(busy)} aria-label={`${enabled ? "Desativar" : "Ativar"} ${scope} para ${item.email}`} onChange={(event) => void setScope(item, scope, event.target.checked)} /><span className="scope-name">{scope}</span>{busy === busyKey ? <LoadingSpinner label={`Salvando ${scope}`} compact /> : null}</label>; })}</div></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={Boolean(busy)} aria-label={busy === `logout:${item.email}` ? `Deslogando ${item.email}` : `Deslogar ${item.email}`}>{busy === `logout:${item.email}` && <LoadingSpinner label={`Deslogando ${item.email}`} compact />}Deslogar</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={Boolean(busy)} aria-label={busy === `remove:${item.email}` ? `Removendo ${item.email}` : `Remover ${item.email}`}>{busy === `remove:${item.email}` && <LoadingSpinner label={`Removendo ${item.email}`} compact />}Remover</button></div></div>)}{!loadingSections.team && !sectionErrors.team && users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
+      </div> : <div id="team-section-content" hidden />}
     </section>
-    <section className="admin-section" aria-labelledby="connection-title">
-      <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading && <LoadingSpinner label="Atualizando painel" compact />}{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
-      <div className="connection-card">
+    <section className={`admin-section admin-section-collapsible${openSections.supabase ? " is-open" : ""}`} aria-labelledby="connection-title">
+      <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><div className="admin-section-actions">{openSections.supabase ? <button className="refresh-button" type="button" onClick={() => void loadOverview()} disabled={loadingSections.supabase}>{loadingSections.supabase && <LoadingSpinner label="Atualizando painel" compact />}{loadingSections.supabase ? "Atualizando…" : "Atualizar painel"}</button> : null}<button className="admin-section-toggle" type="button" aria-expanded={openSections.supabase} aria-controls="supabase-section-content" aria-label={`${openSections.supabase ? "Recolher" : "Expandir"} ${sectionTitles.supabase}`} onClick={() => toggleSection("supabase")}><span aria-hidden="true">{openSections.supabase ? "−" : "+"}</span></button></div></div>
+      {openSections.supabase ? <div id="supabase-section-content" className="admin-section-body" aria-busy={loadingSections.supabase}>
+      {sectionErrors.supabase && !overview ? <p className="quiet-message" role="alert">{sectionErrors.supabase} <button type="button" onClick={() => void loadOverview()}>Tentar novamente</button></p> : !overview && loadingSections.supabase ? <p className="quiet-message loading-message"><LoadingSpinner label="Consultando conexão e indicadores" />Consultando Supabase…</p> : overview ? <><div className="connection-card">
         <span className={`connection-indicator ${overview?.connection.status === "online" ? "is-online" : "is-offline"}`} />
         <div className="connection-copy"><strong>{!overview ? "Verificando conexão" : overview.connection.status === "online" ? "Conexão disponível" : "Conexão indisponível"}</strong><span>{overview ? connectionDiagnostics[overview.connection.diagnostic] : "Consultando Data API do schema Beta"}</span></div>
         <span className="connection-latency">{overview?.connection.latencyMs === null || !overview ? "—" : `${overview.connection.latencyMs} ms`}</span>
@@ -257,12 +337,15 @@ export default function UserAdminPanel() {
           </> : <p className="quiet-message">Nenhuma importação registrada.</p>}</section>
         </div>
       </> : <p className={overview?.knowledge.status === "unavailable" ? "quiet-message" : "quiet-message loading-message"}>{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Consulte o diagnóstico acima para identificar o próximo passo." : <><LoadingSpinner label="Carregando indicadores do conhecimento" />Carregando indicadores do conhecimento…</>}</p>}
+      </> : null}
+      </div> : <div id="supabase-section-content" hidden />}
     </section>
 
-    <section className="admin-section" aria-labelledby="telemetry-title">
-      <div className="section-title"><div><span className="panel-heading">ATIVIDADE DO MCP</span><h2 id="telemetry-title">Uso e erros</h2></div></div>
+    <section className={`admin-section admin-section-collapsible${openSections.telemetry ? " is-open" : ""}`} aria-labelledby="telemetry-title">
+      <div className="section-title"><div><span className="panel-heading">ATIVIDADE DO MCP</span><h2 id="telemetry-title">Uso e erros</h2></div><button className="admin-section-toggle" type="button" aria-expanded={openSections.telemetry} aria-controls="telemetry-section-content" aria-label={`${openSections.telemetry ? "Recolher" : "Expandir"} ${sectionTitles.telemetry}`} onClick={() => toggleSection("telemetry")}><span aria-hidden="true">{openSections.telemetry ? "−" : "+"}</span></button></div>
+      {openSections.telemetry ? <div id="telemetry-section-content" className="admin-section-body" aria-busy={loadingSections.telemetry}>
       <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site.</p>
-      {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message loading-message"><LoadingSpinner label="Carregando métricas do MCP" />Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
+      {loadingSections.telemetry && !toolMetrics ? <p className="quiet-message loading-message"><LoadingSpinner label="Carregando métricas do MCP" />Carregando métricas do MCP…</p> : toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message" role="alert">{sectionErrors.telemetry ?? "As métricas do MCP estão indisponíveis no momento."} <button type="button" onClick={() => void loadToolMetrics()}>Tentar novamente</button></p> : !toolMetrics ? <p className="quiet-message">As métricas ainda não foram carregadas.</p> : <div className="admin-data-grid telemetry-grid">
         <div className="period-comparison-grid" aria-label="Comparação dos últimos 30 dias com os 30 dias anteriores">
           <div className="period-metric"><span>CHAMADAS · 30 DIAS</span><strong>{toolMetrics.periodComparison.current.calls.toLocaleString("pt-BR")}</strong><small className="comparison-neutral">{comparisonLabel(toolMetrics.periodComparison.current.calls, toolMetrics.periodComparison.previous.calls)}</small><small>{toolMetrics.periodComparison.previous.calls.toLocaleString("pt-BR")} no período anterior</small></div>
           <div className="period-metric"><span>ERROS · 30 DIAS</span><strong>{toolMetrics.periodComparison.current.errors.toLocaleString("pt-BR")}</strong><small className={`comparison-${comparisonTone(toolMetrics.periodComparison.current.errors, toolMetrics.periodComparison.previous.errors, true)}`}>{comparisonLabel(toolMetrics.periodComparison.current.errors, toolMetrics.periodComparison.previous.errors)}</small><small>{toolMetrics.periodComparison.previous.errors.toLocaleString("pt-BR")} no período anterior</small></div>
@@ -324,16 +407,21 @@ export default function UserAdminPanel() {
           </> : <p className="quiet-message">Ainda não há durações suficientes registradas neste período.</p>}
         </section>
       </div>}
+      </div> : <div id="telemetry-section-content" hidden />}
     </section>
 
-    <section className="admin-section" aria-labelledby="token-lifetime-title">
-      <div className="section-title"><div><span className="panel-heading">SEGURANÇA DA SESSÃO</span><h2 id="token-lifetime-title">Expiração do access token</h2></div></div>
+    <section className={`admin-section admin-section-collapsible${openSections.tokenLifetime ? " is-open" : ""}`} aria-labelledby="token-lifetime-title">
+      <div className="section-title"><div><span className="panel-heading">SEGURANÇA DA SESSÃO</span><h2 id="token-lifetime-title">Expiração do access token</h2></div><button className="admin-section-toggle" type="button" aria-expanded={openSections.tokenLifetime} aria-controls="token-lifetime-section-content" aria-label={`${openSections.tokenLifetime ? "Recolher" : "Expandir"} ${sectionTitles.tokenLifetime}`} onClick={() => toggleSection("tokenLifetime")}><span aria-hidden="true">{openSections.tokenLifetime ? "−" : "+"}</span></button></div>
+      {openSections.tokenLifetime ? <div id="token-lifetime-section-content" className="admin-section-body" aria-busy={loadingSections.tokenLifetime}>
+      {loadingSections.tokenLifetime ? <p className="quiet-message loading-message"><LoadingSpinner label="Carregando validade do access token" />Carregando configuração…</p> : sectionErrors.tokenLifetime ? <p className="quiet-message" role="alert">{sectionErrors.tokenLifetime} <button type="button" onClick={() => void loadTokenLifetime()}>Tentar novamente</button></p> : <>
       <p className="section-description">Define a validade em milissegundos para access tokens novos e renovados. Tokens já emitidos mantêm a expiração atual; refresh tokens continuam com validade própria de até 90 dias.</p>
       <form onSubmit={saveTokenLifetime} className="user-form">
         <div className="input-wrap"><input aria-label="Validade do access token em milissegundos" type="number" min={MIN_ACCESS_TOKEN_LIFETIME_MS} max={MAX_ACCESS_TOKEN_LIFETIME_MS} step="1" value={tokenLifetimeDraft} onChange={(event) => setTokenLifetimeDraft(event.target.value)} required /><span aria-hidden="true">ms</span></div>
         <button type="submit" disabled={savingTokenLifetime}>{savingTokenLifetime && <LoadingSpinner label="Salvando validade" compact />}{savingTokenLifetime ? "Salvando…" : "Salvar validade"}</button>
       </form>
       <p className="quiet-message">Limite permitido: {MIN_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} a {MAX_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms. O padrão é {DEFAULT_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms.</p>
+      </>}
+      </div> : <div id="token-lifetime-section-content" hidden />}
     </section>
 
   </div>;

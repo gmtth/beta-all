@@ -36,6 +36,12 @@ export type RefreshTokenGrant = {
   accessExpiresAt: number;
 };
 
+export type UserTokenRevocation = {
+  accessTokens: number;
+  authorizationCodes: number;
+  refreshTokens: number;
+};
+
 type StoredRefreshToken = {
   family_id: string;
   client_id: string;
@@ -51,6 +57,20 @@ type StoredRefreshToken = {
 
 function changes(result: { meta?: { changes?: number } } | undefined) {
   return Number(result?.meta?.changes ?? 0);
+}
+
+export async function revokeUserTokens(database: TokenGrantDatabase, userEmail: string, now: number): Promise<UserTokenRevocation> {
+  const email = userEmail.trim().toLowerCase();
+  const results = await database.batch([
+    database.prepare("UPDATE oauth_refresh_tokens SET revoked_at = ? WHERE lower(trim(user_email)) = ? AND revoked_at IS NULL").bind(now, email),
+    database.prepare("DELETE FROM oauth_tokens WHERE lower(trim(user_email)) = ?").bind(email),
+    database.prepare("DELETE FROM oauth_codes WHERE lower(trim(user_email)) = ?").bind(email),
+  ]);
+  return {
+    refreshTokens: changes(results[0]),
+    accessTokens: changes(results[1]),
+    authorizationCodes: changes(results[2]),
+  };
 }
 
 export async function createAuthorizationCodeGrant(database: TokenGrantDatabase, grant: AuthorizationCodeGrant) {

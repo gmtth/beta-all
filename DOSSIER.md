@@ -13,9 +13,9 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 | Componente | Local canônico | Origem da importação | Estado |
 |---|---|---|---|
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
-| MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; dossier completo junto ao componente |
+| MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; rota de “Deslogar” corrigida e publicada no Sites v84; smoke sem identidade retorna 401, sem revogar tokens |
 | Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos Supabase publicado no Sites v79; gráficos MCP no D1 publicados na v80; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
-| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; `sites:workflow` isola o helper e faz pré-voo; versão 81 publicada com sucesso |
+| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; versão 84 publicada com sucesso; correção permanente do helper Windows continua pendente |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
 
@@ -43,6 +43,16 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - O commit de fonte independente do Sites é `a231c84b31124890aec03f03c6d92daa93d7db86`; o build Vinext passou antes de empacotar e publicar. A migration D1 `0002_oauth_refresh_tokens.sql` foi incluída no pacote; a presença das tabelas no D1 não foi inspecionada separadamente após o deploy.
 - A versão adiciona `securitySchemes` por ferramenta, metadados OAuth, desafio de reconexão e refresh token rotativo. O ciclo de reconexão em uma conversa real do ChatGPT continua sem validação.
 - O helper Sites instalado teve incompatibilidade no Windows ao montar o comando npm e localizar `tar.exe`. Para concluir a publicação foi usada uma cópia temporária dos helpers com ajustes de quoting e caminho do tar; nada foi alterado no plugin instalado. Corrigir esse caminho no workflow do monorepo antes da próxima publicação.
+
+### Validade de access token configurável (2026-10-21)
+
+- A PR #3 foi aberta na branch `codex/admin-access-token-expiration`; commit GitHub `efec8f8b8d4468141ce633377785f706be66af27`. A PR continua aberta, não mesclada.
+- O painel master permite configurar em milissegundos a validade de access tokens novos e renovados. O padrão permanece em 30 dias, com limites de um minuto a 30 dias. Tokens já emitidos preservam sua expiração gravada; refresh tokens mantêm a validade própria de até 90 dias.
+- A migration D1 `0003_oauth_settings.sql` e a inicialização idempotente da tabela `oauth_settings` fazem parte do runtime. Testes de migration, padrão, gravação e limites passaram; `npm test` passou (build e 10 testes do projeto) e 11 testes OAuth focados passaram.
+- Publicação Sites v83 concluída com status `succeeded`, deployment `appgdep_6ad8d27565208191984e249fbed0e4c2`, fonte Sites `1020fc078f7414868b44209a4c80097e9b0831f4`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A audiência pública existente foi preservada. v83 exibia o botão mas o endpoint retornava 404; v84 inclui a rota corrigida.
+- O envio e empacotamento exigiram cópia temporária isolada do helper: o build Vinext passou, mas o helper instalado falhou no quoting do npm, caminho auxiliar do pacote e localização do tar no Windows. Nenhum arquivo do plugin instalado foi alterado. A correção permanente do workflow segue pendente no dossier MCP.
+- Falta mesclar a PR #3 e executar smoke test autenticado como master no painel publicado; ainda não foi testada uma alteração real do TTL na interface em produção.
+- O endpoint `POST /api/admin/users/logout` retornou 404 na v83 (request `b719147d…`). A rota foi sincronizada ao checkout do Site e publicada na v84; commit da fonte Sites `2c6860511760c6a5b988bf3c5205536033fc65dd`, deployment `appgdep_6ad8db1b112c8191b7f74972c426f50f`. Smoke sem identidade retornou 401 `unauthorized`, confirmando que a rota existe; nenhum token foi revogado. O código está no commit `1f22bff` da branch `codex/admin-access-token-expiration`, PR #3. Ver pendências no dossier MCP.
 
 ## Migração e rastreabilidade
 
@@ -88,6 +98,8 @@ Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 teste
 
 | Prioridade | Item | Estado / condição para conclusão |
 |---|---|---|
+| Alta | Mesclar a PR #3 da configuração da validade de access tokens e validar o campo como master. | Código publicado no Sites v82 (`1c8a611c656c2582dcc87a4b17d93422fe58f464`); branch GitHub `codex/admin-access-token-expiration`, PR #3 aberta. Após merge, conferir que o painel carrega o valor, salvar um TTL de teste e confirmar resposta persistida; restaurar o valor desejado pelo master. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
+| Alta | Testar logout e reautenticação com uma conta descartável. | Sites v84 implantado; `POST` sem identidade retorna 401, confirmando a rota sem executar revogação. Não testar com contas reais. |
 | Alta | Validar o ciclo nativo de reconexão OAuth no ChatGPT. | Etapas 1–5 foram mescladas pela PR #2 e publicadas no Sites v81; falta testar expiração, refresh, revogação, reconexão e repetição da operação em conversa real. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
 | Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |
 | Média | Corrigir o workflow Windows de build/empacotamento do Sites. | A publicação v81 exigiu ajustes temporários no helper copiado para resolver quoting do `npm` e encontrar `tar.exe`; fazer o wrapper do monorepo concluir build, pacote e publicação sem editar a instalação do plugin. |

@@ -2,14 +2,14 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { DatabaseSync, type SQLInputValue } from "node:sqlite";
 import { test } from "node:test";
-import { createAuthorizationCodeGrant, rotateRefreshToken, type TokenGrantDatabase } from "../app/oauth/token-grants.js";
+import { createAuthorizationCodeGrant, revokeUserTokens, rotateRefreshToken, type TokenGrantDatabase } from "../app/oauth/token-grants.js";
 
 type BoundStatement = { sql: string; values: SQLInputValue[] };
 
 function testDatabase() {
   const sqlite = new DatabaseSync(":memory:");
   sqlite.exec(`
-    CREATE TABLE oauth_codes (code_hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL);
+    CREATE TABLE oauth_codes (code_hash TEXT PRIMARY KEY, user_email TEXT, expires_at INTEGER NOT NULL);
     CREATE TABLE oauth_users (email TEXT PRIMARY KEY, active INTEGER NOT NULL);
     CREATE TABLE oauth_tokens (token_hash TEXT PRIMARY KEY, client_id TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT, scope TEXT NOT NULL, resource TEXT, family_id TEXT, expires_at INTEGER NOT NULL);
     CREATE TABLE oauth_refresh_tokens (token_hash TEXT PRIMARY KEY, family_id TEXT NOT NULL, client_id TEXT NOT NULL, user_id TEXT NOT NULL, user_email TEXT NOT NULL, scope TEXT NOT NULL, resource TEXT NOT NULL, expires_at INTEGER NOT NULL, created_at INTEGER NOT NULL, consumed_at INTEGER, replaced_by_hash TEXT, revoked_at INTEGER);
@@ -64,6 +64,31 @@ test("the D1 migration adds refresh-family storage to the existing OAuth token s
     assert.ok(refreshColumns.includes("replaced_by_hash"));
     assert.ok(refreshColumns.includes("revoked_at"));
   } finally { sqlite.close(); }
+});
+
+test("admin logout revokes every token and pending code for one user without removing account access", async () => {
+  const database = testDatabase();
+  try {
+    seedRefreshGrant(database);
+    database.sqlite.prepare("INSERT INTO oauth_users (email, active) VALUES (?, 1)").run("other@example.com");
+    database.sqlite.prepare("INSERT INTO oauth_tokens (token_hash, client_id, user_id, user_email, scope, resource, family_id, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)")
+      .run("other-access", "movidesk-mcp-app", "user-2", "other@example.com", "movidesk:read", "https://beta.example/mcp/", null, 5000);
+    database.sqlite.prepare("INSERT INTO oauth_refresh_tokens (token_hash, family_id, client_id, user_id, user_email, scope, resource, expires_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)")
+      .run("other-refresh", "family-2", "movidesk-mcp-app", "user-2", "other@example.com", "movidesk:read offline_access", "https://beta.example/mcp/", 10_000, 100);
+    database.sqlite.prepare("INSERT INTO oauth_codes (code_hash, user_email, expires_at) VALUES (?, ?, ?)").run("pending-code", "analyst@example.com", 5000);
+    database.sqlite.prepare("INSERT INTO oauth_codes (code_hash, user_email, expires_at) VALUES (?, ?, ?)").run("other-code", "other@example.com", 5000);
+
+    const revoked = await revokeUserTokens(database, " Analyst@Example.com ", 200);
+
+    assert.deepEqual(revoked, { accessTokens: 1, authorizationCodes: 1, refreshTokens: 1 });
+    assert.equal(database.sqlite.prepare("SELECT COUNT(*) AS count FROM oauth_tokens WHERE lower(trim(user_email)) = ?").get("analyst@example.com")?.count, 0);
+    assert.equal(database.sqlite.prepare("SELECT revoked_at FROM oauth_refresh_tokens WHERE token_hash = ?").get("old-refresh")?.revoked_at, 200);
+    assert.equal(database.sqlite.prepare("SELECT COUNT(*) AS count FROM oauth_codes WHERE user_email = ?").get("analyst@example.com")?.count, 0);
+    assert.equal(database.sqlite.prepare("SELECT active FROM oauth_users WHERE email = ?").get("analyst@example.com")?.active, 1);
+    assert.equal(database.sqlite.prepare("SELECT COUNT(*) AS count FROM oauth_tokens WHERE user_email = ?").get("other@example.com")?.count, 1);
+    assert.equal(database.sqlite.prepare("SELECT revoked_at FROM oauth_refresh_tokens WHERE token_hash = ?").get("other-refresh")?.revoked_at, null);
+    assert.equal(database.sqlite.prepare("SELECT COUNT(*) AS count FROM oauth_codes WHERE user_email = ?").get("other@example.com")?.count, 1);
+  } finally { database.close(); }
 });
 
 test("authorization code exchange creates a hashed-token grant only once", async () => {

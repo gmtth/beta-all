@@ -1,5 +1,15 @@
 import type { KnowledgeStore, KnowledgeSourceSummary } from "./knowledge-tools";
 import type { MovideskKnowledgeRecord } from "./knowledge-ingest";
+import {
+  DATABASE_BROWSER_TABLES,
+  isDatabaseBrowserTable,
+  isDatabasePreviewTable,
+  parseDatabaseCursor,
+  parseDatabasePageSize,
+  sanitizeDatabasePreviewRows,
+  type DatabaseBrowserTable,
+  type DatabasePreviewTable,
+} from "./database-browser-contract";
 import { KnowledgeImportError } from "./knowledge-import-errors";
 
 const safeText = (value: unknown) => typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : null;
@@ -17,10 +27,123 @@ export type KnowledgeAdminOverview = {
 
 export type KnowledgeOverviewDiagnostic = "available" | "configuration_missing" | "rpc_not_found" | "permission_denied" | "rate_limited" | "service_error" | "request_rejected" | "timeout" | "network_error" | "invalid_response";
 
+export type DatabasePrivilege = { role: string; privileges: string[] };
+export type DatabaseBrowserSchema = {
+  schema: { name: "beta"; grants: DatabasePrivilege[] };
+  missingTables: DatabaseBrowserTable[];
+  tables: Array<{
+    key: DatabaseBrowserTable;
+    previewAllowed: boolean;
+    columns: Array<{ name: string; position: number; type: string; nullable: boolean; generated: boolean }>;
+    constraints: Array<{ name: string; type: "PRIMARY KEY" | "FOREIGN KEY" | "UNIQUE"; columns: string[]; referencedTable: string | null; referencedColumns: string[] | null }>;
+    indexes: Array<{ name: string; method: string; unique: boolean; columns: string[] }>;
+    rls: { enabled: boolean; policies: Array<{ name: string; command: "SELECT" | "INSERT" | "UPDATE" | "DELETE" | "ALL" }> };
+    grants: DatabasePrivilege[];
+  }>;
+  rpcs: Array<{ name: string; securityDefiner: boolean; executeRoles: string[] }>;
+};
+export type DatabaseBrowserPage = { table: DatabasePreviewTable; rows: Array<Record<string, string | number | boolean | null>>; nextCursor: string | null; pageSize: number };
+export type DatabaseBrowserDiagnostic = "configuration_missing" | "rpc_not_found" | "permission_denied" | "rate_limited" | "service_error" | "request_rejected" | "timeout" | "network_error" | "invalid_response";
+
 export class KnowledgeOverviewError extends Error {
   constructor(readonly diagnostic: Exclude<KnowledgeOverviewDiagnostic, "available">) {
     super("Supabase admin overview is unavailable.");
   }
+}
+
+export class DatabaseBrowserError extends Error {
+  constructor(readonly diagnostic: DatabaseBrowserDiagnostic) {
+    super("Supabase database browser is unavailable.");
+  }
+}
+
+function databaseBrowserDiagnosticForStatus(status: number): DatabaseBrowserDiagnostic {
+  return status === 404 ? "rpc_not_found"
+    : status === 401 || status === 403 ? "permission_denied"
+      : status === 429 ? "rate_limited"
+        : status >= 500 ? "service_error" : "request_rejected";
+}
+
+const boundedCatalogText = (value: unknown, max = 120): string | null => typeof value === "string" && value.length > 0 && value.length <= max ? value : null;
+const isObject = (value: unknown): value is Record<string, unknown> => Boolean(value) && typeof value === "object" && !Array.isArray(value);
+const parsePrivileges = (value: unknown): DatabasePrivilege[] | null => {
+  if (!Array.isArray(value)) return null;
+  const result: DatabasePrivilege[] = [];
+  for (const item of value) {
+    if (!isObject(item) || !Array.isArray(item.privileges)) return null;
+    const role = boundedCatalogText(item.role, 63);
+    const privileges = item.privileges.map((privilege) => boundedCatalogText(privilege, 32));
+    if (!role || privileges.some((privilege) => !privilege)) return null;
+    result.push({ role, privileges: privileges as string[] });
+  }
+  return result;
+};
+
+function parseDatabaseBrowserSchema(value: unknown): DatabaseBrowserSchema | null {
+  if (!isObject(value) || !isObject(value.schema) || value.schema.name !== "beta" || !Array.isArray(value.missing_tables) || !Array.isArray(value.tables) || !Array.isArray(value.rpcs)) return null;
+  const schemaGrants = parsePrivileges(value.schema.grants);
+  if (!schemaGrants) return null;
+  const missingTables = value.missing_tables.map((table) => isDatabaseBrowserTable(table) ? table : null);
+  if (missingTables.some((table) => !table) || new Set(missingTables).size !== missingTables.length) return null;
+  const tables: DatabaseBrowserSchema["tables"] = [];
+  const seen = new Set<DatabaseBrowserTable>();
+  for (const item of value.tables) {
+    if (!isObject(item) || !isDatabaseBrowserTable(item.key) || seen.has(item.key) || typeof item.preview_allowed !== "boolean" || !Array.isArray(item.columns) || !Array.isArray(item.constraints) || !Array.isArray(item.indexes) || !isObject(item.rls) || typeof item.rls.enabled !== "boolean") return null;
+    const tableKey = item.key;
+    const expectedPreview = tableKey !== "record_chunk";
+    if (item.preview_allowed !== expectedPreview) return null;
+    const grants = parsePrivileges(item.grants);
+    if (!grants) return null;
+    const columns: DatabaseBrowserSchema["tables"][number]["columns"] = [];
+    for (const column of item.columns) {
+      if (!isObject(column)) return null;
+      const name = boundedCatalogText(column.name, 63);
+      const type = boundedCatalogText(column.type, 128);
+      if (!name || !type || !Number.isInteger(column.position) || typeof column.nullable !== "boolean" || typeof column.generated !== "boolean") return null;
+      columns.push({ name, position: column.position as number, type, nullable: column.nullable, generated: column.generated });
+    }
+    const constraints: DatabaseBrowserSchema["tables"][number]["constraints"] = [];
+    for (const constraint of item.constraints) {
+      if (!isObject(constraint) || !Array.isArray(constraint.columns)) return null;
+      const name = boundedCatalogText(constraint.name, 120);
+      const type = constraint.type;
+      const columns = constraint.columns.map((column) => boundedCatalogText(column, 63));
+      const referencedTable = constraint.referenced_table === null ? null : boundedCatalogText(constraint.referenced_table, 128);
+      const referencedColumns = constraint.referenced_columns === null ? null : Array.isArray(constraint.referenced_columns) ? constraint.referenced_columns.map((column) => boundedCatalogText(column, 63)) : undefined;
+      if (!name || (type !== "PRIMARY KEY" && type !== "FOREIGN KEY" && type !== "UNIQUE") || columns.some((column) => !column) || referencedTable === undefined || referencedColumns === undefined || referencedColumns?.some((column) => !column)) return null;
+      constraints.push({ name, type, columns: columns as string[], referencedTable, referencedColumns: referencedColumns as string[] | null });
+    }
+    const indexes: DatabaseBrowserSchema["tables"][number]["indexes"] = [];
+    for (const index of item.indexes) {
+      if (!isObject(index) || !Array.isArray(index.columns)) return null;
+      const name = boundedCatalogText(index.name, 120);
+      const method = boundedCatalogText(index.method, 32);
+      const columns = index.columns.map((column) => boundedCatalogText(column, 63));
+      if (!name || !method || typeof index.unique !== "boolean" || columns.some((column) => !column)) return null;
+      indexes.push({ name, method, unique: index.unique, columns: columns as string[] });
+    }
+    if (!Array.isArray(item.rls.policies)) return null;
+    const policies: DatabaseBrowserSchema["tables"][number]["rls"]["policies"] = [];
+    for (const policy of item.rls.policies) {
+      if (!isObject(policy)) return null;
+      const name = boundedCatalogText(policy.name, 120);
+      const command = policy.command;
+      if (!name || (command !== "SELECT" && command !== "INSERT" && command !== "UPDATE" && command !== "DELETE" && command !== "ALL")) return null;
+      policies.push({ name, command });
+    }
+    seen.add(tableKey);
+    tables.push({ key: tableKey, previewAllowed: expectedPreview, columns, constraints, indexes, rls: { enabled: item.rls.enabled, policies }, grants });
+  }
+  if (seen.size + missingTables.length !== DATABASE_BROWSER_TABLES.length || DATABASE_BROWSER_TABLES.some(({ key }) => seen.has(key) === missingTables.includes(key))) return null;
+  const rpcs: DatabaseBrowserSchema["rpcs"] = [];
+  for (const item of value.rpcs) {
+    if (!isObject(item) || !Array.isArray(item.execute_roles)) return null;
+    const name = boundedCatalogText(item.name, 100);
+    const executeRoles = item.execute_roles.map((role) => boundedCatalogText(role, 63));
+    if (!name || typeof item.security_definer !== "boolean" || executeRoles.some((role) => !role)) return null;
+    rpcs.push({ name, securityDefiner: item.security_definer, executeRoles: executeRoles as string[] });
+  }
+  return { schema: { name: "beta", grants: schemaGrants }, missingTables: missingTables as DatabaseBrowserTable[], tables, rpcs };
 }
 
 export class SupabaseKnowledgeStore implements KnowledgeStore {
@@ -135,6 +258,98 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
       chunkCount: safeCount(data.chunk_count),
       recentImports,
     };
+  }
+
+  async getAdminDatabaseSchema(): Promise<DatabaseBrowserSchema> {
+    let base: URL;
+    let secretKey: string;
+    try {
+      ({ base, secretKey } = this.configuration());
+    } catch {
+      throw new DatabaseBrowserError("configuration_missing");
+    }
+    const endpoint = new URL("/rest/v1/rpc/get_admin_database_schema", base);
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "Content-Profile": "beta",
+        },
+        body: "{}",
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (error) {
+      const diagnostic = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError") ? "timeout" : "network_error";
+      throw new DatabaseBrowserError(diagnostic);
+    }
+    if (!response.ok) {
+      const diagnostic = databaseBrowserDiagnosticForStatus(response.status);
+      await response.body?.cancel();
+      throw new DatabaseBrowserError(diagnostic);
+    }
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new DatabaseBrowserError("invalid_response");
+    }
+    const schema = parseDatabaseBrowserSchema(payload);
+    if (!schema) throw new DatabaseBrowserError("invalid_response");
+    return schema;
+  }
+
+  async getAdminDatabasePage(tableValue: unknown, pageSizeValue: string | null, cursorValue: string | null): Promise<DatabaseBrowserPage> {
+    if (!isDatabasePreviewTable(tableValue)) throw new DatabaseBrowserError("request_rejected");
+    const pageSize = parseDatabasePageSize(pageSizeValue);
+    const cursor = parseDatabaseCursor(cursorValue);
+    if (pageSize === null || cursor === undefined) throw new DatabaseBrowserError("request_rejected");
+    let base: URL;
+    let secretKey: string;
+    try {
+      ({ base, secretKey } = this.configuration());
+    } catch {
+      throw new DatabaseBrowserError("configuration_missing");
+    }
+    const endpoint = new URL("/rest/v1/rpc/get_admin_database_page", base);
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "Content-Profile": "beta",
+        },
+        body: JSON.stringify({ p_table_key: tableValue, p_page_size: pageSize, p_after_id: cursor }),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch (error) {
+      const diagnostic = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError") ? "timeout" : "network_error";
+      throw new DatabaseBrowserError(diagnostic);
+    }
+    if (!response.ok) {
+      const diagnostic = databaseBrowserDiagnosticForStatus(response.status);
+      await response.body?.cancel();
+      throw new DatabaseBrowserError(diagnostic);
+    }
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      throw new DatabaseBrowserError("invalid_response");
+    }
+    if (!isObject(payload) || payload.table !== tableValue || payload.page_size !== pageSize) throw new DatabaseBrowserError("invalid_response");
+    const rows = sanitizeDatabasePreviewRows(tableValue, payload.rows);
+    const nextCursor = payload.next_cursor === null ? null : parseDatabaseCursor(String(payload.next_cursor));
+    if (!rows || rows.length > pageSize || nextCursor === undefined || (nextCursor !== null && rows.length !== pageSize)) throw new DatabaseBrowserError("invalid_response");
+    return { table: tableValue, rows, nextCursor, pageSize };
   }
 
   async importMovideskTicket(record: MovideskKnowledgeRecord, actorEmail: string): Promise<{ recordId: string; chunkCount: number }> {

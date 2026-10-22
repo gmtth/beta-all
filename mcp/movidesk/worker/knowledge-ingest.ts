@@ -1,3 +1,5 @@
+import { KnowledgeImportError } from "./knowledge-import-errors";
+
 export type KnowledgeChunkInput = { ordinal: number; section_title: string; content: string };
 export type MovideskKnowledgeRecord = {
   external_id: string;
@@ -74,10 +76,10 @@ const dateValue = (value: unknown) => {
 export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expectedTicketId: string): Promise<MovideskKnowledgeRecord> {
   const ticket = Array.isArray(ticketValue) ? objectOf(ticketValue[0]) : objectOf(ticketValue);
   const actualId = scalarText(firstValue(ticket, ["id", "ticketId", "ticket_id"]));
-  if (!actualId || actualId !== expectedTicketId) throw new Error("Ticket do Movidesk não corresponde ao identificador solicitado.");
+  if (!actualId || actualId !== expectedTicketId) throw new KnowledgeImportError("ticket_mismatch");
 
   const title = cleanKnowledgeText(firstValue(ticket, ["subject", "assunto", "title", "titulo"]))?.slice(0, 500);
-  if (!title) throw new Error("O ticket não contém um assunto utilizável.");
+  if (!title) throw new KnowledgeImportError("ticket_missing_title");
 
   const sections: Array<{ title: string; content: string }> = [];
   const description = cleanKnowledgeText(firstValue(ticket, ["initialDescription", "description", "descriptionHtml", "descricao"]));
@@ -90,7 +92,7 @@ export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expecte
       if (text) sections.push({ title: `Interação ${index + 1}`, content: text });
     });
   }
-  if (!sections.length) throw new Error("O ticket não contém descrição ou interações para indexar.");
+  if (!sections.length) throw new KnowledgeImportError("ticket_missing_content");
 
   const attributes: Record<string, string> = {};
   const attributeKeys: Array<[string, string[]]> = [
@@ -108,7 +110,7 @@ export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expecte
   const chunks = sections.flatMap((section) => splitText(section.title, section.content, 0));
   chunks.forEach((chunk, index) => { chunk.ordinal = index; });
   if (chunks.length > MAX_CHUNKS || sections.reduce((sum, section) => sum + section.content.length, title.length) > MAX_RECORD_CHARACTERS) {
-    throw new Error("O ticket excede o limite seguro de tamanho para esta importação piloto.");
+    throw new KnowledgeImportError("ticket_too_large");
   }
   const sourceCreatedAt = dateValue(firstValue(ticket, ["createdDate", "created_at"]));
   const sourceUpdatedAt = dateValue(firstValue(ticket, ["lastUpdate", "updatedDate", "updated_at"]));

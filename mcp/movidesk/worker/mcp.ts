@@ -10,10 +10,17 @@ import { registerMovideskTools, type MovideskReader } from "./mcp-tools";
 import { exposeToolSecuritySchemes, type ToolSecurityScheme } from "./tool-security-schemes";
 import { McpAuthorizationFailure, mcpAuthorizationError, missingMcpAuthorizationResponse } from "./oauth-auth-challenge";
 import { protectedResourceMetadata as buildProtectedResourceMetadata } from "../app/oauth/metadata";
+import { KnowledgeImportError } from "./knowledge-import-errors";
 
 const bearerToken = (authorization: string | null) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
 const json = (data: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
 type TelemetryContext = { waitUntil(promise: Promise<unknown>): void };
+const knowledgeImportDiagnostics = new Set([
+  "ticket_not_found", "movidesk_unavailable", "ticket_mismatch", "ticket_missing_title", "ticket_missing_content", "ticket_too_large",
+  "supabase_configuration", "supabase_rpc_unavailable", "supabase_permission_denied", "supabase_source_not_configured",
+  "supabase_payload_rejected", "supabase_rate_limited", "supabase_unavailable", "supabase_timeout", "supabase_network_error",
+  "supabase_invalid_response", "unexpected",
+]);
 
 function toolErrorCode(value: unknown): string {
   const error = value && typeof value === "object" ? value as { name?: unknown; message?: unknown; content?: unknown } : {};
@@ -21,6 +28,8 @@ function toolErrorCode(value: unknown): string {
   const text = typeof error.message === "string" ? error.message : Array.isArray(error.content)
     ? error.content.map((item) => item && typeof item === "object" && typeof (item as { text?: unknown }).text === "string" ? (item as { text: string }).text : "").join(" ")
     : "";
+  const importDiagnostic = /\(diagnóstico: ([a-z_]+)\)/i.exec(text)?.[1];
+  if (importDiagnostic && knowledgeImportDiagnostics.has(importDiagnostic)) return importDiagnostic;
   if (/timeout|timed out|tempo limite/i.test(`${name} ${text}`)) return "timeout";
   if (/autorização|autorizacao|insuficiente|invalid_token|forbidden/i.test(text)) return "authorization";
   if (/inválid|invalid|informe|obrigatório|obrigatoria/i.test(text)) return "validation";
@@ -97,8 +106,14 @@ class LocalMovideskClient implements MovideskReader {
   async getTicketForKnowledge(id: string, accessToken: string) {
     try { return await this.getTicket(id, accessToken); }
     catch (error) {
-      if (!(error instanceof Error) || !error.message.includes("HTTP 404")) throw error;
-      return this.get("tickets", { id, include_past: true }, accessToken);
+      if (error instanceof McpAuthorizationFailure) throw error;
+      if (!(error instanceof Error) || !error.message.includes("HTTP 404")) throw new KnowledgeImportError("movidesk_unavailable");
+      try { return await this.get("tickets", { id, include_past: true }, accessToken); }
+      catch (pastError) {
+        if (pastError instanceof McpAuthorizationFailure) throw pastError;
+        if (pastError instanceof Error && pastError.message.includes("HTTP 404")) throw new KnowledgeImportError("ticket_not_found");
+        throw new KnowledgeImportError("movidesk_unavailable");
+      }
     }
   }
   searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal) { return this.get("tickets", params, accessToken, signal); }

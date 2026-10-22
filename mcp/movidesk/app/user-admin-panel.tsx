@@ -64,7 +64,9 @@ const toolTitles: Record<string, string> = {
   movidesk_search_people: "Pesquisar pessoas",
   movidesk_list_services: "Listar serviços",
   knowledge_list_sources: "Listar fontes de conhecimento",
+  knowledge_search: "Pesquisar na base de conhecimento",
   knowledge_import_movidesk_ticket: "Importar chamado para a base",
+  beta_record_feedback: "Registrar feedback da Beta",
 };
 const errorTitles: Record<string, string> = {
   tool_error: "A ferramenta retornou uma falha",
@@ -383,14 +385,16 @@ export default function UserAdminPanel() {
           </section>
           <section className="data-card telemetry-card recent-errors-card" aria-labelledby="recent-errors-title">
           <div className="telemetry-heading"><div><h3 id="recent-errors-title">Dez erros mais recentes</h3><span>Retenção de até 90 dias</span></div></div>
-          {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong>{toolTitle(item.toolName)}</strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span><span>{item.userEmail ?? "Conta não identificada"} · {item.durationMs === null ? "Duração indisponível" : `${item.durationMs.toLocaleString("pt-BR")} ms`}{item.httpStatus ? ` · HTTP ${item.httpStatus}` : ""}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
+          {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong className="tool-name-line"><span className="tool-name-friendly">{toolTitle(item.toolName)}</span><code className="tool-name-technical">{item.toolName}</code></strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span><span>{item.userEmail ?? "Conta não identificada"} · {item.durationMs === null ? "Duração indisponível" : `${item.durationMs.toLocaleString("pt-BR")} ms`}{item.httpStatus ? ` · HTTP ${item.httpStatus}` : ""}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
           </section>
         </div>
         <section className="data-card telemetry-card usage-telemetry-card" aria-labelledby="tool-usage-title">
           <div className="telemetry-heading"><div><h3 id="tool-usage-title">Uso por ferramenta</h3><span>Últimos 30 dias · latência média das medições disponíveis</span></div><strong>{toolMetrics.totalCalls.toLocaleString("pt-BR")}</strong></div>
           {toolMetrics.usageByTool.length ? <div className="usage-chart" role="img" aria-label="Chamadas às ferramentas da Beta nos últimos 30 dias">
-            {toolMetrics.usageByTool.map((item) => <div className="usage-bar-row" key={item.toolName} title={`${toolTitle(item.toolName)}: ${item.calls} chamadas, ${item.errors} erros`}>
-              <span className="usage-tool-name" title={`${toolTitle(item.toolName)} · ${item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de sucesso · ${item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms de latência média`}`}>{toolTitle(item.toolName)}<small>{item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% sucesso · {item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms méd.`}</small></span><span className="usage-bar-track"><span className="usage-bar-fill" style={{ width: `${Math.max(2, item.calls / maxToolCalls * 100)}%` }} /></span><strong>{item.calls.toLocaleString("pt-BR")}</strong><small className="usage-error-count">{item.errors} erros</small>
+            {toolMetrics.usageByTool.map((item) => <div className="usage-bar-row" key={item.toolName} title={`${toolTitle(item.toolName)} (${item.toolName}): ${item.calls} calls, ${item.errors} erros`}>
+              <div className="usage-tool-header"><span className="tool-name-line"><span className="tool-name-friendly">{toolTitle(item.toolName)}</span><code className="tool-name-technical">{item.toolName}</code></span><strong>{item.calls.toLocaleString("pt-BR")} calls</strong></div>
+              <div className="usage-metrics"><span>{item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% sucesso</span><span>{item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms méd.`}</span></div>
+              <span className="usage-bar-track"><span className="usage-bar-fill" style={{ width: `${Math.max(2, item.calls / maxToolCalls * 100)}%` }} /></span><small className="usage-error-count">{item.errors} erros</small>
             </div>)}
           </div> : <p className="quiet-message">Ainda não há chamadas registradas neste período.</p>}
         </section>
@@ -398,10 +402,10 @@ export default function UserAdminPanel() {
           <div className="telemetry-heading"><div><h3 id="latency-title">Ferramentas com maior latência</h3><span>P95 e P50 das execuções medidas · últimos 30 dias</span></div></div>
           {toolMetrics.latencyByTool.length ? <>
             <div className="latency-legend"><span><i className="latency-p95-key" />Faixa até P95</span><span><i className="latency-p50-key" />P50 (típica)</span></div>
-            <div className="latency-chart">{toolMetrics.latencyByTool.map((item) => <div className="latency-row" key={item.toolName} title={`${toolTitle(item.toolName)}: P50 ${item.p50Ms.toLocaleString("pt-BR")} ms, P95 ${item.p95Ms.toLocaleString("pt-BR")} ms em ${item.samples} execuções medidas`}>
-              <span className="latency-tool-name">{toolTitle(item.toolName)}<small>{item.samples.toLocaleString("pt-BR")} {item.samples === 1 ? "execução medida" : "execuções medidas"}</small></span>
-              <span className="latency-track"><span className="latency-p95" style={{ width: `${Math.max(2, item.p95Ms / maxLatencyP95 * 100)}%` }}><span className="latency-p50" style={{ width: `${item.p95Ms ? Math.min(100, item.p50Ms / item.p95Ms * 100) : 0}%` }} /></span></span>
+            <div className="latency-chart">{toolMetrics.latencyByTool.map((item) => <div className="latency-row" key={item.toolName} title={`${toolTitle(item.toolName)} (${item.toolName}): P50 ${item.p50Ms.toLocaleString("pt-BR")} ms, P95 ${item.p95Ms.toLocaleString("pt-BR")} ms em ${item.samples} execuções medidas`}>
+              <div className="latency-tool-header"><span className="tool-name-line"><span className="tool-name-friendly">{toolTitle(item.toolName)}</span><code className="tool-name-technical">{item.toolName}</code></span><strong>{item.samples.toLocaleString("pt-BR")} {item.samples === 1 ? "medição" : "medições"}</strong></div>
               <span className="latency-values"><strong>P95 {item.p95Ms.toLocaleString("pt-BR")} ms</strong><small>P50 {item.p50Ms.toLocaleString("pt-BR")} ms</small></span>
+              <span className="latency-track"><span className="latency-p95" style={{ width: `${Math.max(2, item.p95Ms / maxLatencyP95 * 100)}%` }}><span className="latency-p50" style={{ width: `${item.p95Ms ? Math.min(100, item.p50Ms / item.p95Ms * 100) : 0}%` }} /></span></span>
             </div>)}</div>
             <p className="http-status-note">P95 ajuda a perceber lentidão que a média pode esconder. Considere o número de execuções ao comparar ferramentas; amostras pequenas variam mais.</p>
           </> : <p className="quiet-message">Ainda não há durações suficientes registradas neste período.</p>}

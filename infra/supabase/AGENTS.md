@@ -9,6 +9,14 @@ Leia este arquivo e [`DOSSIER.md`](./DOSSIER.md) antes de alterar schema, migrat
 - Preferir RPCs estreitas, seleção explícita de colunas, limites e sanitização. Não fornecer SQL genérico ao browser nem aceitar nome de tabela, coluna ou ordenação livre sem allowlist server-side.
 - A busca e o navegador administrativo são somente leitura. Escritas na base de conhecimento continuam restritas às operações explícitas e auditadas já documentadas.
 
+## Orientação para ações manuais no Supabase
+
+- Sempre que uma tarefa exigir que o usuário altere algo no painel do Supabase — por exemplo, abrir/aplicar uma migration no SQL Editor, configurar secrets, ajustar Data API, grants ou RLS — guie-o passo a passo, com uma ação por vez. Não entregue uma lista longa de passos dependentes de uma vez.
+- Antes da ação, informe o projeto/ambiente esperado, o arquivo ou configuração exatos, o escopo e o efeito previsto. Confirme que a operação não afeta outros projetos quando isso for relevante; nunca presumir que uma migration está limitada ao projeto correto sem conferir seu conteúdo e destino.
+- Dê instruções concretas de navegação e de validação. Em alterações SQL, aponte para a migration versionada e seu rollback correspondente; peça para conferir o project ref antes de executar. Não peça ao usuário para colar ou compartilhar chaves, tokens, connection strings ou dados reais.
+- Após cada etapa que dependa de uma ação do usuário, aguarde o resultado antes de orientar a próxima. Se houver erro, primeiro interprete o erro e determine se é seguro corrigir ou tentar novamente; não recomende execução repetida às cegas.
+- Depois da alteração, oriente uma verificação somente leitura e atualize o estado no dossier com o que foi confirmado. Diferencie claramente instruções locais, alteração executada pelo usuário e comportamento validado em produção.
+
 ## Política de tabelas do navegador Supabase
 
 O navegador planejado para `/admin/database` é uma interface master, somente leitura, com metadados de schema e prévias paginadas. A prévia de linhas de qualquer nova tabela é **negada por padrão**; os metadados estruturais podem ser listados sem expor seus dados. Para permitir linhas de uma tabela futura, revise este arquivo e o dossier Supabase na mesma mudança, com justificativa, campos exatos permitidos e classificação de sensibilidade.

@@ -17,10 +17,10 @@ Snapshot remoto consultado em 2026-10-22:
 | Item | Estado observado | Evidência/limite |
 |---|---|---|
 | Repositório e branch padrão | `gmtth/beta-all`, `main` | Consulta GitHub e remote do clone oficial. |
-| `main` | `d3ee3fd42884402e725b4248a1917c8275bcfc7f` é a base funcional do snapshot de PRs abaixo. | Depois, os commits somente documentais do revisor foram enviados ao GitHub; o head retornado pelo `git push` foi `7d8797e0f0c29b1f5b8231ad82f9fd13db95a889`. Um commit adicional de atualização deste dossier poderá avançar o head; consulte o remoto para o SHA atual. |
-| Checkout usado nesta revisão documental | Clone limpo em `main`, avançado por fast-forward de `32b3f0b`; os documentos do revisor foram commitados e enviados diretamente. | A última sincronização confirmada incluiu somente `AGENTS.md`, `revisor/AGENTS.md` e `revisor/DOSSIER.md`. Existem outros clones/worktrees; não presumir que sejam oficiais nem que estejam limpos. |
+| `main` | `aeaebb4ae51a4a0644d1277ff778fec65ef7e5e7` no início desta rodada. | SHA consultado no `origin/main` local e confrontado com metadados GitHub; após o commit deste dossier, verificar o novo head. |
+| Checkout usado nesta revisão | Clone limpo em `main`; a única alteração local desta rodada é este dossier. | Não houve alteração de código, migration, PR, branch de produto ou Sites. |
 | PRs abertas | #25 e #31; ambas documentais; ambas `mergeable: false` mesmo após o push documental do revisor | Busca GitHub refeita após `7d8797e`, em 2026-10-22; reconsultar antes de repetir. |
-| Cobertura merged | #26, #28–#30 e #32–#36 revisadas em parecer anterior | Proveniência é a conversa de 2026-10-22; inventário total/paginação ainda não reconciliado. |
+| PRs merged | 32 de 32 cobertas até esta rodada | Revisão consolidada registrada em `Histórico de revisões`; diffs e contratos foram consultados, sem executar testes nesta rodada. |
 
 ### PRs abertas no snapshot
 
@@ -29,7 +29,7 @@ Snapshot remoto consultado em 2026-10-22:
 | [#25 — registrar publicação da página de feedback](https://github.com/gmtth/beta-all/pull/25) | Mudança documental: registra merge da #24, sincronização para Sites, publicação v108 e smoke visual autenticado. Head `5ebbf560b8e9c1dee423ac2481fc9422b0248d81`; base reportada `91de48874808cd09fb53a21e82f1ce5bbcd2ac24`; `open`, `mergeable: false`. | Página/painel já estava implementada e publicada segundo a evidência registrada; `main` dizia incorretamente que a mudança não teve PR, merge ou publicação. A PR corrige esse fato no dossier. | **Merge recomendado após atualizar/reconciliar a branch**; sem merge direto porque a base era antiga e o GitHub não a marcava mergeable. |
 | [#31 — baseline de avaliação da busca](https://github.com/gmtth/beta-all/pull/31) | Mudança documental: registra 11 consultas naturais reais e controles exatos, atualização da importação longa, estado de publicação/importação e plano para avaliar ranking. Head `1ebae29eddedfc4e9e1850535734dbb083c78aa7`; base `74c034e6dbc673e78b9a54e3a8dfef6e4b2293bd`; `open`, `mergeable: false`. | A baseline só existia na PR; a #36 já referenciava um artefato de avaliação ausente do `main`. A migration de ranking não estava aplicada e as buscas não tinham sido reavaliadas em produção segundo o registro consultado. | **Merge recomendado após rebase/atualização e reconciliação dos dossiers com mudanças posteriores**; não declarar a busca validada em produção. |
 
-Os pareceres são snapshots da conversa de 2026-10-22, não reviews formais submetidos ao GitHub nem substituto da leitura dos diffs atuais.
+Os pareceres são snapshots de revisão, não reviews formais submetidos ao GitHub. Revalidar findings após alterações posteriores.
 
 ## Decisões vigentes
 
@@ -124,35 +124,82 @@ Este modelo é uma transcrição funcional do padrão pedido, não uma exigênci
 
 Após conferir a solicitação original ponto a ponto, foram detalhados os fatos específicos da #25 e da #31, o formato tabular de PRs abertas e merged e os achados/limites de validação da revisão anterior. Os commits documentais acumulados foram enviados diretamente a `main`, sem PR; o push confirmou `7d8797e0f0c29b1f5b8231ad82f9fd13db95a889`. A consulta GitHub posterior ainda retornou #25 e #31 abertas e não mergeable. Nenhum runtime foi alterado ou publicado. O head remoto atual deve ser lido novamente, pois este adendo também altera o dossier.
 
+### 2026-10-22 — revisão completa do inventário merged e revalidação
+
+Inventário atualizado diretamente no GitHub para `gmtth/beta-all`: 36 PRs no total, **32 merged**, duas abertas (#25 e #31) e duas fechadas sem merge (#16 e #27). `main` consultada em `aeaebb4ae51a4a0644d1277ff778fec65ef7e5e7`; checkout local limpo. A revisão leu instruções/dossiers do componente, lista de arquivos e diffs das PRs, além de rastrear os fluxos atuais. Não executou testes nesta rodada.
+
+| PR | Revisão de comportamento esperado |
+|---|---|
+| [#1 — métricas e ingestão da base](https://github.com/gmtth/beta-all/pull/1) | PR inicial ampla: consolida a importação explícita, o catálogo e as métricas MCP em D1. A ingestão continua exigindo pedido explícito, scopes adequados, ID interno canônico, RPC transacional e auditoria; a telemetria permanece separada no D1. Não identifiquei perda no recorte conferido. O corpo da PR reporta build aprovado, sem testes automatizados. |
+| [#2 — reconexão OAuth](https://github.com/gmtth/beta-all/pull/2) | Acrescenta discovery/PKCE, desafio de autenticação MCP e refresh rotativo. Contratos e limites posteriores estão registrados no AGENTS MCP; os achados atuais de escopo/erro na #26 também afetam esse fluxo OAuth. O corpo reporta build e testes HTML; os testes TypeScript originalmente tentados não executaram por resolução de imports. |
+| [#3 — validade configurável do access token](https://github.com/gmtth/beta-all/pull/3) | Configuração por master limitada a 1 minuto–30 dias; novos access tokens usam o valor, sem reescrever validade de tokens existentes nem dos refresh tokens. O corpo reporta 11 testes focados, build e smoke administrativo autenticado; smoke do painel ainda estava pendente. |
+| [#4 — latência e sucesso](https://github.com/gmtth/beta-all/pull/4) | Mede duração e taxa de sucesso por ferramenta no D1. Preserva chamadas históricas sem duração na taxa, deixando latência desconhecida em vez de inventá-la. O próprio corpo diz que o build completo não foi executado naquela rodada. |
+| [#5 — diagnóstico seguro da importação](https://github.com/gmtth/beta-all/pull/5) | Distingue falhas do Movidesk/Supabase e evita devolver corpos brutos de erro; timeout é tratado como resultado incerto e não como falha seguramente sem gravação. Contrato preservado. A PR reporta 15 testes, build e lint direcionado aprovados; importação de produção não foi confirmada. |
+| [#6 — navegador administrativo Supabase](https://github.com/gmtth/beta-all/pull/6) | A página e APIs verificam sessão/role master; prévias são allowlist/paginadas e excluem conteúdo de `record_chunk`. Não encontrei caminho de prévia arbitrária no código atual consultado. A PR reporta build, quatro testes e conferências SQL; smoke HTTP/site master ainda estava pendente. |
+| [#7 — importação por ID ou protocolo](https://github.com/gmtth/beta-all/pull/7) | Exige correspondência exata, falha fechada em conflito e persiste o ID interno canônico, evitando duplicidade por consulta via protocolo. Contrato e testes reportados preservam esses comportamentos. Sem importação real adicional nesta revisão. |
+| #8 — registro documental da #7 | Só documentação de merge/publicação e ressalva de validação do chamado piloto. Nenhuma regressão de runtime. |
+| [#9 — telemetria de status HTTP](https://github.com/gmtth/beta-all/pull/9) | Acrescenta status HTTP a falhas finais registradas; a PR limita corretamente a métrica a chamadas que terminam em erro com status, não respostas intermediárias recuperadas. Sem perda observada. Build e diff-check reportados. |
+| [#10 — contexto autenticado de erros](https://github.com/gmtth/beta-all/pull/10) | Guarda e-mail somente em falhas de conta autenticada e painel master, além de status/duração; isso é compatível com a exceção de privacidade vigente, com retenção de 90 dias no caminho de escrita. Build/testes não foram executados naquela rodada, segundo a PR. |
+| #11 — registro documental da #10 | Documenta integração/publicação; sem alteração de runtime. |
+| [#12 — busca lexical](https://github.com/gmtth/beta-all/pull/12) | RPC filtra registros apagados, fontes inativas e classificação não autorizada; limita consulta/resultados e resposta; usa lexical, não embeddings. A migration preserva `knowledge:read`. A #31 contém baseline que demonstra falhas/ruído em paráfrases; portanto, exatidão por protocolo não valida relevância diagnóstica. PR reporta 28 testes e build; teste live da busca não estava confirmado naquela época. |
+| [#13 — indicadores de carregamento](https://github.com/gmtth/beta-all/pull/13) | Spinner compartilhado e acessível nos carregamentos/ações do painel e navegador; não encontrei perda de ações. A branch atual não existe no inventário, mas a PR está merged e comportamento permanece no `main`. |
+| [#14 — insights de telemetria](https://github.com/gmtth/beta-all/pull/14) | Mantém volume, erros HTTP e por ferramenta; adiciona comparação temporal, categorias, contas com falhas e percentis. Retenção é aplicada tanto ao gravar evento quanto ao abrir métricas, sem depender apenas da visita do painel. Não identifiquei perda no contrato. |
+| #15 — registro documental da #14 | Só registra publicação/estado da telemetria. Nenhuma regressão de runtime. |
+| #16 — registro de publicação da busca, fechada sem merge | Somente documentação. A publicação v101 e a limitação da chamada MCP foram registradas depois no dossier; o conteúdo útil foi substituído por registros posteriores. Branch `docs/knowledge-search-publication-status` não aparece no inventário remoto atual. Não reabrir/mesclar. |
+| [#17 — protocolo em `movidesk_get_ticket`](https://github.com/gmtth/beta-all/pull/17) | Inclusão aditiva do protocolo visível, preservando ID interno e demais campos da resposta. Dossier registra consulta live e importação posterior; sem perda identificada. |
+| [#18 — persistência e busca exata por protocolo](https://github.com/gmtth/beta-all/pull/18) | Preserva protocolo em `attributes`, retorno de busca e comparação exata ao lado do ID interno; o SQL conserva filtro de classificação e melhor trecho por registro. Testes/live registrados nos dossiers. Não executei SQL nem consulta live nesta rodada. |
+| [#19 — paginação de importações recentes](https://github.com/gmtth/beta-all/pull/19) | Aumenta feed de 10 para 30, pagina três por vez e limita excedente na API e RPC. Mantém ordenação recente e indicação de faixa. Dossier registra migration, publicação e smoke; nada disso foi repetido nesta revisão. |
+| #20 — registro documental da #19 | Só registra migration/deploy e smoke da paginação. Sem alteração de runtime. |
+| [#21 — feedback e autodiagnóstico](https://github.com/gmtth/beta-all/pull/21) | Mantém feedback contextual separado da telemetria D1 e da base de conhecimento; exige autorização `feedback:write`, gravação idempotente, acesso master e retenção/agregação programadas. O runtime mantém feature flag desligada conforme dossier. Migration foi reportada aplicada; execução dos jobs e fluxo end-to-end continuam sem evidência de conclusão. |
+| #22 — registro documental da #21 | Só documentação do rollout/deploy e smoke relatados; não prova execução dos jobs nem piloto de coleta. |
+| [#23 — importação de chamados longos](https://github.com/gmtth/beta-all/pull/23) | Alinha MCP/RPC em 350 mil caracteres, 250 trechos de até 1.500 caracteres, mantém upsert atômico e aumenta timeout para 30s. O código valida limite antes de persistir; migração SQL limita quantidade e tamanho de cada trecho. PR reporta 30 testes, lint/build e migration aplicada; a reimportação específica ficou como follow-up no corpo. |
+| [#24 — refinamento visual do painel de feedback](https://github.com/gmtth/beta-all/pull/24) | Mudança de apresentação solicitada; remove rodapé/link e textos redundantes, conserva listagem, ações de revisão/remoção, carregamento incremental e spinners. PR reporta build e 10 testes de renderização. |
+| #26 — escopos OAuth por conta | **Achado de segurança confirmado no `main`:** refresh substituto grava `row.scope` integral embora o access token seja emitido com `accessScope` filtrado; se admin reativar depois scope que havia sido removido do access token, outro refresh pode restaurá-lo sem reconexão. Além disso, a rota REST `authorizeMovidesk` usa helper que reduz qualquer falha a `null` e responde `401 invalid_token`, inclusive `insufficient_scope`; o contrato exige distinção. Ver `token-grants.ts:121-128`, `app/api/_movidesk.ts:36-42` e AGENTS MCP. Recomenda-se persistir somente scopes efetivos no refresh girado e propagar o motivo de autorização. |
+| #28 — registro documental da #26 | Só documentação de merge, testes e publicação. Sem runtime próprio. |
+| #29 — controles compactos de scope | Mantém checkbox individual, descrições acessíveis, salvamento e estado ocupado. Mudança visual sem perda funcional observada. |
+| #30 — registro documental da #29 | Só documentação de publicação. |
+| #32 — seções sob demanda no painel | Carrega ao expandir, cancela/limpa ao recolher e permite retry após erro. Build reportado; testes e inspeção visual autenticada pendentes segundo a PR. |
+| #33 — registro documental da #32 | Só registro do deploy. Não converte a inspeção visual pendente em evidência concluída. |
+| #34 — remoção do resumo de scopes | **Perda de visibilidade confirmada:** API ainda retorna `tokenScopes`, mas painel mostra contagem/expiração e scopes configurados pelo administrador, sem mostrar quais scopes estão nos tokens; a mensagem de reconexão depende desse dado invisível. Contrato do dossier distingue as duas listas. Recomenda-se restaurar indicação compacta/acessível dos scopes efetivamente concedidos. |
+| #35 — registro documental da #34 | Só registra sincronização/publicação. Sem runtime próprio. |
+| #36 — reranking lexical | Preserva resposta, filtros e match exato por ID/protocolo; porém a migration ainda consta como proposta não aplicada, teste pgTAP/SQL não executado e baseline live de 11 perguntas sem repetição validada. Não há evidência para afirmar melhora em produção. A #31 contém essa baseline e atende referência já citada no dossier; recomendo integrá-la após atualização/reconciliação. |
+
+**PRs abertas:** #25 continua sendo registro de publicação da #24 (v108/smoke); seu patch corrige o dossier que ainda descreve a mudança como local/não publicada. **Merge recomendado após atualizar e reconciliar a branch**, sem merge direto por `mergeable: false`. #31 registra a baseline das 11 consultas reais e estado da importação longa; a baseline não está no `main`, e sua referência é necessária para a avaliação da #36. **Merge recomendado após atualizar/reconciliar**; não declarar ranking validado.
+
+**PRs fechadas sem merge:** #16 é documentação substituída por registros posteriores. #27 reapresenta a implementação OAuth já integrada na #26 devido à ancestralidade do squash e conserva a interface antiga com scopes visíveis; essa interface foi posteriormente alterada pela #29 e a lista visível foi removida pela #34. A documentação de deploy da #27 foi substituída pela #28. **Não recomendo mesclar #27**, pois sua árvore é anterior às decisões posteriores e poderia reverter ajustes; a branch `codex/admin-user-scopes` ainda existe no GitHub, ligada à PR fechada, e só deve ser excluída mediante pedido. Nenhuma branch remota sem PR foi encontrada: os refs listados correspondem a PRs existentes, além de `main`. As branches citadas historicamente `feat/site-loading-spinners` e `docs/knowledge-search-publication-status` não aparecem; a primeira tem implementação merged na #13, a segunda era #16 fechada sem merge.
+
+**Validação desta rodada:** diff/código/documentação e metadados GitHub foram consultados; não rodei testes, build, SQL, deployment ou smoke. Os resultados atribuídos a PRs são os reportados nelas/dossiers, não execuções minhas. Nada foi alterado em runtime, Supabase, Sites, PRs ou branches.
+
 ## Achados que exigem revalidação
 
-Estes são achados do parecer histórico, não afirmações de que ainda persistem no `main` atual. Reconsultar o código e commits posteriores antes de confirmar/encerrar.
+Achados revalidados em 2026-10-22 contra o `main` consultado no SHA `aeaebb4ae51a4a0644d1277ff778fec65ef7e5e7`:
 
 | Origem | Achado registrado | Revalidação necessária |
 |---|---|---|
-| #26 | Scope desativado poderia sobreviver em refresh token e voltar sem nova autorização; `insufficient_scope` poderia virar `401 invalid_token`. | Rastrear persistência/rotação de scopes e mapeamento de erros nas implementações atuais e testes de regressão. |
-| #34 | Painel não mostraria scopes efetivamente contidos nos tokens. | Conferir painel e dossier; confirmar distinção entre habilitados pelo admin e concedidos no token. |
-| #36 | Ranking não tinha validação SQL/live nem benchmark repetido. | Conferir migrations de aplicação/rollback, queries, teste SQL, deployment e baseline; separar validação de código e de produção. |
+| #26 | **Confirmado no código atual:** scope removido pode sobreviver no refresh girado e voltar após reativação; `insufficient_scope` é reduzido a `401 invalid_token` em rotas REST. | Correção no runtime e regressões de teste ainda necessárias; nenhuma feita pelo revisor. |
+| #34 | **Confirmado no código atual:** a tela omite `tokenScopes`, embora a API ainda forneça a lista. | Restaurar indicação visível dos scopes do token sem confundir com grants administrativos; nenhuma alteração feita pelo revisor. |
+| #36 | **Pendente de validação externa:** o dossier Supabase ainda registra migration/rollback preparados, sem execução SQL, aplicação remota nem repetição das 11 consultas. | Executar o teste SQL, verificar migration no banco e repetir baseline após integração/publicação; não alegar melhora ainda. |
 
 ## Cobertura de PRs e branches
 
 | Identificador | Estado no ledger | Limite |
 |---|---|---|
-| #26, #28–#30, #32–#36 | Merged e revisadas uma vez no parecer registrado acima. | Cobertura histórica; reler caso mudanças posteriores alterem o comportamento. |
+| #1–#15, #17–#24 | Merged e cobertas nesta rodada. | Revisão estática de diffs, código e contratos; sem execução de testes nesta rodada. |
+| #26, #28–#30, #32–#36 | Merged, cobertas em parecer anterior e findings #26/#34/#36 revalidados nesta rodada. | #26 e #34 persistem; #36 continua sem validação live. |
 | #25, #31 | Abertas no snapshot de 2026-10-22; análise executiva registrada. | Diff/checks precisam de reconsulta antes de nova recomendação. |
-| #27 | Fechada sem merge no snapshot da revisão anterior. | Não conta como merged/revisada. |
-| Demais PRs merged | Cobertura ainda não reconciliada por inventário paginado. | Enumerar todas e comparar com conversa/ledger antes de declarar cobertura completa. |
-| Demais PRs abertas | Não inventariadas neste dossier. | Listar na próxima revisão genérica e avaliar estado atual. |
-| Branches remotas sem PR | Nenhuma conclusão registrada neste snapshot. | Listar refs, comparar com `main`, procurar integração posterior e identificar commits exclusivos. |
+| #16 | Fechada sem merge; era documental e o conteúdo útil foi substituído por registros posteriores. | Não conta como merged; branch correspondente ausente na consulta de 2026-10-22. |
+| #27 | Fechada sem merge; código de escopos deriva da #26 já merged; branch conserva apresentação anterior à remoção da lista de scopes na #34 e documentação substituída pela #28. | Não mesclar; `codex/admin-user-scopes` ainda aparece como ref remota associada a PR fechada. Reavaliar exclusão apenas se solicitada. |
+| #25 e #31 | Abertas e não mergeable no inventário de 2026-10-22. | Recomendações registradas acima; reconsultar base, diff e checks na próxima rodada. |
+| Branches remotas sem PR | Nenhuma encontrada na busca de 2026-10-22. | Os refs listados pertencem a PRs conhecidas, além de `main`; `feat/site-loading-spinners` e `docs/knowledge-search-publication-status` não aparecem. |
 
 ## Próximos passos
 
 | Prioridade | Trabalho | Contexto/evidência | Condição de conclusão |
 |---|---|---|---|
-| Alta | Completar inventário de PRs merged, abertas e branches sem PR. | Cobertura conhecida neste ledger é parcial. | Inventário remoto paginado reconciliado com revisões anteriores; cada PR merged coberta uma vez e cada branch relevante classificada. |
-| Alta | Revisar integralmente #25 e #31 atualizadas. | Ambas eram não mergeable no snapshot; recomendação exigia atualização/reconciliação. | Diff/head/base/checks e dossiers consultados em SHAs atuais; registrar recomendação separando valor e prontidão. |
-| Alta | Revalidar achados de #26, #34 e #36 contra `main`. | Achados históricos listados acima; merges posteriores podem tê-los corrigido ou alterado. | Confirmar com diff/código/testes e, para produção, deployment/smoke diretamente verificados. |
-| Média | Revisar branches antigas sem PR apontadas pelo usuário ou destacadas pelo inventário. | Não há classificação completa no snapshot. | Comparação merge-base/diff e histórico de integração registrados; parecer de exclusão sem executar exclusão. |
+| Alta | Corrigir os dois defeitos de autorização identificados na #26. | Refresh token conserva `row.scope` em vez dos scopes efetivos; rota REST colapsa `insufficient_scope`. | Correção de runtime com testes de regressão e preservação dos demais grants/contratos. |
+| Alta | Restaurar visibilidade dos scopes efetivamente concedidos nos tokens. | #34 removeu sua apresentação, embora a API e o aviso de reconexão ainda dependam deles. | Painel distingue visualmente scopes do token dos scopes ativados pelo administrador e mantém acessibilidade. |
+| Alta | Atualizar/reconciliar as branches abertas #25 e #31 antes de recomendar merge final. | Ambas seguem não mergeable; #25 reconcilia publicação da página, #31 mantém baseline da #36 ausente no `main`. | Consultar estado novo e integrar somente após reconciliar docs posteriores; não alegar busca validada antes da medição. |
+| Alta | Validar reranking #36 em SQL e no corpus live. | Migração/teste SQL e repetição das 11 consultas continuam pendentes segundo os dossiers e a PR. | Teste SQL aprovado, migration remota comprovada e benchmark repetido com resultados comparáveis. |
 
 ## Fontes de verdade
 

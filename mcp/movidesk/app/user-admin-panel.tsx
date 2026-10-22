@@ -9,11 +9,15 @@ type ConnectionDiagnostic = "configuration_missing" | "invalid_url" | "available
 type KnowledgeDiagnostic = "available" | "configuration_missing" | "rpc_not_found" | "permission_denied" | "rate_limited" | "service_error" | "request_rejected" | "timeout" | "network_error" | "invalid_response";
 type ToolMetrics = {
   window: { start: string; end: string; days: number };
+  periodComparison: { current: { calls: number; errors: number }; previous: { calls: number; errors: number } };
   totalCalls: number;
   usageByTool: Array<{ toolName: string; calls: number; errors: number; successRatePercent: number; averageLatencyMs: number | null }>;
   recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string; durationMs: number | null; httpStatus: number | null; userEmail: string | null }>;
-  errorsByDay: Array<{ date: string; count: number }>;
+  callsByDay: Array<{ date: string; calls: number; errors: number }>;
   httpErrorsByStatus: Array<{ status: number; count: number }>;
+  errorsByCategory: Array<{ errorCode: string; count: number; previousCount: number }>;
+  errorsByAccount: Array<{ userEmail: string; count: number }>;
+  latencyByTool: Array<{ toolName: string; samples: number; p50Ms: number; p95Ms: number }>;
 };
 type Overview = {
   connection: { status: "online" | "offline"; configured: boolean; latencyMs: number | null; diagnostic: ConnectionDiagnostic };
@@ -77,6 +81,8 @@ const scopeDescriptions: Record<string, string> = {
 };
 const toolTitle = (name: string) => toolTitles[name] ?? name;
 const shortDate = (value: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(`${value}T12:00:00Z`));
+const comparisonLabel = (current: number, previous: number) => previous === 0 ? current === 0 ? "sem registros nos dois períodos" : "novo neste período" : `${current > previous ? "+" : ""}${((current - previous) / previous * 100).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% vs período anterior`;
+const comparisonTone = (current: number, previous: number, lowerIsBetter: boolean) => current === previous ? "neutral" : lowerIsBetter ? current > previous ? "negative" : "positive" : "neutral";
 
 export default function UserAdminPanel() {
   const [email, setEmail] = useState("");
@@ -188,8 +194,11 @@ export default function UserAdminPanel() {
   const knowledge = overview?.knowledge.data;
   const toolMetrics = toolMetricsResponse?.data;
   const maxToolCalls = Math.max(1, ...(toolMetrics?.usageByTool.map((item) => item.calls) ?? []));
-  const maxDailyErrors = Math.max(1, ...(toolMetrics?.errorsByDay.map((item) => item.count) ?? []));
+  const maxDailyCalls = Math.max(1, ...(toolMetrics?.callsByDay.map((item) => item.calls) ?? []));
   const maxHttpErrors = Math.max(1, ...(toolMetrics?.httpErrorsByStatus.map((item) => item.count) ?? []));
+  const maxLatencyP95 = Math.max(1, ...(toolMetrics?.latencyByTool.map((item) => item.p95Ms) ?? []));
+  const currentToolErrorRate = toolMetrics?.periodComparison.current.calls ? toolMetrics.periodComparison.current.errors / toolMetrics.periodComparison.current.calls * 100 : 0;
+  const previousToolErrorRate = toolMetrics?.periodComparison.previous.calls ? toolMetrics.periodComparison.previous.errors / toolMetrics.periodComparison.previous.calls * 100 : 0;
   return <div className="admin-content">
     {toast ? <div className={`toast toast-${toast.tone}`} role={toast.tone === "error" ? "alert" : "status"} aria-atomic="true">
       <span className="toast-icon" aria-hidden="true">{toast.tone === "success" ? "✓" : "!"}</span>
@@ -223,16 +232,23 @@ export default function UserAdminPanel() {
       <div className="section-title"><div><span className="panel-heading">ATIVIDADE DO MCP</span><h2 id="telemetry-title">Uso e erros</h2></div></div>
       <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site.</p>
       {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message loading-message"><LoadingSpinner label="Carregando métricas do MCP" />Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
+        <div className="period-comparison-grid" aria-label="Comparação dos últimos 30 dias com os 30 dias anteriores">
+          <div className="period-metric"><span>CHAMADAS · 30 DIAS</span><strong>{toolMetrics.periodComparison.current.calls.toLocaleString("pt-BR")}</strong><small className="comparison-neutral">{comparisonLabel(toolMetrics.periodComparison.current.calls, toolMetrics.periodComparison.previous.calls)}</small><small>{toolMetrics.periodComparison.previous.calls.toLocaleString("pt-BR")} no período anterior</small></div>
+          <div className="period-metric"><span>ERROS · 30 DIAS</span><strong>{toolMetrics.periodComparison.current.errors.toLocaleString("pt-BR")}</strong><small className={`comparison-${comparisonTone(toolMetrics.periodComparison.current.errors, toolMetrics.periodComparison.previous.errors, true)}`}>{comparisonLabel(toolMetrics.periodComparison.current.errors, toolMetrics.periodComparison.previous.errors)}</small><small>{toolMetrics.periodComparison.previous.errors.toLocaleString("pt-BR")} no período anterior</small></div>
+          <div className="period-metric"><span>TAXA DE ERRO</span><strong>{currentToolErrorRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</strong><small className={`comparison-${comparisonTone(currentToolErrorRate, previousToolErrorRate, true)}`}>{currentToolErrorRate === previousToolErrorRate ? "estável vs período anterior" : `${currentToolErrorRate > previousToolErrorRate ? "+" : ""}${(currentToolErrorRate - previousToolErrorRate).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} p.p. vs período anterior`}</small><small>{previousToolErrorRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% no período anterior</small></div>
+        </div>
         <div className="telemetry-error-grid">
-          <section className="data-card telemetry-card" aria-labelledby="error-trend-title">
-          <div className="telemetry-heading"><div><h3 id="error-trend-title">Erros no último mês</h3><span>Ocorrências por dia</span></div><strong>{toolMetrics.errorsByDay.reduce((sum, day) => sum + day.count, 0)}</strong></div>
-          <div className="error-chart" role="img" aria-label="Gráfico diário de erros nos últimos 30 dias">
-            {toolMetrics.errorsByDay.map((day) => {
-              const barHeight = day.count ? Math.max(4, day.count / maxDailyErrors * 100) : 2;
-              return <div className="error-chart-column" key={day.date} title={`${shortDate(day.date)}: ${day.count} ${day.count === 1 ? "erro" : "erros"}`}><span className="error-chart-bar" style={{ height: `${barHeight}%` }} /><span className="error-chart-value" aria-hidden="true" style={{ bottom: `calc(${barHeight}% + 2px)` }}>{day.count}</span><span className="sr-only">{shortDate(day.date)}: {day.count} erros</span></div>;
+          <section className="data-card telemetry-card" aria-labelledby="activity-trend-title">
+          <div className="telemetry-heading"><div><h3 id="activity-trend-title">Atividade diária</h3><span>Chamadas e falhas nos últimos 30 dias</span></div><strong>{toolMetrics.callsByDay.reduce((sum, day) => sum + day.errors, 0)} erros</strong></div>
+          <div className="activity-chart" role="img" aria-label="Chamadas diárias, divididas entre sucesso e erro, nos últimos 30 dias">
+            {toolMetrics.callsByDay.map((day) => {
+              const barHeight = day.calls ? Math.max(3, day.calls / maxDailyCalls * 100) : 0;
+              const successes = Math.max(0, day.calls - day.errors);
+              return <div className="activity-chart-column" key={day.date} title={`${shortDate(day.date)}: ${day.calls} chamadas, ${successes} sucessos, ${day.errors} erros`}><span className="activity-count" aria-hidden="true" style={{ bottom: `calc(${barHeight}% + 3px)` }}>{day.calls > 0 && (day.calls >= maxDailyCalls * 0.45 || day.errors > 0) ? day.calls : ""}</span><span className="activity-bar" style={{ height: `${barHeight}%` }}><span className="activity-errors-segment" style={{ flexGrow: day.errors }} /><span className="activity-success-segment" style={{ flexGrow: successes }} /></span><span className="sr-only">{shortDate(day.date)}: {day.calls} chamadas, {successes} sucessos e {day.errors} erros</span></div>;
             })}
           </div>
-          <div className="chart-axis-labels"><span>{toolMetrics.errorsByDay[0] ? shortDate(toolMetrics.errorsByDay[0].date) : ""}</span><span>Hoje</span></div>
+          <div className="chart-axis-labels"><span>{toolMetrics.callsByDay[0] ? shortDate(toolMetrics.callsByDay[0].date) : ""}</span><span>Hoje</span></div>
+          <div className="activity-legend"><span><i className="legend-success" />Sucesso</span><span><i className="legend-error" />Erro</span></div>
           </section>
           <section className="data-card telemetry-card" aria-labelledby="http-errors-title">
             <div className="telemetry-heading"><div><h3 id="http-errors-title">Retornos HTTP de erro</h3><span>Códigos reportados pelas ferramentas · últimos 30 dias</span></div><strong>{toolMetrics.httpErrorsByStatus.reduce((sum, item) => sum + item.count, 0)}</strong></div>
@@ -241,7 +257,15 @@ export default function UserAdminPanel() {
                 <strong className="http-status-code">{item.status}</strong><span className="usage-bar-track"><span className="http-status-fill" style={{ width: `${Math.max(2, item.count / maxHttpErrors * 100)}%` }} /></span><strong>{item.count.toLocaleString("pt-BR")}</strong>
               </div>)}
             </div> : <p className="quiet-message">Nenhum código HTTP de erro identificado neste período.</p>}
-            <p className="http-status-note">A contagem considera chamadas que terminaram com erro e informaram o status HTTP. Esse detalhamento passa a ser registrado nesta atualização.</p>
+            <p className="http-status-note">Inclui erros que informaram um status HTTP; as demais falhas aparecem nas categorias e na lista recente.</p>
+          </section>
+          <section className="data-card telemetry-card" aria-labelledby="error-category-title">
+            <div className="telemetry-heading"><div><h3 id="error-category-title">Causas registradas</h3><span>Tipos de falha · últimos 30 dias</span></div><strong>{toolMetrics.errorsByCategory.reduce((sum, item) => sum + item.count, 0)}</strong></div>
+            {toolMetrics.errorsByCategory.length ? <div className="error-category-list">{toolMetrics.errorsByCategory.map((item) => <div className="error-category-row" key={item.errorCode}><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}<small>{item.count.toLocaleString("pt-BR")} atual · {item.previousCount.toLocaleString("pt-BR")} anterior · {comparisonLabel(item.count, item.previousCount)}</small></span><strong>{item.count.toLocaleString("pt-BR")}</strong></div>)}</div> : <p className="quiet-message">Nenhuma falha registrada neste período.</p>}
+          </section>
+          <section className="data-card telemetry-card" aria-labelledby="error-account-title">
+            <div className="telemetry-heading"><div><h3 id="error-account-title">Contas mais afetadas</h3><span>Somente erros com identidade validada · 30 dias</span></div></div>
+            {toolMetrics.errorsByAccount.length ? <div className="error-category-list">{toolMetrics.errorsByAccount.map((item) => <div className="error-category-row error-account-row" key={item.userEmail}><span title={item.userEmail}>{item.userEmail}</span><strong>{item.count.toLocaleString("pt-BR")}</strong></div>)}</div> : <p className="quiet-message">Sem erros associados a uma conta neste período.</p>}
           </section>
           <section className="data-card telemetry-card recent-errors-card" aria-labelledby="recent-errors-title">
           <div className="telemetry-heading"><div><h3 id="recent-errors-title">Dez erros mais recentes</h3><span>Retenção de até 90 dias</span></div></div>
@@ -255,6 +279,18 @@ export default function UserAdminPanel() {
               <span className="usage-tool-name" title={`${toolTitle(item.toolName)} · ${item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de sucesso · ${item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms de latência média`}`}>{toolTitle(item.toolName)}<small>{item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% sucesso · {item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms méd.`}</small></span><span className="usage-bar-track"><span className="usage-bar-fill" style={{ width: `${Math.max(2, item.calls / maxToolCalls * 100)}%` }} /></span><strong>{item.calls.toLocaleString("pt-BR")}</strong><small className="usage-error-count">{item.errors} erros</small>
             </div>)}
           </div> : <p className="quiet-message">Ainda não há chamadas registradas neste período.</p>}
+        </section>
+        <section className="data-card telemetry-card latency-telemetry-card" aria-labelledby="latency-title">
+          <div className="telemetry-heading"><div><h3 id="latency-title">Ferramentas com maior latência</h3><span>P95 e P50 das execuções medidas · últimos 30 dias</span></div></div>
+          {toolMetrics.latencyByTool.length ? <>
+            <div className="latency-legend"><span><i className="latency-p95-key" />Faixa até P95</span><span><i className="latency-p50-key" />P50 (típica)</span></div>
+            <div className="latency-chart">{toolMetrics.latencyByTool.map((item) => <div className="latency-row" key={item.toolName} title={`${toolTitle(item.toolName)}: P50 ${item.p50Ms.toLocaleString("pt-BR")} ms, P95 ${item.p95Ms.toLocaleString("pt-BR")} ms em ${item.samples} execuções medidas`}>
+              <span className="latency-tool-name">{toolTitle(item.toolName)}<small>{item.samples.toLocaleString("pt-BR")} {item.samples === 1 ? "execução medida" : "execuções medidas"}</small></span>
+              <span className="latency-track"><span className="latency-p95" style={{ width: `${Math.max(2, item.p95Ms / maxLatencyP95 * 100)}%` }}><span className="latency-p50" style={{ width: `${item.p95Ms ? Math.min(100, item.p50Ms / item.p95Ms * 100) : 0}%` }} /></span></span>
+              <span className="latency-values"><strong>P95 {item.p95Ms.toLocaleString("pt-BR")} ms</strong><small>P50 {item.p50Ms.toLocaleString("pt-BR")} ms</small></span>
+            </div>)}</div>
+            <p className="http-status-note">P95 ajuda a perceber lentidão que a média pode esconder. Considere o número de execuções ao comparar ferramentas; amostras pequenas variam mais.</p>
+          </> : <p className="quiet-message">Ainda não há durações suficientes registradas neste período.</p>}
         </section>
       </div>}
     </section>

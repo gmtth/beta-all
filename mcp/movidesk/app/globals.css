@@ -97,6 +97,12 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 /* MCP usage telemetry (stored in the Sites D1 database) */
 .telemetry-grid { grid-template-columns: minmax(0, 1fr); }
 .telemetry-error-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
+.period-comparison-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.period-metric { display: grid; align-content: start; gap: 6px; min-width: 0; padding: 15px; border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,.018); }
+.period-metric > span { color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.period-metric > strong { color: var(--ink); font-size: 23px; }
+.period-metric > small { color: var(--muted); font-size: 10px; line-height: 1.4; }
+.period-metric > .comparison-positive { color: #65e4ad; }.period-metric > .comparison-negative { color: #ff9b87; }.period-metric > .comparison-neutral { color: #ffbd8c; }
 .telemetry-card { min-width: 0; }
 .usage-telemetry-card { width: 100%; }
 .telemetry-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
@@ -114,6 +120,21 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .error-chart { display: grid; grid-template-columns: repeat(30, minmax(2px, 1fr)); align-items: end; gap: 3px; height: 150px; padding: 10px 0 0; border-bottom: 1px solid var(--line); }
 .error-chart-column { position: relative; display: flex; height: 100%; align-items: end; }.error-chart-value { position: absolute; z-index: 1; left: 50%; transform: translateX(-50%); color: #bcb5c0; font-size: 8px; line-height: 1; font-weight: 700; pointer-events: none; }
 .error-chart-bar { width: 100%; min-height: 2px; border-radius: 3px 3px 0 0; background: linear-gradient(0deg, #db5f52, #ff9b66); }
+.activity-chart { display: grid; grid-template-columns: repeat(30, minmax(2px, 1fr)); align-items: end; gap: 3px; height: 150px; padding: 12px 0 0; border-bottom: 1px solid var(--line); }
+.activity-chart-column { position: relative; display: flex; height: 100%; min-width: 0; align-items: end; justify-content: center; }
+.activity-count { position: absolute; z-index: 1; left: 50%; transform: translateX(-50%); color: #bcb5c0; font-size: 8px; line-height: 1; font-weight: 700; pointer-events: none; }
+.activity-bar { display: flex; width: 100%; min-height: 2px; flex-direction: column; overflow: hidden; border-radius: 3px 3px 0 0; }
+.activity-errors-segment { background: linear-gradient(0deg, #db5f52, #ff9b66); }.activity-success-segment { background: linear-gradient(0deg, #df7d3b, #ffad60); }
+.activity-legend,.latency-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; color: var(--muted); font-size: 10px; }
+.activity-legend > span,.latency-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.activity-legend i,.latency-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; }
+.legend-success { background: #ffad60; }.legend-error { background: #ff806f; }
+.error-category-list { display: grid; }
+.error-category-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding: 10px 0; border-top: 1px solid var(--line); font-size: 11px; }
+.error-category-row > span { min-width: 0; color: var(--ink); }
+.error-category-row small { display: block; overflow-wrap: anywhere; margin-top: 4px; color: var(--muted); font-size: 9px; line-height: 1.4; }
+.error-category-row > strong { flex: 0 0 auto; color: var(--hot); }
+.error-account-row > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .http-status-chart { display: grid; gap: 14px; }
 .http-status-row { display: grid; grid-template-columns: 70px minmax(40px, 1fr) auto; align-items: center; gap: 12px; font-size: 12px; }
 .http-status-code { color: #ffb69f; font: 700 12px var(--font-geist-mono), Consolas, monospace; }
@@ -128,7 +149,17 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .recent-error-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .recent-error-row span, .recent-error-row time { color: var(--muted); font-size: 11px; }
 .recent-error-row time { white-space: nowrap; }
-@media (max-width: 700px) { .telemetry-error-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(90px, 1fr) minmax(40px, 1.3fr) auto; } .usage-error-count { display: none; } }
+.latency-chart { display: grid; gap: 12px; margin-top: 14px; }
+.latency-row { display: grid; grid-template-columns: minmax(130px, 1fr) minmax(60px, 1.5fr) minmax(130px, auto); align-items: center; gap: 12px; font-size: 11px; }
+.latency-tool-name { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.latency-tool-name small { display: block; overflow: hidden; margin-top: 4px; color: var(--muted); font-size: 9px; text-overflow: ellipsis; }
+.latency-track { display: block; height: 9px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.08); }
+.latency-p95 { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: rgba(255,128,111,.42); }
+.latency-p50 { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--hot)); }
+.latency-values { display: grid; justify-items: end; gap: 3px; white-space: nowrap; }
+.latency-values strong { color: #ffb69f; font-size: 10px; }.latency-values small { color: var(--muted); font-size: 9px; }
+.latency-p95-key { background: rgba(255,128,111,.42); }.latency-p50-key { background: var(--hot); }
+@media (max-width: 700px) { .telemetry-error-grid,.period-comparison-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(90px, 1fr) minmax(40px, 1.3fr) auto; } .usage-error-count { display: none; } .latency-row { grid-template-columns: minmax(90px, 1fr) minmax(50px, 1.2fr) auto; gap: 8px; }.latency-values { font-size: 9px; }.latency-values strong { font-size: 9px; } }
 
 .loading-indicator { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; vertical-align: middle; }
 .loading-spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid rgba(255,255,255,.18); border-top-color: var(--accent); border-radius: 50%; animation: loading-spinner-rotate .8s linear infinite; }

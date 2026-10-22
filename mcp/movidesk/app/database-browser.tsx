@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { DatabaseBrowserPage, DatabaseBrowserSchema } from "../worker/supabase-knowledge";
 import { DATABASE_BROWSER_TABLES, type DatabaseBrowserTable, type DatabasePreviewTable } from "../worker/database-browser-contract";
+import LoadingSpinner from "./loading-spinner";
 
 type BrowserResponse<T> = { data: T | null; diagnostic: string | null };
 const tableTitles: Record<(typeof DATABASE_BROWSER_TABLES)[number]["key"], string> = {
@@ -89,13 +90,8 @@ export default function DatabaseBrowser() {
   };
 
   return <div className="database-content">
-    <div className="database-hero">
-      <span className="panel-heading">SUPABASE · SCHEMA BETA</span>
-      <div className="database-title-row"><div><h1>Banco de dados</h1><p className="lead">Consulte a estrutura e prévias paginadas das tabelas autorizadas.</p></div><button className="refresh-button" type="button" onClick={() => void loadSchema()} disabled={loadingSchema}>{loadingSchema ? "Atualizando…" : "Atualizar estrutura"}</button></div>
-    </div>
-
     <section className="admin-section database-access" aria-labelledby="database-access-title">
-      <div className="section-title"><div><span className="panel-heading">CONTROLE DE ACESSO</span><h2 id="database-access-title">Site e Supabase</h2></div></div>
+      <div className="section-title"><div><span className="panel-heading">CONTROLE DE ACESSO</span><h1 id="database-access-title">Site e Supabase</h1></div><button className="refresh-button" type="button" onClick={() => void loadSchema()} disabled={loadingSchema}>{loadingSchema && <LoadingSpinner label="Atualizando estrutura" compact />}{loadingSchema ? "Atualizando…" : "Atualizar estrutura"}</button></div>
       <div className="database-access-grid">
         <article className="data-card"><h3>Acesso pelo Site</h3><p>Esta página e suas APIs exigem sessão autenticada do ChatGPT e papel master ativo, validados no servidor pelo D1 do Site.</p><p>O acesso às ferramentas MCP usa OAuth e scopes próprios, como <code>movidesk:read</code>, <code>knowledge:read</code> e <code>knowledge:write</code>. Eles não concedem acesso a esta página administrativa.</p></article>
         <article className="data-card"><h3>Acesso ao Supabase</h3><p>O Worker chama RPCs específicas com <code>service_role</code>, mantida somente no servidor. Essa chave ignora RLS; por isso, a autorização master no Site e as consultas restritas são obrigatórias.</p><p>As permissões de schema, tabela, RLS e execução das RPCs aparecem abaixo. Nenhuma credencial ou expressão SQL de política é exibida.</p></article>
@@ -104,7 +100,7 @@ export default function DatabaseBrowser() {
 
     <section className="admin-section" aria-labelledby="database-tables-title">
       <div className="section-title"><div><span className="panel-heading">CATÁLOGO</span><h2 id="database-tables-title">Tabelas do schema beta</h2></div></div>
-      {loadingSchema && <p className="quiet-message">Carregando estrutura…</p>}
+      {loadingSchema && <p className="quiet-message loading-message"><LoadingSpinner label="Carregando estrutura" />Carregando estrutura…</p>}
       {schemaResult.diagnostic && <div className="database-alert" role="alert"><strong>Não foi possível consultar o catálogo</strong><span>{diagnosticLabels[schemaResult.diagnostic] ?? diagnosticLabels.request_rejected}</span><button className="refresh-button" onClick={() => void loadSchema()} type="button">Tentar novamente</button></div>}
       {schemaResult.data && <>
         {schemaResult.data.missingTables.length > 0 && <p className="database-alert" role="status">Tabelas ausentes no catálogo: {schemaResult.data.missingTables.join(", ")}.</p>}
@@ -129,9 +125,9 @@ export default function DatabaseBrowser() {
                 <div className="database-subsection"><h4>Políticas RLS</h4>{selectedTable.rls.policies.length ? <ul className="database-meta-list">{selectedTable.rls.policies.map((policy) => <li key={policy.name}><strong>{policy.command}</strong><code>{policy.name}</code></li>)}</ul> : <p className="quiet-message">RLS {selectedTable.rls.enabled ? "está ativo, sem políticas catalogadas" : "está desativado"}.</p>}</div>
                 <div className="database-subsection"><h4>Grants de tabela</h4>{selectedTable.grants.length ? <ul className="database-meta-list">{selectedTable.grants.map((grant) => <li key={grant.role}><strong>{grant.role}</strong><span>{grant.privileges.join(", ") || "Sem privilégios listados"}</span></li>)}</ul> : <p className="quiet-message">Nenhum grant de role exposto no catálogo.</p>}</div>
               </div>
-              {selectedTable.previewAllowed && <div className="database-subsection database-preview"><div className="database-preview-heading"><div><h4>Prévia de dados</h4><p>Campos permitidos pela política do projeto. Conteúdo livre e dados sensíveis permanecem ocultos.</p></div><span>{loadingPage ? "Consultando…" : page ? page.rows.length + " linhas nesta página" : "—"}</span></div>
+              {selectedTable.previewAllowed && <div className="database-subsection database-preview" aria-busy={loadingPage}><div className="database-preview-heading"><div><h4>Prévia de dados</h4><p>Campos permitidos pela política do projeto. Conteúdo livre e dados sensíveis permanecem ocultos.</p></div><span className="preview-count">{loadingPage && <LoadingSpinner label="Consultando prévia" compact />}{loadingPage ? "Consultando…" : page ? page.rows.length + " linhas nesta página" : "—"}</span></div>
                 {pageDiagnostic && <p className="database-alert" role="alert">{diagnosticLabels[pageDiagnostic] ?? diagnosticLabels.request_rejected}</p>}
-                <div className="database-schema-table-wrap"><table className="database-schema-table database-preview-table"><thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{page?.rows.map((row, index) => <tr key={String(row.id) + "-" + index}>{columns.map((column) => <td key={column}>{displayCell(row[column])}</td>)}</tr>)}</tbody></table>{!loadingPage && page && page.rows.length === 0 && <p className="quiet-message database-empty">Esta tabela não tem linhas para exibir.</p>}</div>
+                <div className="database-schema-table-wrap" aria-busy={loadingPage}>{loadingPage ? <div className="database-loading-state"><LoadingSpinner label="Carregando prévia da tabela" />Carregando prévia…</div> : <><table className="database-schema-table database-preview-table"><thead><tr>{columns.map((column) => <th key={column}>{column}</th>)}</tr></thead><tbody>{page?.rows.map((row, index) => <tr key={String(row.id) + "-" + index}>{columns.map((column) => <td key={column}>{displayCell(row[column])}</td>)}</tr>)}</tbody></table>{page && page.rows.length === 0 && <p className="quiet-message database-empty">Esta tabela não tem linhas para exibir.</p>}</>}</div>
                 <div className="database-pagination"><span>Página {pageCursors.length}</span><div><button type="button" className="refresh-button" onClick={previousPage} disabled={pageCursors.length <= 1 || loadingPage}>Anterior</button><button type="button" className="refresh-button" onClick={nextPage} disabled={!page?.nextCursor || loadingPage}>Próxima</button></div></div>
               </div>}
             </> : <p className="quiet-message">Selecione uma tabela disponível.</p>}

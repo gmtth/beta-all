@@ -1,6 +1,6 @@
 # Dossier da Beta — índice do contexto
 
-Atualizado em 2026-10-21. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
+Atualizado em 2026-10-22. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
 
 ## Objetivo do produto
 
@@ -116,7 +116,7 @@ Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 teste
 | Alta | Validar o ciclo nativo de reconexão OAuth no ChatGPT. | Etapas 1–5 foram mescladas pela PR #2 e publicadas no Sites v81; falta testar expiração, refresh, revogação, reconexão e repetição da operação em conversa real. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
 | Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |
 | Média | Corrigir o workflow Windows de build/empacotamento do Sites. | A publicação v81 exigiu ajustes temporários no helper copiado para resolver quoting do `npm` e encontrar `tar.exe`; fazer o wrapper do monorepo concluir build, pacote e publicação sem editar a instalação do plugin. |
-| Alta | Integrar/publicar e validar a busca lexical da base compartilhada; depois escolher provedor/modelo e implementar embeddings para busca semântica. | Migrations `20261022100000` e `20261022110000` aplicadas ao Supabase em 2026-10-22; a RPC retornou o ticket piloto `5835` em consulta read-only de metadados. A ferramenta MCP `knowledge_search` e seus testes estão locais na branch `codex/knowledge-search`; runtime ainda não publicado, e a busca vetorial não implementada. Ver dossiers Supabase e MCP. |
+| Alta | Validar `knowledge_search` ponta a ponta e, em seguida, escolher provedor/modelo e implementar embeddings para busca semântica. | PR #12 foi mesclada à `main` no commit `d18a374`; o runtime foi publicado no Sites v101 (deployment `appgdep_6ad99a3ae2f081919bfa4a5524a74291`, fonte `61589d2e660e5ce4394e417b08fd9a1e36515145`). `knowledge_list_sources` respondeu com as três fontes, mas `knowledge_search` ainda não apareceu no catálogo de ferramentas desta sessão nem foi validada em chamada real. A busca vetorial/híbrida permanece pendente. Ver dossiers Supabase e MCP. |
 | Média | Expandir métricas MCP com erros por categoria e comparação de períodos. | Após latência por ferramenta e taxa de sucesso, incluir agregação segura de categorias e comparação entre os últimos 30 dias e os 30 dias anteriores; preservar a política de minimização de dados. |
 | Média | Confirmar disponibilidade do marketplace Beta e conexão ClickUp do plugin. | Pendências mantidas no [`plugins/beta/DOSSIER.md`](plugins/beta/DOSSIER.md#próximos-passos). |
 

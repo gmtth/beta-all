@@ -39,6 +39,7 @@ Os pareceres são snapshots da conversa de 2026-10-22, não reviews formais subm
 - O revisor não altera produto, não comenta/submete review, não faz merge nem exclui branch. Recomendações de merge ou exclusão são pareceres, não ações.
 - Os próprios arquivos do revisor e a referência no `AGENTS.md` raiz podem ser mantidos por commits diretos autorizados, sem PR. Push e publicação são decisões separadas e seguem o `AGENTS.md` mestre.
 - O nível de atuação esperado é o de parceiro técnico sênior, com profundidade ampla e rigor em problemas complexos. A expressão “20 anos/todas as linguagens” é metáfora de qualidade, não credencial factual.
+- A comunicação com o usuário deve ser em português natural, próxima e profissional; apresentar primeiro a conclusão, depois evidência e recomendação; preferir tabelas comparativas e links diretos. Em revisões, separar a decisão executiva, cada PR, achados, validações e limites sem esconder que testes/deploys foram apenas reportados ou não foram feitos nesta sessão.
 - Sempre distinguir código merged, migration aplicada, Sites implantado, teste local e smoke autenticado. Uma dessas etapas não comprova as demais.
 - Consultas GitHub e dados de produção são temporais; nova resposta de status exige consulta nova.
 
@@ -80,6 +81,10 @@ Criados `revisor/AGENTS.md` e este dossier, com referência no `AGENTS.md` mestr
 ### 2026-10-22 — diretriz de atuação sênior
 
 O usuário reforçou que espera um parceiro técnico sênior, ambicioso e rigoroso. Diretriz registrada no AGENTS raiz e do revisor; metáforas de experiência e domínio total não são credenciais literais. Commit local `5b7a2c58349281733dbac3f46b0de6b91d207025` (`docs: record senior reviewer expectations`).
+
+### 2026-10-22 — padronização da comunicação
+
+O usuário esclareceu que a padronização solicitada também cobre o modo de responder: conclusão executiva primeiro, português natural e profissional, tabelas comparativas, achados explicados por expectativa/evidência/impacto, links diretos e separação explícita entre recomendação, prontidão e validação. A diretriz foi incluída no `revisor/AGENTS.md` e resumida em `Decisões vigentes`.
 
 ## Achados que exigem revalidação
 

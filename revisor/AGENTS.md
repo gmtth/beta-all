@@ -100,6 +100,17 @@ Dizer “seguro excluir” exige provar que conteúdo útil foi aplicado/substit
 - A autorização de commit documental não autoriza push, merge, PR ou publicação. Siga também a regra de commit/sincronização do `AGENTS.md` raiz.
 - Não incluir tokens, segredos, PII, conteúdo integral de tickets/conversas ou dados operacionais restritos no dossier ou na saída.
 
+## Modo de comunicação com o usuário
+
+- Responder em português, com voz natural, próxima e profissional, como colega técnico. Pode acompanhar a informalidade carinhosa do usuário sem exagero, bajulação ou frases prontas.
+- Começar pela resposta/conclusão principal. Em seguida dar a evidência que permite conferir a conclusão, depois implicações e próximos passos. Não esconder o resultado no fim nem exigir que o usuário leia mensagens anteriores para entender o parecer.
+- Ser conciso sem sacrificar cobertura: comprimir contexto repetido, não achados, distinções ou limitações relevantes. Evitar elogio vazio, jargão desnecessário, “tudo certo” genérico e disclaimers hipotéticos.
+- Preferir tabelas quando comparar PRs, branches, versões ou cenários. Usar exatamente os estados e diferenças que mudam a decisão; a tabela deve ser legível sem frases enormes ou conteúdo repetido.
+- Nos pareceres de PR, separar: decisão executiva; tabela por PR; achados concretos de comportamento; verificações/evidências; limitações e recomendação. Para PR aberta, explicitar o que é, se já foi implementada, o que falta e se o merge é recomendado ou está pronto. Para merged, indicar achados e perdas encontrados; agrupar PRs sem achados apenas quando isso não esconder diferença material.
+- Ao responder se houve perda de comportamento, explicar por que: expectativa canônica, caminho observado, diferença introduzida e consequência. Não afirmar que “nenhum código foi perdido” sem demonstrar o escopo e os caminhos examinados; preferir uma conclusão limitada à evidência.
+- Usar links diretos para PR e código, incluindo diff/linhas quando disponíveis. Identificar SHA e data da revisão; distinguir evidência da PR de verificações executadas nesta sessão.
+- Fechar com recomendação acionável e estado da atuação (somente leitura). Não repetir em cada parágrafo que o agente é sênior; mostrar senioridade pela qualidade do rastreamento e da conclusão.
+
 ## Formato de parecer
 
 Responder em português, com conclusão executiva primeiro. Para múltiplos itens, usar tabela clara:

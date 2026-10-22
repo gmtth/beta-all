@@ -17,9 +17,9 @@ Snapshot remoto consultado em 2026-10-22:
 | Item | Estado observado | Evidência/limite |
 |---|---|---|
 | Repositório e branch padrão | `gmtth/beta-all`, `main` | Consulta GitHub e remote do clone oficial. |
-| `main` | `d3ee3fd42884402e725b4248a1917c8275bcfc7f` — `feat(supabase): rank knowledge search by query coverage` | SHA da base remota usada para o primeiro snapshot, antes dos commits de documentação do revisor; não é um status atual pós-push. |
-| Checkout usado nesta revisão documental | Clone limpo em `main`, avançado por fast-forward de `32b3f0b`; as atualizações documentais posteriores geraram commits locais | Commits e estado remoto precisam ser reconciliados após push. Existem outros clones locais/worktrees; não presumir que sejam oficiais nem que estejam limpos. |
-| PRs abertas | #25 e #31; ambas documentais; ambas `mergeable: false` no retorno GitHub | Busca remota em 2026-10-22. Reconsultar antes de repetir. |
+| `main` | `d3ee3fd42884402e725b4248a1917c8275bcfc7f` é a base funcional do snapshot de PRs abaixo. | Depois, os commits somente documentais do revisor foram enviados ao GitHub; o head retornado pelo `git push` foi `7d8797e0f0c29b1f5b8231ad82f9fd13db95a889`. Um commit adicional de atualização deste dossier poderá avançar o head; consulte o remoto para o SHA atual. |
+| Checkout usado nesta revisão documental | Clone limpo em `main`, avançado por fast-forward de `32b3f0b`; os documentos do revisor foram commitados e enviados diretamente. | A última sincronização confirmada incluiu somente `AGENTS.md`, `revisor/AGENTS.md` e `revisor/DOSSIER.md`. Existem outros clones/worktrees; não presumir que sejam oficiais nem que estejam limpos. |
+| PRs abertas | #25 e #31; ambas documentais; ambas `mergeable: false` mesmo após o push documental do revisor | Busca GitHub refeita após `7d8797e`, em 2026-10-22; reconsultar antes de repetir. |
 | Cobertura merged | #26, #28–#30 e #32–#36 revisadas em parecer anterior | Proveniência é a conversa de 2026-10-22; inventário total/paginação ainda não reconciliado. |
 
 ### PRs abertas no snapshot
@@ -119,6 +119,10 @@ Para PRs abertas, o modelo elogiado foi: “as duas PRs abertas são documentais
 Para PRs merged em lote, começar com “Revisão das PRs merged — `gmtth/beta-all`”, declarar o intervalo coberto e identificar PRs abertas/fechadas sem merge que não contam como integradas. Usar tabela por PR com revisão e findings por comportamento. O parecer aprovado apontou separadamente: (1) na #26, scope desativado podia sobreviver no refresh token e voltar após reativação sem nova autorização; (2) `insufficient_scope` podia ser convertido em `401 invalid_token`; (3) #34 removeu a exibição dos scopes realmente presentes no token. Agrupou #28/#30/#33/#35 como documentação sem regressão; descreveu o comportamento #29 e #32 e suas validações pendentes; na #36 distinguiu código preservado de ranking ainda sem validação de produção. Encerrar com **achados de código** e **verificações**, incluindo testes reportados (#26: 29 OAuth e 10 renderização), teste SQL não executado e migration não aplicada na #36, e confirmação de leitura apenas, sem publicação.
 
 Este modelo é uma transcrição funcional do padrão pedido, não uma exigência de repetir literalmente a resposta ou usar as mesmas PRs como estado atual.
+
+### 2026-10-22 — preservação dos exemplos e sincronização
+
+Após conferir a solicitação original ponto a ponto, foram detalhados os fatos específicos da #25 e da #31, o formato tabular de PRs abertas e merged e os achados/limites de validação da revisão anterior. Os commits documentais acumulados foram enviados diretamente a `main`, sem PR; o push confirmou `7d8797e0f0c29b1f5b8231ad82f9fd13db95a889`. A consulta GitHub posterior ainda retornou #25 e #31 abertas e não mergeable. Nenhum runtime foi alterado ou publicado. O head remoto atual deve ser lido novamente, pois este adendo também altera o dossier.
 
 ## Achados que exigem revalidação
 

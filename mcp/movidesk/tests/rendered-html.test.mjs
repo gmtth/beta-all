@@ -9,7 +9,7 @@ test("the proxy renders its branded access page", async () => {
   const page = await read("app/page.tsx");
   const layout = await read("app/layout.tsx");
   assert.match(page, /Movidesk/);
-  assert.match(page, /Conecte o ChatGPT às ferramentas da sua equipe/i);
+  assert.match(page, /A Beta ajuda a equipe a analisar chamados e diagnosticar ocorrências/i);
   assert.match(layout, /Movidesk \\| Acesso seguro/);
   assert.match(layout, /beta-logo\.svg/);
   assert.doesNotMatch(page, /codex-preview/);

@@ -27,7 +27,7 @@ O navegador planejado para `/admin/database` é uma interface master, somente le
 | `source_record` | Sim | Sim, metadados somente | `id`, `source_system_id`, `external_id`, `record_type`, `status`, `classification`, `source_created_at`, `source_updated_at`, `imported_at`, `deleted_at` | `title`, `source_url`, `content_hash`, `attributes` e qualquer conteúdo livre/PII |
 | `knowledge_ingest_audit` | Sim | Sim, metadados somente | `id`, `source_record_id`, `operation`, `chunk_count`, `created_at` | `actor_email`, `content_hash` e qualquer identidade direta ou conteúdo |
 | `record_chunk` | Sim, estrutura somente | Não | Nenhum | Todas as linhas, `section_title`, `content`, `search_vector` e texto derivado de chamados |
-| Tabela futura de feedback/frustração/autodiagnóstico | Sim, quando criada | Não na tabela genérica | Nenhum por padrão | Eventos individuais, resumos, referências de interação e identidade. Exibir somente agregados sanitizados no painel de controle, conforme autorização e política de feedback |
+| Tabelas de feedback/frustração/autodiagnóstico | Sim, quando criadas | Não na tabela genérica | Nenhum por padrão | Não exibir no navegador genérico `/admin/database`. No painel dedicado, master pode consultar eventos individuais/contexto permitido e agregados, incluindo ranking nominal e índice de linguagem ofensiva conforme decisão do usuário; autorização sempre server-side. Seguir [`feedback-and-self-diagnosis.md`](../../docs/architecture/feedback-and-self-diagnosis.md) |
 
 ### Regras para incluir tabelas futuras
 

@@ -3,9 +3,11 @@ import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/
 import { GET as getTickets } from "../app/api/tickets/route";
 import { GET as getPersons } from "../app/api/persons/route";
 import { GET as getServices } from "../app/api/services/route";
-import { authorizeOAuthPrincipal, canonicalResource, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, OAUTH_SCOPE, recordMcpToolEvent, SUPPORTED_RESOURCE_SCOPES } from "../app/oauth/_lib";
+import { authorizeOAuthPrincipal, canonicalResource, FEEDBACK_WRITE_SCOPE, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, OAUTH_SCOPE, recordMcpToolEvent, SUPPORTED_RESOURCE_SCOPES } from "../app/oauth/_lib";
 import { registerKnowledgeTools } from "./knowledge-tools";
 import { SupabaseKnowledgeStore } from "./supabase-knowledge";
+import { registerFeedbackTools } from "./feedback-tools";
+import { SupabaseFeedbackStore } from "./supabase-feedback";
 import { registerMovideskTools, type MovideskReader } from "./mcp-tools";
 import { exposeToolSecuritySchemes, type ToolSecurityScheme } from "./tool-security-schemes";
 import { McpAuthorizationFailure, mcpAuthorizationError, missingMcpAuthorizationResponse } from "./oauth-auth-challenge";
@@ -176,6 +178,10 @@ export async function handleMcp(request: Request, context?: TelemetryContext): P
     authorizeRead: () => authorizeOAuthPrincipal(accessToken, [KNOWLEDGE_READ_SCOPE], resource, "mcp"),
     authorizeImport: () => authorizeOAuthPrincipal(accessToken, [OAUTH_SCOPE, KNOWLEDGE_WRITE_SCOPE], resource, "mcp"),
     getMovideskTicket: (id) => movideskClient.getTicketForKnowledge(id, accessToken),
+  });
+  registerFeedbackTools(instrumentedServer, new SupabaseFeedbackStore(), {
+    resource,
+    authorizeWrite: () => authorizeOAuthPrincipal(accessToken, [FEEDBACK_WRITE_SCOPE], resource, "mcp"),
   });
   instrumentedServer.exposeSecuritySchemes();
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });

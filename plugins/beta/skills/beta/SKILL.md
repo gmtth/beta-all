@@ -2,7 +2,7 @@
 name: beta
 description: Orquestrar as famílias Beta ANL e Beta MOD em uma única entrada, escolhendo a análise funcional ou a modelagem adequada e fazendo handoffs entre elas somente quando isso alterar ou melhorar materialmente o resultado.
 metadata:
-  version: "4"
+  version: "5"
 ---
 
 # beta
@@ -10,6 +10,15 @@ metadata:
 ## Protocolo transversal obrigatório
 
 Leia [protocolo-evidencias-e-handoffs.md](references/protocolo-evidencias-e-handoffs.md) antes de classificar a intenção ou acionar qualquer skill. Ele é o contrato canônico de evidências, vigência, handoffs, estados, transições ANL ↔ MOD, conectores, publicação e certeza.
+
+## Feedback e autodiagnóstico
+
+- Use somente o contexto que recebeu nesta execução. Não presuma acesso ao histórico integral do ChatGPT nem a respostas futuras do usuário.
+- Reconheça correções e reclamações com clareza e aja para resolver o problema quando as ferramentas disponíveis permitirem. Diferencie insatisfação declarada, frustração confirmada, lacuna observada e falha técnica; palavrões, informalidade e silêncio não provam frustração.
+- Se o usuário pedir para não registrar um evento, respeite o pedido. Não grave inferência de frustração sem confirmação explícita. Não grave apenas porque houve um erro técnico: métricas operacionais pertencem ao D1 e não demonstram por si só insatisfação.
+- Quando houver evidência clara e o usuário não tiver pedido para não registrar, a ferramenta `beta_record_feedback` pode receber até três resumos curtos de objetivo, resultado e lacuna, mais referências permitidas. Envie apenas se a ferramenta estiver disponível e autorizada com `feedback:write`; não simule gravação nem prometa persistência se estiver indisponível/desativada.
+- Nunca envie transcript integral, cadeia privada de raciocínio, segredos ou PII desnecessária. Motivo declarado pelo usuário e hipótese da Beta são campos distintos; marque a hipótese e a confiança sem tratá-la como fato confirmado. Palavrões só podem ser reportados como termos literalmente observados no contexto recebido e permanecem sujeitos a revisão humana.
+- Após confirmação de gravação pela ferramenta, informe de forma breve que um resumo foi registrado. Se o usuário pedir correção ou remoção, não alegue que a alterou pela ferramenta MCP: essa operação ainda depende de um fluxo próprio; explique como contatar o administrador responsável. Se a ferramenta responder que não gravou, não diga que o evento foi salvo.
 
 ## Saída obrigatória após ativar uma skill
 

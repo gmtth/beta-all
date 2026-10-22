@@ -104,5 +104,3 @@ beta-all/                              # único clone/repos de trabalho após a 
 - Registrar matriz de compatibilidade entre plugin/skills, MCP, endpoint Sites, scopes e schema/API Supabase. Builds, testes e publicações devem apontar aos diretórios do monorepo e continuar isolados por componente.
 - Não deixar workflows, automações ou instruções de contribuição apontando aos repositórios antigos como destino de desenvolvimento. Manter seus URLs somente como proveniência/arquivo.
 - Na primeira versão, não depender de scripts. Se forem introduzidos depois, limitar a bootstrap e verificação segura; nunca esconder deploys ou mutações remotas em comandos inesperados.
-
-

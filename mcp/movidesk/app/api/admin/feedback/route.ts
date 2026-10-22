@@ -1,5 +1,5 @@
-import { getChatGPTUser } from "../../../../chatgpt-auth";
-import { ensureSchema, getUserRole, isMaster, json } from "../../../../oauth/_lib";
+import { getChatGPTUser } from "../../../chatgpt-auth";
+import { ensureSchema, getUserRole, isMaster, json } from "../../../oauth/_lib";
 import { FeedbackStoreError, SupabaseFeedbackStore } from "../../../../worker/supabase-feedback";
 
 export const dynamic = "force-dynamic";

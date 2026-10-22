@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { FEEDBACK_WRITE_SCOPE } from "../app/oauth/clients";
 import type { OAuthPrincipalAuthorization } from "../app/oauth/_lib";
 import { mcpAuthorizationError } from "./oauth-auth-challenge";
@@ -22,7 +23,7 @@ const piiRedactors = [
 function sanitizeText(value: string, limit: number) {
   let result = value.normalize("NFC").trim();
   for (const pattern of piiRedactors) result = result.replace(pattern, "[removido]");
-  return result.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/gu, "").slice(0, limit);
+  return result.replace(/\p{Cc}/gu, "").slice(0, limit);
 }
 
 const eventBaseSchema = z.object({
@@ -66,7 +67,7 @@ const writeAnnotations = { readOnlyHint: false, destructiveHint: false, openWorl
 const storageFailure = "Não foi possível registrar este feedback com segurança. Nenhum sucesso de gravação foi confirmado.";
 
 export function registerFeedbackTools(
-  server: any,
+  server: McpServer,
   store: SupabaseFeedbackStore,
   options: { resource: string; authorizeWrite: () => Promise<OAuthPrincipalAuthorization> },
 ) {

@@ -67,7 +67,7 @@ export default function FeedbackAdminPanel() {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => { queueMicrotask(() => { void load(); }); }, [load]);
 
   async function toggleGroup(group: Group) {
     if (expanded === group.group_id) { setExpanded(null); return; }
@@ -126,7 +126,7 @@ export default function FeedbackAdminPanel() {
       <div className="section-title"><div><span className="section-kicker">INVESTIGAÇÃO</span><h2>Grupos e eventos</h2></div></div>
       <p className="section-description">Abra um grupo para comparar casos e consultar objetivo, resultado, lacuna, motivo e evidências registrados.</p>
       <div className="feedback-groups">{groups.map((group) => <article className="feedback-group" key={group.group_id}>
-        <button className="feedback-group-toggle" aria-expanded={expanded === group.group_id} onClick={() => void toggleGroup(group)}><span><strong>{group.label || categoryLabels[group.category] || group.category}</strong><small>{categoryLabels[group.category] ?? group.category} · {group.event_count} ocorrência(s) · {statusLabels[group.status] ?? group.status}</small></span><span>{formatDate(group.last_recorded_at)}　{expanded === group.group_id ? "−" : "+"}</span></button>
+        <button className="feedback-group-toggle" aria-expanded={expanded === group.group_id} onClick={() => void toggleGroup(group)}><span><strong>{group.label || categoryLabels[group.category] || group.category}</strong><small>{categoryLabels[group.category] ?? group.category} · {group.event_count} ocorrência(s) · {statusLabels[group.status] ?? group.status}</small></span><span>{formatDate(group.last_recorded_at)} · {expanded === group.group_id ? "−" : "+"}</span></button>
         {expanded === group.group_id && <div className="feedback-group-body">{group.summary && <p className="feedback-cluster-summary">{group.summary}</p>}{(events[group.group_id] ?? []).map((event) => <FeedbackEventCard key={event.event_id} event={event} busy={busy} onReview={(action) => void review("event", event.event_id, action)} onCorrect={(patch) => mutate({ object_type: "event", object_id: event.event_id, action: "correct", patch }, "Salvar a correção deste resumo? O texto substituído não será guardado.", event.event_id)} onDelete={() => void mutate({ object_type: "event", object_id: event.event_id, action: "delete" }, "Apagar este evento detalhado e seus termos ofensivos? A operação não pode ser desfeita.", event.event_id)} />)}{!events[group.group_id] && <p className="quiet-message">Carregando detalhes…</p>}{group.cluster_id && <div className="feedback-actions"><button disabled={busy === group.cluster_id} onClick={() => void review("cluster", group.cluster_id!, "confirm")}>Confirmar agrupamento</button><button disabled={busy === group.cluster_id} onClick={() => void review("cluster", group.cluster_id!, "dismiss")}>Desfazer agrupamento</button></div>}</div>}
       </article>)}{!groups.length && !loading && <p className="quiet-message">Nenhum evento registrado para exibir.</p>}</div>
       {hasMore && <button className="refresh-button feedback-more" disabled={loading} onClick={() => void load(false, offset)}>Carregar mais grupos</button>}

@@ -2,9 +2,11 @@ import { BETA_TERMS_VERSION } from "../oauth/clients";
 
 export const dynamic = "force-static";
 
+import Link from "next/link";
+
 export default function TermsPage() {
   return <main className="shell"><div className="ambient ambient-one" /><div className="ambient ambient-two" /><article className="card privacy-card">
-    <header className="brandbar internal-brandbar"><a className="back-link" href="/">← Voltar ao acesso</a></header>
+    <header className="brandbar internal-brandbar"><Link className="back-link" href="/">← Voltar ao acesso</Link></header>
     <div className="hero privacy-hero"><h1>Termos de uso<br /><em>da Beta.</em></h1></div>
     <section className="access-panel privacy-content" aria-label="Termos de Uso da Beta">
       <h2>Uso autorizado</h2>

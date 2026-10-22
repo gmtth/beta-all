@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { registerKnowledgeTools, type KnowledgeStore } from "../worker/knowledge-tools";
 import type { OAuthPrincipalAuthorization } from "../app/oauth/_lib";
 import { McpAuthorizationFailure } from "../worker/oauth-auth-challenge";
+import { KnowledgeImportError } from "../worker/knowledge-import-errors";
 
 type RegisteredTool = { config: any; handler: (args: unknown) => Promise<any> };
 
@@ -90,13 +91,34 @@ test("knowledge_import_movidesk_ticket fails closed without writer authorization
   assert.equal(fetched, false);
 });
 
-test("knowledge_import_movidesk_ticket hides upstream and persistence errors", async () => {
+test("knowledge_import_movidesk_ticket explains persistence failures without exposing provider details", async () => {
   const reader: KnowledgeStore = { listSources: async () => [], importMovideskTicket: async () => { throw new Error("private database error"); } };
   const tools = setup(reader, async () => authorized, async () => authorized, async () => ({ id: "20260702000000016", subject: "Falha", description: "Problema técnico" }));
   const result = await tools.get("knowledge_import_movidesk_ticket")!.handler({ ticket_id: "20260702000000016" });
   assert.equal(result.isError, true);
-  assert.match(result.content[0].text, /Não foi possível importar/);
+  assert.match(result.content[0].text, /causa não classificada/);
+  assert.match(result.content[0].text, /diagnóstico: unexpected/);
   assert.doesNotMatch(result.content[0].text, /private database error/);
+});
+
+test("knowledge_import_movidesk_ticket identifies preparation failures before persistence", async () => {
+  let persisted = false;
+  const reader: KnowledgeStore = { listSources: async () => [], importMovideskTicket: async () => { persisted = true; return { recordId: "1", chunkCount: 1 }; } };
+  const tools = setup(reader, async () => authorized, async () => authorized, async () => ({ id: "20260702000000016", subject: "Falha", description: "" }));
+  const result = await tools.get("knowledge_import_movidesk_ticket")!.handler({ ticket_id: "20260702000000016" });
+  assert.equal(result.isError, true);
+  assert.match(result.content[0].text, /não contém descrição nem interações/);
+  assert.match(result.content[0].text, /diagnóstico: ticket_missing_content/);
+  assert.equal(persisted, false);
+});
+
+test("knowledge_import_movidesk_ticket distinguishes a missing source ticket", async () => {
+  const reader: KnowledgeStore = { listSources: async () => [], importMovideskTicket: async () => ({ recordId: "1", chunkCount: 1 }) };
+  const tools = setup(reader, async () => authorized, async () => authorized, async () => { throw new KnowledgeImportError("ticket_not_found"); });
+  const result = await tools.get("knowledge_import_movidesk_ticket")!.handler({ ticket_id: "20260702000000016" });
+  assert.equal(result.isError, true);
+  assert.match(result.content[0].text, /não encontrou esse chamado/);
+  assert.match(result.content[0].text, /diagnóstico: ticket_not_found/);
 });
 
 test("knowledge_import_movidesk_ticket preserves the reconnect challenge from an authorization failure", async () => {

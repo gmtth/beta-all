@@ -3,6 +3,7 @@ import { buildMovideskKnowledgeRecord, type MovideskKnowledgeRecord } from "./kn
 import { KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, OAUTH_SCOPE } from "../app/oauth/clients";
 import type { OAuthPrincipalAuthorization } from "../app/oauth/_lib";
 import { McpAuthorizationFailure, mcpAuthorizationError } from "./oauth-auth-challenge";
+import { knowledgeImportFailure } from "./knowledge-import-errors";
 
 export interface KnowledgeSourceSummary {
   id: string | null;
@@ -80,7 +81,8 @@ export function registerKnowledgeTools(server: any, reader: KnowledgeStore, opti
         };
       } catch (error) {
         if (error instanceof McpAuthorizationFailure) return mcpAuthorizationError(error.reason, options.resource, [OAUTH_SCOPE, KNOWLEDGE_WRITE_SCOPE]);
-        return { isError: true, content: [{ type: "text" as const, text: "Não foi possível importar o chamado. Confirme se ele existe e se a base está disponível." }] };
+        const failure = knowledgeImportFailure(error);
+        return { isError: true, content: [{ type: "text" as const, text: `${failure.message} (diagnóstico: ${failure.diagnostic})` }] };
       }
     },
   );

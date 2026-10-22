@@ -11,10 +11,12 @@ export type AdminToolMetrics = {
   usageByTool: Array<{ toolName: string; calls: number; errors: number; successRatePercent: number; averageLatencyMs: number | null }>;
   recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string }>;
   errorsByDay: Array<{ date: string; count: number }>;
+  httpErrorsByStatus: Array<{ status: number; count: number }>;
 };
 
 type ErrorRow = { tool_name: string; error_code: string | null; created_at: number };
 type DailyErrorRow = { day: number; count: number };
+type HttpErrorRow = { http_status: number; count: number };
 
 export async function getAdminToolMetrics(): Promise<AdminToolMetrics> {
   await ensureToolUsageSchema();
@@ -24,13 +26,15 @@ export async function getAdminToolMetrics(): Promise<AdminToolMetrics> {
   const retentionCutoff = now - RETENTION_DAYS * DAY_MS;
   await db().prepare("DELETE FROM mcp_tool_events WHERE created_at < ?").bind(retentionCutoff).run();
 
-  const [usage, errors, daily] = await Promise.all([
+  const [usage, errors, daily, httpErrors] = await Promise.all([
     db().prepare("SELECT tool_name, COUNT(*) AS calls, SUM(CASE WHEN outcome = 'error' THEN 1 ELSE 0 END) AS errors, AVG(duration_ms) AS average_latency_ms FROM mcp_tool_events WHERE created_at >= ? AND created_at < ? GROUP BY tool_name ORDER BY calls DESC, tool_name ASC")
       .bind(startUtc, todayUtc + DAY_MS).all<ToolUsageRow>(),
     db().prepare("SELECT tool_name, error_code, created_at FROM mcp_tool_events WHERE outcome = 'error' ORDER BY created_at DESC, id DESC LIMIT 10")
       .all<ErrorRow>(),
     db().prepare("SELECT CAST(created_at / 86400000 AS INTEGER) AS day, COUNT(*) AS count FROM mcp_tool_events WHERE outcome = 'error' AND created_at >= ? AND created_at < ? GROUP BY day")
       .bind(startUtc, todayUtc + DAY_MS).all<DailyErrorRow>(),
+    db().prepare("SELECT http_status, COUNT(*) AS count FROM mcp_tool_events WHERE outcome = 'error' AND http_status BETWEEN 400 AND 599 AND created_at >= ? AND created_at < ? GROUP BY http_status ORDER BY count DESC, http_status ASC")
+      .bind(startUtc, todayUtc + DAY_MS).all<HttpErrorRow>(),
   ]);
 
   const dailyCounts = new Map((daily.results ?? []).map((row) => [row.day, row.count]));
@@ -50,6 +54,7 @@ export async function getAdminToolMetrics(): Promise<AdminToolMetrics> {
       occurredAt: new Date(row.created_at).toISOString(),
     })),
     errorsByDay,
+    httpErrorsByStatus: (httpErrors.results ?? []).map((row) => ({ status: row.http_status, count: row.count })),
   };
 }
 

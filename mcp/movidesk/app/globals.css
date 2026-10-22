@@ -96,8 +96,10 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 @media (max-width: 600px) { .diagnostic-row { flex-direction: column; gap: 6px; }.diagnostic-row strong { max-width: 100%; text-align: left; } }
 
 /* MCP usage telemetry (stored in the Sites D1 database) */
-.telemetry-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.telemetry-grid { grid-template-columns: minmax(0, 1fr); }
+.telemetry-error-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
 .telemetry-card { min-width: 0; }
+.usage-telemetry-card { width: 100%; }
 .telemetry-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
 .telemetry-heading h3 { margin: 0 0 5px; font-size: 16px; }
 .telemetry-heading span { color: var(--muted); font-size: 12px; }
@@ -113,6 +115,12 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .error-chart { display: grid; grid-template-columns: repeat(30, minmax(2px, 1fr)); align-items: end; gap: 3px; height: 150px; padding: 10px 0 0; border-bottom: 1px solid var(--line); }
 .error-chart-column { position: relative; display: flex; height: 100%; align-items: end; }.error-chart-value { position: absolute; z-index: 1; left: 50%; transform: translateX(-50%); color: #bcb5c0; font-size: 8px; line-height: 1; font-weight: 700; pointer-events: none; }
 .error-chart-bar { width: 100%; min-height: 2px; border-radius: 3px 3px 0 0; background: linear-gradient(0deg, #db5f52, #ff9b66); }
+.http-status-chart { display: grid; gap: 14px; }
+.http-status-row { display: grid; grid-template-columns: 70px minmax(40px, 1fr) auto; align-items: center; gap: 12px; font-size: 12px; }
+.http-status-code { color: #ffb69f; font: 700 12px var(--font-geist-mono), Consolas, monospace; }
+.http-status-fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, #db5f52, #ff9b66); }
+.http-status-row > strong:last-child { min-width: 26px; text-align: right; }
+.http-status-note { margin: 14px 0 0; color: var(--muted); font-size: 10px; line-height: 1.5; }
 .chart-axis-labels { display: flex; justify-content: space-between; margin-top: 8px; color: var(--muted); font-size: 11px; }
 .recent-errors-card { grid-column: 1 / -1; }
 .recent-error-list { display: grid; }
@@ -121,7 +129,7 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .recent-error-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .recent-error-row span, .recent-error-row time { color: var(--muted); font-size: 11px; }
 .recent-error-row time { white-space: nowrap; }
-@media (max-width: 700px) { .telemetry-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(90px, 1fr) minmax(40px, 1.3fr) auto; } .usage-error-count { display: none; } }
+@media (max-width: 700px) { .telemetry-error-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(90px, 1fr) minmax(40px, 1.3fr) auto; } .usage-error-count { display: none; } }
 
 .toast { position: fixed; z-index: 1000; top: 24px; right: 24px; display: grid; grid-template-columns: 34px minmax(0, 1fr) 30px; align-items: center; gap: 12px; width: min(430px, calc(100vw - 48px)); padding: 14px; border: 1px solid rgba(87,200,138,.32); border-radius: 14px; background: rgba(30,35,34,.94); box-shadow: 0 18px 60px rgba(0,0,0,.42); color: #f5f2f4; backdrop-filter: blur(18px); animation: toast-enter .22s ease-out; }
 .toast-error { border-color: rgba(255,130,112,.38); background: rgba(43,31,31,.96); }

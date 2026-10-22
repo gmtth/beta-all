@@ -321,3 +321,7 @@ beta-all/                              # único clone/repos de trabalho após a 
 - Pedido de commit não autoriza merge, PR, tag/release nem publicação no Sites. Faça cada uma dessas ações somente quando solicitada.
 - Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
 - Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.
+
+## Revisor oficial de PRs e branches
+
+O revisor oficial do repositório `gmtth/beta-all` segue [`revisor/AGENTS.md`](revisor/AGENTS.md); o estado e a cobertura das revisões ficam em [`revisor/DOSSIER.md`](revisor/DOSSIER.md). O revisor é somente leitura no código do produto. Conforme autorização explícita do usuário, pode atualizar e commitar diretamente somente esses documentos e esta referência, sem abrir PR.

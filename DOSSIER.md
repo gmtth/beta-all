@@ -38,13 +38,14 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 
 - Decisão do usuário: gráficos e métricas de uso/erros devem contabilizar chamadas das ferramentas MCP no ambiente Sites; não usar Supabase para esse fim.
 - Implementação publicada no Sites v80: eventos mínimos no D1, endpoint administrativo separado dos indicadores Supabase, gráfico de chamadas por ferramenta, erros diários em 30 dias e lista dos dez erros mais recentes. Retenção de até 90 dias.
-- Os eventos não contêm identidade, argumentos, conteúdo de retorno nem mensagens brutas de erro. A tabela é declarada em Drizzle e possui migration própria; o Worker também garante criação idempotente.
+- Na implementação inicial publicada na v80, os eventos não continham identidade, argumentos, conteúdo de retorno nem mensagens brutas de erro. A política de identidade foi alterada por pedido explícito posterior em 2026-10-22, descrito abaixo. A tabela é declarada em Drizzle e possui migration própria; o Worker também garante criação idempotente.
 - Estado: commit GitHub `f013830` enviado à branch `codex/knowledge-ticket-ingestion`; fonte Sites `f0e56004251435d2b3b07b8c516857c7f3a4f4de`; versão 80 implantada com sucesso em deployment `appgdep_6ad7ffa179f88191bf045ab6570e161c`. Ainda não confirmado que chamadas reais estejam aparecendo nos gráficos. Ver `mcp/movidesk/DOSSIER.md` para detalhes.
 - O commit `2d05b69` corrige o `PATH` enviado pelo wrapper Sites no Windows, incluindo Node para o empacotador Bash. O workflow completo foi concluído com esse ajuste.
 
 ### Expansão da telemetria MCP (2026-10-21)
 
 - Pedido do usuário: incluir latência por ferramenta e taxa de sucesso no painel, mantendo a telemetria no D1 do Sites e sem registrar identidade, argumentos, respostas ou mensagens brutas de erro.
+- Atualização explícita e implementação (2026-10-22): PR #10, commit integrado `751d2b2`. Eventos de falha autenticados podem incluir o e-mail da conta para diagnóstico no painel master, com retenção máxima de 90 dias; sucessos e falhas sem autenticação validada continuam sem identidade. O resumo também mostra duração e status HTTP quando disponíveis. Sites v99 publicada a partir do commit de fonte `ca45aec`; deployment `appgdep_6ad9917718b48191bfd3859d8f1e705e` concluído com sucesso. Ver `mcp/movidesk/DOSSIER.md`.
 - Implementação integrada pela PR #4: commit `fd13f12` em `main`. Acrescenta duração dos eventos, média de latência disponível e porcentagem de sucesso na lista por ferramenta. Eventos anteriores seguem válidos para a taxa de sucesso; duração não registrada permanece nula e não entra na média.
 - Build Vinext passou. A fonte do Site foi sincronizada e enviada ao repositório do Sites no commit `87d0cbb`; a versão 94 foi implantada com sucesso em 2026-10-22 (deployment `appgdep_6ad96f162c648191ba03b66129bcc7e6`). Testes completos do componente não foram executados neste ciclo.
 - Próximo passo solicitado: exibir erros por categoria e comparar o período com o período anterior. Acompanhar em [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos).

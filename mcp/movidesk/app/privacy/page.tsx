@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       <p>Antes da gravação, o serviço remove padrões reconhecidos de e-mail, documentos, telefone rotulado e URLs. Essa limpeza é automatizada e não garante anonimização: nomes ou outros dados pessoais podem permanecer no texto quando não forem reconhecidos pelos filtros. O conteúdo importado é classificado como interno e não deve ser tratado como material para clientes.</p>
 
       <h2>Métricas de uso</h2>
-      <p>Para acompanhar o funcionamento, a Beta registra o nome da ferramenta, sucesso ou falha, uma categoria segura de erro e o horário. Esses eventos não incluem a identidade do usuário, argumentos, respostas ou mensagens brutas de erro. Ao gravar novas métricas, o serviço remove eventos anteriores a 90 dias; essa limpeza ocorre durante o uso, sem uma rotina periódica independente.</p>
+      <p>Para acompanhar o funcionamento e diagnosticar falhas, a Beta registra o nome da ferramenta, sucesso ou falha, uma categoria segura de erro, duração e horário. Em chamadas que falham após autenticação, o evento também associa o e-mail da conta autenticada; falhas sem identidade validada não recebem e-mail. O status HTTP é guardado quando disponível. Esses eventos não incluem argumentos, respostas ou mensagens brutas de erro. Ao gravar novas métricas, o serviço remove eventos anteriores a 90 dias; essa limpeza ocorre durante o uso, sem uma rotina periódica independente.</p>
 
       <h2>Serviços envolvidos</h2>
       <p>O ChatGPT fornece a autenticação e recebe as solicitações e respostas das ferramentas. O Movidesk recebe as consultas feitas pela integração. O ChatGPT Sites/Cloudflare hospeda a aplicação e os dados operacionais de autenticação e métricas; o Supabase hospeda a base de conhecimento. Cada serviço também está sujeito aos próprios termos e avisos de privacidade.</p>
@@ -28,6 +28,6 @@ export default function PrivacyPage() {
       <h2>Privacidade no ChatGPT</h2>
       <p>Este aviso trata do serviço Beta. Para entender como a OpenAI trata dados da sua conta e das conversas no ChatGPT, consulte a <a href="https://openai.com/policies/privacy-policy/" target="_blank" rel="noreferrer">Política de Privacidade da OpenAI</a>.</p>
     </section>
-    <footer className="card-footer"><span>Última atualização: 21/10/2026</span></footer>
+    <footer className="card-footer"><span>Última atualização: 22/10/2026</span></footer>
   </article></main>;
 }

@@ -1,4 +1,4 @@
-import type { KnowledgeStore, KnowledgeSourceSummary } from "./knowledge-tools";
+import type { KnowledgeStore, KnowledgeSearchResult, KnowledgeSourceSummary } from "./knowledge-tools";
 import type { MovideskKnowledgeRecord } from "./knowledge-ingest";
 import {
   DATABASE_BROWSER_TABLES,
@@ -13,6 +13,7 @@ import {
 import { KnowledgeImportError } from "./knowledge-import-errors";
 
 const safeText = (value: unknown) => typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : null;
+const safeSearchText = (value: unknown, max: number) => typeof value === "string" && value.trim() && value.length <= max ? value.trim() : null;
 const safeAdminText = (value: unknown) => typeof value === "string" || typeof value === "number" ? String(value).trim().slice(0, 180) || null : null;
 const safeCount = (value: unknown) => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : 0;
 const safeIsoDate = (value: unknown) => typeof value === "string" && Number.isFinite(Date.parse(value)) ? new Date(value).toISOString() : null;
@@ -186,6 +187,55 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
       const name = sourceNameKeys.map((key) => safeText(row[key])).find((value) => value !== null) ?? id;
       return { id, name };
     });
+  }
+
+  async searchRecords(query: string, limit: number): Promise<KnowledgeSearchResult[]> {
+    const { base, secretKey } = this.configuration();
+    const endpoint = new URL("/rest/v1/rpc/search_knowledge", base);
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "Content-Profile": "beta",
+        },
+        body: JSON.stringify({ p_query: query, p_limit: limit }),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch {
+      throw new Error("Knowledge search request failed.");
+    }
+    if (!response.ok) {
+      await response.body?.cancel();
+      throw new Error("Knowledge search RPC is unavailable.");
+    }
+    let payload: unknown;
+    try { payload = await response.json(); }
+    catch { throw new Error("Knowledge search returned an invalid response."); }
+    if (!Array.isArray(payload) || payload.length > limit) throw new Error("Knowledge search returned an invalid response.");
+    const results: KnowledgeSearchResult[] = [];
+    for (const value of payload) {
+      if (!isObject(value)) throw new Error("Knowledge search returned an invalid response.");
+      const recordId = safeText(value.record_id);
+      const externalId = safeText(value.external_id);
+      const recordType = safeText(value.record_type);
+      const title = safeSearchText(value.title, 500);
+      const sourceName = safeText(value.source_name);
+      const sectionTitle = safeText(value.section_title);
+      const excerpt = safeSearchText(value.excerpt, 1600);
+      const relevance = typeof value.relevance === "number" && Number.isFinite(value.relevance) ? value.relevance : null;
+      const sourceCreatedAt = value.source_created_at === null ? null : safeIsoDate(value.source_created_at);
+      if (!recordId || !externalId || !recordType || !title || !sourceName || !sectionTitle || !excerpt || relevance === null
+          || (value.source_created_at !== null && sourceCreatedAt === null)) {
+        throw new Error("Knowledge search returned an invalid response.");
+      }
+      results.push({ recordId, externalId, recordType, title, sourceName, sourceCreatedAt, sectionTitle, excerpt, relevance });
+    }
+    return results;
   }
 
   async getAdminOverview(): Promise<KnowledgeAdminOverview> {

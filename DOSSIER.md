@@ -45,7 +45,8 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 ### Expansão da telemetria MCP (2026-10-21)
 
 - Pedido do usuário: incluir latência por ferramenta e taxa de sucesso no painel, mantendo a telemetria no D1 do Sites e sem registrar identidade, argumentos, respostas ou mensagens brutas de erro.
-- Implementação local no monorepo: acrescenta duração dos eventos, média de latência disponível e porcentagem de sucesso na lista por ferramenta. Eventos anteriores seguem válidos para a taxa de sucesso; duração não registrada permanece nula e não entra na média. Ainda não houve commit, push ou publicação.
+- Implementação integrada pela PR #4: commit `fd13f12` em `main`. Acrescenta duração dos eventos, média de latência disponível e porcentagem de sucesso na lista por ferramenta. Eventos anteriores seguem válidos para a taxa de sucesso; duração não registrada permanece nula e não entra na média.
+- Build Vinext passou. A fonte do Site foi sincronizada e enviada ao repositório do Sites no commit `87d0cbb`; a versão 94 foi implantada com sucesso em 2026-10-22 (deployment `appgdep_6ad96f162c648191ba03b66129bcc7e6`). Testes completos do componente não foram executados neste ciclo.
 - Próximo passo solicitado: exibir erros por categoria e comparar o período com o período anterior. Acompanhar em [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos).
 
 ### Reconexão OAuth publicada no MCP/Sites (2026-10-21)

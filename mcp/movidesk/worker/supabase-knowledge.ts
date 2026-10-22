@@ -293,7 +293,7 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
         chunkCount: safeCount(row.chunk_count),
       };
     }) : [];
-    const recentImports = Array.isArray(data.recent_imports) ? data.recent_imports.slice(0, 10).map((value) => {
+    const recentImports = Array.isArray(data.recent_imports) ? data.recent_imports.slice(0, 30).map((value) => {
       const row = value && typeof value === "object" ? value as Record<string, unknown> : {};
       return {
         ticketId: safeAdminText(row.ticket_id),

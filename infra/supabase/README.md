@@ -37,7 +37,7 @@ Não usar `supabase db reset --linked` no projeto existente: esse comando pode a
 
 ### Painel administrativo (migration aplicada)
 
-A migration `20261020150000_admin_knowledge_overview.sql` adiciona uma RPC somente de leitura para o painel master do MCP. Ela retorna contagens por fonte e até dez importações recentes, sem conteúdo dos trechos. A execução fica concedida somente a `service_role`; o backend continua exigindo sessão ChatGPT e papel master. O rollback remove apenas a função.
+A migration `20261020150000_admin_knowledge_overview.sql` adiciona uma RPC somente de leitura para o painel master do MCP. A migration `20261022130000_expand_recent_imports.sql` limita a resposta a no máximo 30 importações recentes, sem conteúdo dos trechos. A execução fica concedida somente a `service_role`; o backend continua exigindo sessão ChatGPT e papel master. O rollback de cada migration está em `rollback/`.
 
 Esta migration foi aplicada remotamente em 2026-10-22. A validação ponta a ponta do painel e da rota correspondente ainda está pendente.
 

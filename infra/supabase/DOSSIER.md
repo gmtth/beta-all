@@ -92,7 +92,11 @@ A nova rota master-only `/admin/database` exibe seletor das quatro tabelas aprov
 
 - A integração de status foi alinhada a `SUPABASE_SECRET_KEY` e ao endpoint real `beta.source_system`, com verificação HTTPS, medição de latência e retorno sem credenciais ou erros brutos.
 - O painel master local em `mcp/movidesk/app/admin/users` reúne disponibilidade da Data API, latência, contagens de fontes/registros/trechos, importações recentes e escopos em tokens ativos por analista. Os endpoints permanecem protegidos por autenticação ChatGPT e papel master.
-- A migration `20261020150000_admin_knowledge_overview.sql` cria uma RPC de leitura agregada, limitada a dez importações recentes e sem conteúdo de chamados/trechos. Execução concedida apenas a `service_role`; rollback remove somente a função.
+- A migration `20261020150000_admin_knowledge_overview.sql` cria uma RPC de leitura agregada, originalmente limitada a dez importações recentes e sem conteúdo dos trechos. A migration `20261022130000_expand_recent_imports.sql` elevou o limite para 30; ambas mantêm execução concedida apenas a `service_role`.
+
+### Ampliação do histórico de importações no painel (2026-10-22)
+
+A migration `20261022130000_expand_recent_imports.sql` substituiu somente `beta.get_knowledge_admin_overview()`, aumentando o limite da consulta de auditorias recentes de 10 para 30. Não alterou linhas nem outras tabelas. O `db push --dry-run` indicou exclusivamente essa migration pendente no projeto `ywqoanfqcbcdecmkguze`; o `db push` concluiu e `migration list` confirmou a versão `20261022130000` em Local e Remote. O rollback correspondente restaura o limite de 10.
 - **Estado registrado à época:** painel/runtime publicados como Site versão 75 em 2026-10-20. Naquele registro a migration `20261020150000_admin_knowledge_overview.sql` estava pendente. Ela foi aplicada em 2026-10-22 junto com a busca; a conexão e os indicadores do painel ainda não foram revalidados end-to-end após o deploy.
 
 ## Protocolo do chamado na busca indexada — aplicada no Supabase (2026-10-22)

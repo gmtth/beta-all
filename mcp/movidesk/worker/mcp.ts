@@ -11,6 +11,7 @@ import { exposeToolSecuritySchemes, type ToolSecurityScheme } from "./tool-secur
 import { McpAuthorizationFailure, mcpAuthorizationError, missingMcpAuthorizationResponse } from "./oauth-auth-challenge";
 import { protectedResourceMetadata as buildProtectedResourceMetadata } from "../app/oauth/metadata";
 import { KnowledgeImportError } from "./knowledge-import-errors";
+import { resolveMovideskTicketIdentifier } from "./knowledge-ingest";
 
 const bearerToken = (authorization: string | null) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
 const json = (data: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
@@ -104,17 +105,22 @@ class LocalMovideskClient implements MovideskReader {
   }
   getTicket(id: string, accessToken: string, signal?: AbortSignal) { return this.get("tickets", { id }, accessToken, signal); }
   async getTicketForKnowledge(id: string, accessToken: string) {
-    try { return await this.getTicket(id, accessToken); }
-    catch (error) {
-      if (error instanceof McpAuthorizationFailure) throw error;
-      if (!(error instanceof Error) || !error.message.includes("HTTP 404")) throw new KnowledgeImportError("movidesk_unavailable");
-      try { return await this.get("tickets", { id, include_past: true }, accessToken); }
-      catch (pastError) {
-        if (pastError instanceof McpAuthorizationFailure) throw pastError;
-        if (pastError instanceof Error && pastError.message.includes("HTTP 404")) throw new KnowledgeImportError("ticket_not_found");
-        throw new KnowledgeImportError("movidesk_unavailable");
+    const lookup = async (kind: "id" | "protocol", value: string): Promise<unknown | null> => {
+      const params = { [kind]: value };
+      try { return await this.get("tickets", params, accessToken); }
+      catch (error) {
+        if (error instanceof McpAuthorizationFailure) throw error;
+        if (!(error instanceof Error) || !error.message.includes("HTTP 404")) throw new KnowledgeImportError("movidesk_unavailable");
+        try { return await this.get("tickets", { ...params, include_past: true }, accessToken); }
+        catch (pastError) {
+          if (pastError instanceof McpAuthorizationFailure) throw pastError;
+          if (pastError instanceof Error && pastError.message.includes("HTTP 404")) return null;
+          throw new KnowledgeImportError("movidesk_unavailable");
+        }
       }
-    }
+    };
+    // A numeric identifier may be a protocol; try internal ID first, then protocol.
+    return resolveMovideskTicketIdentifier(id, lookup);
   }
   searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal) { return this.get("tickets", params, accessToken, signal); }
   searchPeople(params: Record<string, string | number | boolean | undefined>, accessToken: string) { return this.get("persons", params, accessToken); }

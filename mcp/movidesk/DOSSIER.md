@@ -1781,3 +1781,15 @@ A rota `/privacy` foi reescrita para descrever o que o runtime confirma: identid
 Na worktree `codex/supabase-database-browser`, foram adicionadas as rotas master-only `/api/admin/database/schema` e `/api/admin/database/preview`, com acesso por duas RPCs Supabase de allowlist fechada. A página `/admin/database` apresenta catálogo, permissões por camada e prévias paginadas; a home oferece um link visível somente para masters. A prévia aceita apenas `source_system`, `source_record` e `knowledge_ingest_audit`, campos definidos no contrato e até 25 linhas por página; `record_chunk` é estrutural, sem linhas. Respostas e erros são validados e sanitizados.
 
 **Verificação:** build lista a página e as duas rotas. Seis testes focados passaram. No teste adicional de renderização, 15 passaram e uma asserção falhou porque espera texto antigo na home, falha já registrada no estado anterior e fora das mudanças desta etapa. A migration `20261021160000_admin_database_browser.sql` não foi aplicada remotamente; schema/RPCs ainda não foram verificadas contra PostgreSQL real, e página não publicada nem validada visualmente no Site.
+
+## Estados de carregamento e diretrizes visuais do Site (2026-10-22)
+
+Foi adicionado `app/loading-spinner.tsx` como indicador compartilhado, com rótulo acessível e variante compacta. A interface mostra o indicador durante carregamentos de estrutura e prévias do navegador Supabase, leitura inicial de contas, métricas do painel, atualização de conexão, cadastro/remoção/logout de contas e salvamento da validade do token. O CSS mantém o acento laranja do Site, informa `aria-busy` nos dados consultados e deixa o spinner estático quando `prefers-reduced-motion` está ativo. Cópia de texto e páginas SSR não receberam animação artificial.
+
+O `AGENTS.md` do componente ganhou diretrizes detalhadas para recuperar a linguagem visual implementada: tokens e cores semânticas, cartão pequeno/intermediário/grande, superfícies, tipografia, ritmo de espaçamento, botões/formulários, tabelas/gráficos, carregamento, responsividade e acessibilidade.
+
+**Verificação:** `git diff --check` passou. `npm run build` passou após uma primeira execução no sandbox ser impedida por `EPERM` ao resolver arquivos locais de `node_modules`; a repetição autorizada fora do sandbox compilou todas as rotas. A suíte automatizada não foi executada. Nenhum commit, push, merge ou publicação Sites foi solicitado ou realizado; mudanças permanecem na branch `feat/site-loading-spinners`.
+
+## Simplificação do cabeçalho do navegador Supabase (2026-10-22)
+
+Após feedback visual, removido o hero redundante da rota `/admin/database` (kicker “SUPABASE · SCHEMA BETA”, título “Banco de dados” e descrição). O botão “Atualizar estrutura” foi movido ao canto direito do cartão de controle de acesso, ao lado do título “Site e Supabase”; em telas estreitas fica à direita abaixo do título. O título é agora o H1 visível da rota. Não publicado; build desta alteração ainda não executado.

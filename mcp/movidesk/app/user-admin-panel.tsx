@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS, MAX_ACCESS_TOKEN_LIFETIME_MS, MIN_ACCESS_TOKEN_LIFETIME_MS } from "./oauth/token-lifetime";
+import LoadingSpinner from "./loading-spinner";
 
 type User = { email: string; role: string; active: number; created_at: number; scopes: string[]; activeTokenCount: number; latestTokenExpiry: number | null };
 type ConnectionDiagnostic = "configuration_missing" | "invalid_url" | "available" | "invalid_credentials" | "schema_unavailable" | "rate_limited" | "api_error" | "request_rejected" | "timeout" | "network_error";
@@ -87,6 +88,7 @@ export default function UserAdminPanel() {
   const [savingTokenLifetime, setSavingTokenLifetime] = useState(false);
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
+  const [addingUser, setAddingUser] = useState(false);
 
   const notify = useCallback((message: string, tone: "success" | "error") => setToast({ message, tone }), []);
 
@@ -118,7 +120,7 @@ export default function UserAdminPanel() {
   useEffect(() => { void load(); }, [load]);
 
   async function submit(event: React.FormEvent) {
-    event.preventDefault(); setToast(null);
+    event.preventDefault(); setToast(null); setAddingUser(true);
     try {
       const response = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       const data = await response.json();
@@ -126,12 +128,14 @@ export default function UserAdminPanel() {
       setEmail(""); notify("Acesso liberado. A pessoa deverá autorizar as permissões no ChatGPT.", "success"); await load();
     } catch {
       notify("Não foi possível cadastrar. Tente novamente.", "error");
+    } finally {
+      setAddingUser(false);
     }
   }
 
   async function remove(target: User) {
     if (!window.confirm(`Remover o acesso de ${target.email}?`)) return;
-    setBusy(target.email); setToast(null);
+    setBusy(`remove:${target.email}`); setToast(null);
     try {
       const response = await fetch("/api/admin/users", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
       const data = await response.json();
@@ -146,7 +150,7 @@ export default function UserAdminPanel() {
 
   async function logout(target: User) {
     if (!window.confirm(`Deslogar ${target.email}? Todos os access tokens, refresh tokens e autorizações pendentes serão invalidados. A conta continuará autorizada e precisará conectar novamente.`)) return;
-    setBusy(target.email); setToast(null);
+    setBusy(`logout:${target.email}`); setToast(null);
     try {
       const response = await fetch("/api/admin/users/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
       const data = await response.json() as { error?: string };
@@ -195,11 +199,11 @@ export default function UserAdminPanel() {
     <section className="admin-section" aria-labelledby="team-title">
       <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div></div>
       <p className="section-description">O acesso é validado pelo servidor. Cada pessoa precisa autorizar sua própria conta; os escopos abaixo vêm dos tokens ativos.</p>
-      <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit">Liberar acesso</button></form>
-      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === item.email} aria-label={`Deslogar ${item.email}`}>{busy === item.email ? "…" : "Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === item.email} aria-label={`Remover ${item.email}`}>{busy === item.email ? "…" : "Remover"}</button></div></div>)}{users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
+      <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit" disabled={addingUser}>{addingUser && <LoadingSpinner label="Liberando acesso" compact />}{addingUser ? "Liberando…" : "Liberar acesso"}</button></form>
+      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{loading && users.length === 0 ? <div className="loading-message"><LoadingSpinner label="Carregando contas autorizadas" />Carregando contas…</div> : users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === `logout:${item.email}` || busy === `remove:${item.email}`} aria-label={busy === `logout:${item.email}` ? `Deslogando ${item.email}` : `Deslogar ${item.email}`}>{busy === `logout:${item.email}` && <LoadingSpinner label={`Deslogando ${item.email}`} compact />}{"Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === `logout:${item.email}` || busy === `remove:${item.email}`} aria-label={busy === `remove:${item.email}` ? `Removendo ${item.email}` : `Remover ${item.email}`}>{busy === `remove:${item.email}` && <LoadingSpinner label={`Removendo ${item.email}`} compact />}{"Remover"}</button></div></div>)}{!loading && users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
     </section>
     <section className="admin-section" aria-labelledby="connection-title">
-      <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
+      <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading && <LoadingSpinner label="Atualizando painel" compact />}{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
       <div className="connection-card">
         <span className={`connection-indicator ${overview?.connection.status === "online" ? "is-online" : "is-offline"}`} />
         <div className="connection-copy"><strong>{!overview ? "Verificando conexão" : overview.connection.status === "online" ? "Conexão disponível" : "Conexão indisponível"}</strong><span>{overview ? connectionDiagnostics[overview.connection.diagnostic] : "Consultando Data API do schema Beta"}</span></div>
@@ -212,13 +216,13 @@ export default function UserAdminPanel() {
           <section className="data-card"><h3>Fontes cadastradas</h3>{knowledge.sources.length ? knowledge.sources.map((source) => <div className="source-row" key={source.id ?? source.code}><div><strong>{source.name ?? source.code ?? "Fonte"}</strong><span>{source.active ? "Ativa" : "Inativa"}</span></div><span>{source.recordCount} registros · {source.chunkCount} trechos</span></div>) : <p className="quiet-message">Nenhuma fonte cadastrada.</p>}</section>
           <section className="data-card"><h3>Importações recentes</h3>{knowledge.recentImports.length ? knowledge.recentImports.map((item, index) => <div className="source-row import-row" key={`${item.ticketId}-${item.createdAt}-${index}`}><div><strong>{item.title ?? `Chamado ${item.ticketId ?? ""}`}</strong><span>Movidesk {item.ticketId ? `· ${item.ticketId}` : ""} · {item.chunkCount} trechos · por {item.actorEmail ?? "analista"}</span></div><span>{dateTime(item.createdAt)}</span></div>) : <p className="quiet-message">Nenhuma importação registrada.</p>}</section>
         </div>
-      </> : <p className="quiet-message">{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Consulte o diagnóstico acima para identificar o próximo passo." : "Carregando indicadores do conhecimento…"}</p>}
+      </> : <p className={overview?.knowledge.status === "unavailable" ? "quiet-message" : "quiet-message loading-message"}>{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Consulte o diagnóstico acima para identificar o próximo passo." : <><LoadingSpinner label="Carregando indicadores do conhecimento" />Carregando indicadores do conhecimento…</>}</p>}
     </section>
 
     <section className="admin-section" aria-labelledby="telemetry-title">
       <div className="section-title"><div><span className="panel-heading">ATIVIDADE DO MCP</span><h2 id="telemetry-title">Uso e erros</h2></div></div>
       <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site.</p>
-      {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message">Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
+      {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message loading-message"><LoadingSpinner label="Carregando métricas do MCP" />Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
         <div className="telemetry-error-grid">
           <section className="data-card telemetry-card" aria-labelledby="error-trend-title">
           <div className="telemetry-heading"><div><h3 id="error-trend-title">Erros no último mês</h3><span>Ocorrências por dia</span></div><strong>{toolMetrics.errorsByDay.reduce((sum, day) => sum + day.count, 0)}</strong></div>
@@ -260,7 +264,7 @@ export default function UserAdminPanel() {
       <p className="section-description">Define a validade em milissegundos para access tokens novos e renovados. Tokens já emitidos mantêm a expiração atual; refresh tokens continuam com validade própria de até 90 dias.</p>
       <form onSubmit={saveTokenLifetime} className="user-form">
         <div className="input-wrap"><input aria-label="Validade do access token em milissegundos" type="number" min={MIN_ACCESS_TOKEN_LIFETIME_MS} max={MAX_ACCESS_TOKEN_LIFETIME_MS} step="1" value={tokenLifetimeDraft} onChange={(event) => setTokenLifetimeDraft(event.target.value)} required /><span aria-hidden="true">ms</span></div>
-        <button type="submit" disabled={savingTokenLifetime}>{savingTokenLifetime ? "Salvando…" : "Salvar validade"}</button>
+        <button type="submit" disabled={savingTokenLifetime}>{savingTokenLifetime && <LoadingSpinner label="Salvando validade" compact />}{savingTokenLifetime ? "Salvando…" : "Salvar validade"}</button>
       </form>
       <p className="quiet-message">Limite permitido: {MIN_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} a {MAX_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms. O padrão é {DEFAULT_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms.</p>
     </section>

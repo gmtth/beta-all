@@ -68,6 +68,7 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
         let outcome: "success" | "error" = "success";
         let errorCode: string | null = null;
         let httpStatus: number | null = null;
+        let userEmail: string | null = null;
         try {
           if (!schemes?.length) {
             outcome = "error";
@@ -81,6 +82,7 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
               errorCode = "authorization";
               return mcpAuthorizationError(authorization.error, resource, requiredScopes);
             }
+            userEmail = authorization.principal.email;
           }
           const result = await handler(...args);
           if (result?.isError) {
@@ -96,7 +98,7 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
           if (error instanceof McpAuthorizationFailure) return mcpAuthorizationError(error.reason, resource, requiredScopes);
           throw error;
         } finally {
-          const persistence = recordMcpToolEvent(name, outcome, errorCode, performance.now() - startedAt, httpStatus);
+          const persistence = recordMcpToolEvent(name, outcome, errorCode, performance.now() - startedAt, httpStatus, userEmail);
           if (context) context.waitUntil(persistence);
           else await persistence;
         }

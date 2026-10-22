@@ -15,7 +15,7 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 | Plugin e skills | `plugins/beta/` | `gmtth/plugin-beta` | Ativo; regras em `AGENTS.md` e histórico/estado em `DOSSIER.md` |
 | MCP/OAuth e runtime Sites | `mcp/movidesk/` | `gmtth/movidesk-mcp-oauth` | Ativo; `movidesk_get_ticket` retorna `protocol`; PR #17 integrada e Sites v103 publicado, smoke do ticket 5835 confirmou o protocolo |
 | Banco e API Supabase | `infra/supabase/` e integração MCP | Projeto Supabase e integração MCP | Listagem MCP e hardening validados; migration de ingestão aplicada; painel admin com diagnósticos Supabase publicado no Sites v79; gráficos MCP no D1 publicados na v80; migration dos indicadores ainda pendente; importação piloto pendente de reautorização |
-| Publicação Sites | `mcp/movidesk/` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; versão 103 publicada com sucesso após merge PR #17; correção permanente do helper Windows continua pendente |
+| Publicação Sites | `mcp/movidesk/`, `scripts/run-sites-workflow.mjs` e `docs/components/sites.md` | Sites/Cloudflare Artifact e snapshots | Fonte Sites é separada do GitHub; versão 112 publicada após merge PR #34; correção do helper Windows está implementada localmente na branch `codex/fix-sites-publish-windows`, ainda sem merge ou publicação de código do wrapper |
 | Dossiês e arquitetura | `docs/`, `DOSSIER.md` | workspace Beta, MCP, plugin e suite histórica | Ativos separados de snapshots e arquivos históricos |
 | Agregador antigo/subskills históricas | `legacy/` | `gmtth/suite-beta` e submódulos | Preservados para comparação e recuperação |
 

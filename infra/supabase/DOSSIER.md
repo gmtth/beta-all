@@ -150,3 +150,7 @@ A migration `20261022120000_add_movidesk_protocol_search.sql` foi aplicada no pr
 - [`mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md) — estado do contrato MCP/OAuth e integração.
 - [`docs/architecture/arquitetura-base-compartilhada-beta.md`](../../docs/architecture/arquitetura-base-compartilhada-beta.md) — requisitos e direção arquitetural.
 - [`AGENTS.md`](../../AGENTS.md) — regras transversais de segurança e roteamento documental.
+
+## Diagnóstico da resposta do catálogo (2026-10-22)
+
+A RPC `beta.get_admin_database_schema()` pode reportar `columns: null` para índice de expressão, pois o índice não possui atributos de coluna que correspondam ao join do catálogo. O índice `source_record_movidesk_protocol_idx` é um caso concreto adicionado pela migration `20261022120000_add_movidesk_protocol_search.sql`. O runtime foi ajustado para interpretar esse campo nulo como ausência de nomes de colunas; a página mostra a descrição genérica de índice especial. Nenhuma migration ou dado remoto foi alterado nesta correção. A validação é local; a chamada autenticada à página em produção continua pendente até publicar o runtime.

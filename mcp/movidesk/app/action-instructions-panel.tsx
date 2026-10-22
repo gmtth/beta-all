@@ -289,29 +289,38 @@ const items = [
 ];
 
 function CopyField({ label, value }: { label: string; value: string }) {
-  const [copied, setCopied] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   async function copy() {
-    await navigator.clipboard.writeText(value);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 1600);
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopyStatus("copied");
+    } catch {
+      setCopyStatus("error");
+    }
+    window.setTimeout(() => setCopyStatus("idle"), 2400);
   }
   return <div className="copy-field">
     <label>{label}</label>
-    <div className="copy-row"><code>{value}</code><button type="button" onClick={copy}>{copied ? "Copiado" : "Copiar"}</button></div>
+    <div className="copy-row"><code title={value}>{value}</code><button type="button" aria-label={`Copiar ${label}`} onClick={copy}>{copyStatus === "copied" ? "Copiado" : copyStatus === "error" ? "Tente novamente" : "Copiar"}</button></div>
+    <span className="copy-status" role="status" aria-live="polite">{copyStatus === "error" ? "A cópia foi bloqueada. Selecione o valor para copiá-lo manualmente." : copyStatus === "copied" ? `${label} copiado.` : ""}</span>
   </div>;
 }
 
-export default function ActionInstructionsPanel() {
-  const [copiedSchema, setCopiedSchema] = useState(false);
+export default function ActionInstructionsPanel({ clientSecretConfigured }: { clientSecretConfigured: boolean }) {
+  const [schemaCopyStatus, setSchemaCopyStatus] = useState<"idle" | "copied" | "error">("idle");
   async function copySchema() {
-    await navigator.clipboard.writeText(schema);
-    setCopiedSchema(true);
-    window.setTimeout(() => setCopiedSchema(false), 1600);
+    try {
+      await navigator.clipboard.writeText(schema);
+      setSchemaCopyStatus("copied");
+    } catch {
+      setSchemaCopyStatus("error");
+    }
+    window.setTimeout(() => setSchemaCopyStatus("idle"), 2400);
   }
-  return <div className="instructions-content">
-    <section className="instruction-block"><div className="section-kicker">01 / CREDENCIAIS</div><h2>Configure o GPT Action</h2><p>Use estes valores na autenticação OAuth 2.0 da Action. O fluxo da Action funciona sem PKCE; não preencha um client secret, a menos que ele tenha sido configurado separadamente no servidor.</p><div className="copy-grid">{items.map((item) => <CopyField key={item.label} {...item} />)}</div></section>
+  return <div className="instructions-content action-instructions">
+    <section className="instruction-block action-credentials"><div className="section-kicker">01 / CREDENCIAIS</div><h1>Configure a GPT Action</h1><p>Use estes valores na autenticação OAuth 2.0. No editor, selecione Authorization Code e envio das credenciais no corpo da requisição (POST). Este cliente não usa PKCE e é separado do cliente MCP.</p><div className="copy-grid">{items.map((item) => <CopyField key={item.label} {...item} />)}</div><div className={`notice ${clientSecretConfigured ? "notice-ready" : "notice-attention"}`}><span aria-hidden="true">{clientSecretConfigured ? "✓" : "!"}</span><div><strong>{clientSecretConfigured ? "Client Secret configurado no servidor" : "Configure o Client Secret antes de conectar"}</strong><small>{clientSecretConfigured ? "No editor da GPT Action, informe exatamente o mesmo valor guardado em OAUTH_GPT_ACTION_CLIENT_SECRET. O segredo não é exibido nesta página." : "O editor do GPT pede um Client Secret. Cadastre OAUTH_GPT_ACTION_CLIENT_SECRET nos segredos do Sites e informe o mesmo valor no editor; esta página não exibe nem copia segredos."}</small></div></div></section>
     <section className="instruction-block"><div className="section-kicker">02 / REDIRECT</div><h2>Callback gerado pelo GPT</h2><p>Selecione <strong>OAuth</strong> e o fluxo <strong>Authorization Code</strong> no editor da Action. Deixe o ChatGPT gerar o redirect URI oficial; não invente nem reutilize o callback do MCP.</p><div className="notice"><span>✓</span><div><strong>Não copie um redirect URI fixo daqui.</strong><small>O endereço oficial contém o identificador da sua Action e é fornecido pelo próprio ChatGPT durante a configuração.</small></div></div></section>
-    <section className="instruction-block"><div className="section-kicker">03 / OPENAPI SCHEMA</div><div className="schema-heading"><div><h2>Schema pronto para colar</h2><p>Copie o documento inteiro e cole no campo Schema da Action. O schema inclui pesquisa resumida e pesquisa no conteúdo dos tickets.</p></div><button className="schema-copy" type="button" onClick={copySchema}>{copiedSchema ? "Schema copiado" : "Copiar schema"}</button></div><pre className="schema-box"><code>{schema}</code></pre></section>
+    <section className="instruction-block"><div className="section-kicker">03 / OPENAPI SCHEMA</div><div className="schema-heading"><div><h2>Schema pronto para colar</h2><p>Copie o documento inteiro e cole no campo Schema da Action. Inclui pesquisa resumida e pesquisa no conteúdo dos tickets.</p></div><button className="schema-copy" type="button" aria-label="Copiar schema OpenAPI" onClick={copySchema}>{schemaCopyStatus === "copied" ? "Schema copiado" : schemaCopyStatus === "error" ? "Tente novamente" : "Copiar schema"}</button></div><span className="copy-status schema-copy-status" role="status" aria-live="polite">{schemaCopyStatus === "error" ? "A cópia foi bloqueada; tente novamente neste navegador." : schemaCopyStatus === "copied" ? "Schema copiado." : ""}</span><details className="schema-disclosure"><summary>Visualizar schema completo</summary><pre className="schema-box"><code>{schema}</code></pre></details></section>
     <section className="instruction-block"><div className="section-kicker">04 / TESTE</div><h2>Pesquisas que já funcionam</h2><p>Depois de salvar e autorizar, peça ao GPT coisas como:</p><div className="prompt-example">“Pesquise Vetorial no conteúdo dos tickets criados entre 2026-08-01 e 2026-08-16.”</div><p className="hint">A API continua somente leitura: aceita apenas operações GET e nunca cria, edita ou exclui tickets.</p></section>
   </div>;
 }

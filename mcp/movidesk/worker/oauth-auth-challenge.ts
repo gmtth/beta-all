@@ -1,8 +1,13 @@
 import type { OAuthTokenFailure } from "../app/oauth/clients";
 
-const RECONNECTION_DESCRIPTION = "A conexão expirou ou foi revogada. Reconecte sua conta para continuar.";
-const SCOPE_DESCRIPTION = "Esta autorização não inclui as permissões necessárias. Reconecte sua conta para continuar.";
-const TERMS_DESCRIPTION = "Leia e aceite os Termos de Uso e o Aviso de Privacidade na tela de autorização para continuar.";
+const RECONNECTION_DESCRIPTION = "A conexao expirou ou foi revogada. Reconecte sua conta para continuar.";
+const SCOPE_DESCRIPTION = "Esta autorizacao nao inclui as permissoes necessarias. Reconecte sua conta para continuar.";
+const TERMS_DESCRIPTION = "Leia e aceite os Termos de Uso e o Aviso de Privacidade na tela de autorizacao para continuar.";
+const USER_DESCRIPTIONS = {
+  invalid_token: "A conexão expirou ou foi revogada. Reconecte sua conta para continuar.",
+  insufficient_scope: "Esta autorização não inclui as permissões necessárias. Reconecte sua conta para continuar.",
+  terms_not_accepted: "Leia e aceite os Termos de Uso e o Aviso de Privacidade na tela de autorização para continuar.",
+} satisfies Record<OAuthTokenFailure, string>;
 
 export function protectedResourceMetadataUrl(resource: string) {
   return new URL("/.well-known/oauth-protected-resource", resource).toString();
@@ -30,7 +35,7 @@ export class McpAuthorizationFailure extends Error {
 }
 
 export function mcpAuthorizationError(error: OAuthTokenFailure, resource: string, requiredScopes: string[]) {
-  const description = error === "terms_not_accepted" ? TERMS_DESCRIPTION : error === "insufficient_scope" ? SCOPE_DESCRIPTION : RECONNECTION_DESCRIPTION;
+  const description = USER_DESCRIPTIONS[error];
   const challenge = bearerAuthenticateChallenge(error, resource, requiredScopes);
   return {
     isError: true,

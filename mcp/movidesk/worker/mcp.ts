@@ -39,6 +39,22 @@ function toolErrorCode(value: unknown): string {
   return value && typeof value === "object" && (value as { isError?: unknown }).isError === true ? "tool_error" : "handler_exception";
 }
 
+function toolHttpStatus(value: unknown): number | null {
+  const error = value && typeof value === "object" ? value as { message?: unknown; content?: unknown; structuredContent?: unknown; error?: unknown } : {};
+  const structured = error.structuredContent && typeof error.structuredContent === "object"
+    ? error.structuredContent as { error?: unknown }
+    : error;
+  const details = structured.error && typeof structured.error === "object"
+    ? structured.error as { status?: unknown }
+    : {};
+  if (typeof details.status === "number" && Number.isInteger(details.status) && details.status >= 400 && details.status <= 599) return details.status;
+  const text = typeof error.message === "string" ? error.message : Array.isArray(error.content)
+    ? error.content.map((item) => item && typeof item === "object" && typeof (item as { text?: unknown }).text === "string" ? (item as { text: string }).text : "").join(" ")
+    : "";
+  const status = /\bHTTP\s+([45]\d{2})\b/i.exec(text)?.[1];
+  return status ? Number(status) : null;
+}
+
 function instrumentToolUsage(server: McpServer, accessToken: string, resource: string, context?: TelemetryContext) {
   const schemesByTool = new Map<string, ToolSecurityScheme[]>();
   return {
@@ -51,6 +67,7 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
         const startedAt = performance.now();
         let outcome: "success" | "error" = "success";
         let errorCode: string | null = null;
+        let httpStatus: number | null = null;
         try {
           if (!schemes?.length) {
             outcome = "error";
@@ -69,15 +86,17 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
           if (result?.isError) {
             outcome = "error";
             errorCode = toolErrorCode(result);
+            httpStatus = toolHttpStatus(result);
           }
           return result;
         } catch (error) {
           outcome = "error";
           errorCode = toolErrorCode(error);
+          httpStatus = toolHttpStatus(error);
           if (error instanceof McpAuthorizationFailure) return mcpAuthorizationError(error.reason, resource, requiredScopes);
           throw error;
         } finally {
-          const persistence = recordMcpToolEvent(name, outcome, errorCode, performance.now() - startedAt);
+          const persistence = recordMcpToolEvent(name, outcome, errorCode, performance.now() - startedAt, httpStatus);
           if (context) context.waitUntil(persistence);
           else await persistence;
         }

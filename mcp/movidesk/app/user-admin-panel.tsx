@@ -12,6 +12,7 @@ type ToolMetrics = {
   usageByTool: Array<{ toolName: string; calls: number; errors: number; successRatePercent: number; averageLatencyMs: number | null }>;
   recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string }>;
   errorsByDay: Array<{ date: string; count: number }>;
+  httpErrorsByStatus: Array<{ status: number; count: number }>;
 };
 type Overview = {
   connection: { status: "online" | "offline"; configured: boolean; latencyMs: number | null; diagnostic: ConnectionDiagnostic };
@@ -184,6 +185,7 @@ export default function UserAdminPanel() {
   const toolMetrics = toolMetricsResponse?.data;
   const maxToolCalls = Math.max(1, ...(toolMetrics?.usageByTool.map((item) => item.calls) ?? []));
   const maxDailyErrors = Math.max(1, ...(toolMetrics?.errorsByDay.map((item) => item.count) ?? []));
+  const maxHttpErrors = Math.max(1, ...(toolMetrics?.httpErrorsByStatus.map((item) => item.count) ?? []));
   return <div className="admin-content">
     {toast ? <div className={`toast toast-${toast.tone}`} role={toast.tone === "error" ? "alert" : "status"} aria-atomic="true">
       <span className="toast-icon" aria-hidden="true">{toast.tone === "success" ? "✓" : "!"}</span>
@@ -217,15 +219,8 @@ export default function UserAdminPanel() {
       <div className="section-title"><div><span className="panel-heading">ATIVIDADE DO MCP</span><h2 id="telemetry-title">Uso e erros</h2></div></div>
       <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site.</p>
       {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message">Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
-        <section className="data-card telemetry-card" aria-labelledby="tool-usage-title">
-          <div className="telemetry-heading"><div><h3 id="tool-usage-title">Uso por ferramenta</h3><span>Últimos 30 dias · latência média das medições disponíveis</span></div><strong>{toolMetrics.totalCalls.toLocaleString("pt-BR")}</strong></div>
-          {toolMetrics.usageByTool.length ? <div className="usage-chart" role="img" aria-label="Chamadas às ferramentas da Beta nos últimos 30 dias">
-            {toolMetrics.usageByTool.map((item) => <div className="usage-bar-row" key={item.toolName} title={`${toolTitle(item.toolName)}: ${item.calls} chamadas, ${item.errors} erros`}>
-              <span className="usage-tool-name" title={`${toolTitle(item.toolName)} · ${item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de sucesso · ${item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms de latência média`}`}>{toolTitle(item.toolName)}<small>{item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% sucesso · {item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms méd.`}</small></span><span className="usage-bar-track"><span className="usage-bar-fill" style={{ width: `${Math.max(2, item.calls / maxToolCalls * 100)}%` }} /></span><strong>{item.calls.toLocaleString("pt-BR")}</strong><small className="usage-error-count">{item.errors} erros</small>
-            </div>)}
-          </div> : <p className="quiet-message">Ainda não há chamadas registradas neste período.</p>}
-        </section>
-        <section className="data-card telemetry-card" aria-labelledby="error-trend-title">
+        <div className="telemetry-error-grid">
+          <section className="data-card telemetry-card" aria-labelledby="error-trend-title">
           <div className="telemetry-heading"><div><h3 id="error-trend-title">Erros no último mês</h3><span>Ocorrências por dia</span></div><strong>{toolMetrics.errorsByDay.reduce((sum, day) => sum + day.count, 0)}</strong></div>
           <div className="error-chart" role="img" aria-label="Gráfico diário de erros nos últimos 30 dias">
             {toolMetrics.errorsByDay.map((day) => {
@@ -234,10 +229,28 @@ export default function UserAdminPanel() {
             })}
           </div>
           <div className="chart-axis-labels"><span>{toolMetrics.errorsByDay[0] ? shortDate(toolMetrics.errorsByDay[0].date) : ""}</span><span>Hoje</span></div>
-        </section>
-        <section className="data-card telemetry-card recent-errors-card" aria-labelledby="recent-errors-title">
+          </section>
+          <section className="data-card telemetry-card" aria-labelledby="http-errors-title">
+            <div className="telemetry-heading"><div><h3 id="http-errors-title">Retornos HTTP de erro</h3><span>Códigos reportados pelas ferramentas · últimos 30 dias</span></div><strong>{toolMetrics.httpErrorsByStatus.reduce((sum, item) => sum + item.count, 0)}</strong></div>
+            {toolMetrics.httpErrorsByStatus.length ? <div className="http-status-chart" role="img" aria-label="Retornos HTTP de erro por código nos últimos 30 dias">
+              {toolMetrics.httpErrorsByStatus.map((item) => <div className="http-status-row" key={item.status} title={`HTTP ${item.status}: ${item.count} ${item.count === 1 ? "retorno" : "retornos"}`}>
+                <strong className="http-status-code">{item.status}</strong><span className="usage-bar-track"><span className="http-status-fill" style={{ width: `${Math.max(2, item.count / maxHttpErrors * 100)}%` }} /></span><strong>{item.count.toLocaleString("pt-BR")}</strong>
+              </div>)}
+            </div> : <p className="quiet-message">Nenhum código HTTP de erro identificado neste período.</p>}
+            <p className="http-status-note">A contagem considera chamadas que terminaram com erro e informaram o status HTTP. Esse detalhamento passa a ser registrado nesta atualização.</p>
+          </section>
+          <section className="data-card telemetry-card recent-errors-card" aria-labelledby="recent-errors-title">
           <div className="telemetry-heading"><div><h3 id="recent-errors-title">Dez erros mais recentes</h3><span>Retenção de até 90 dias</span></div></div>
           {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong>{toolTitle(item.toolName)}</strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
+          </section>
+        </div>
+        <section className="data-card telemetry-card usage-telemetry-card" aria-labelledby="tool-usage-title">
+          <div className="telemetry-heading"><div><h3 id="tool-usage-title">Uso por ferramenta</h3><span>Últimos 30 dias · latência média das medições disponíveis</span></div><strong>{toolMetrics.totalCalls.toLocaleString("pt-BR")}</strong></div>
+          {toolMetrics.usageByTool.length ? <div className="usage-chart" role="img" aria-label="Chamadas às ferramentas da Beta nos últimos 30 dias">
+            {toolMetrics.usageByTool.map((item) => <div className="usage-bar-row" key={item.toolName} title={`${toolTitle(item.toolName)}: ${item.calls} chamadas, ${item.errors} erros`}>
+              <span className="usage-tool-name" title={`${toolTitle(item.toolName)} · ${item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de sucesso · ${item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms de latência média`}`}>{toolTitle(item.toolName)}<small>{item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% sucesso · {item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms méd.`}</small></span><span className="usage-bar-track"><span className="usage-bar-fill" style={{ width: `${Math.max(2, item.calls / maxToolCalls * 100)}%` }} /></span><strong>{item.calls.toLocaleString("pt-BR")}</strong><small className="usage-error-count">{item.errors} erros</small>
+            </div>)}
+          </div> : <p className="quiet-message">Ainda não há chamadas registradas neste período.</p>}
         </section>
       </div>}
     </section>

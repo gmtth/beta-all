@@ -67,6 +67,12 @@ const errorTitles: Record<string, string> = {
   upstream_5xx: "Serviço externo indisponível",
   handler_exception: "Falha durante a execução",
 };
+const scopeDescriptions: Record<string, string> = {
+  "movidesk:read": "Permite consultar chamados, pessoas, serviços e históricos no Movidesk.",
+  "knowledge:read": "Permite consultar as fontes e informações da base de conhecimento compartilhada.",
+  "knowledge:write": "Permite importar chamados para a base compartilhada quando solicitado explicitamente.",
+  offline_access: "Permite renovar a sessão sem pedir autorização novamente, enquanto a autorização continuar válida.",
+};
 const toolTitle = (name: string) => toolTitles[name] ?? name;
 const shortDate = (value: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(`${value}T12:00:00Z`));
 
@@ -184,6 +190,12 @@ export default function UserAdminPanel() {
       <p className="toast-message">{toast.message}</p>
       <button className="toast-dismiss" type="button" onClick={() => setToast(null)} aria-label="Fechar aviso">×</button>
     </div> : null}
+    <section className="admin-section" aria-labelledby="team-title">
+      <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div></div>
+      <p className="section-description">O acesso é validado pelo servidor. Cada pessoa precisa autorizar sua própria conta; os escopos abaixo vêm dos tokens ativos.</p>
+      <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit">Liberar acesso</button></form>
+      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === item.email} aria-label={`Deslogar ${item.email}`}>{busy === item.email ? "…" : "Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === item.email} aria-label={`Remover ${item.email}`}>{busy === item.email ? "…" : "Remover"}</button></div></div>)}{users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
+    </section>
     <section className="admin-section" aria-labelledby="connection-title">
       <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
       <div className="connection-card">
@@ -203,7 +215,7 @@ export default function UserAdminPanel() {
 
     <section className="admin-section" aria-labelledby="telemetry-title">
       <div className="section-title"><div><span className="panel-heading">ATIVIDADE DO MCP</span><h2 id="telemetry-title">Uso e erros</h2></div></div>
-      <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site, armazenadas no banco D1 do Sites.</p>
+      <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site.</p>
       {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message">Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
         <section className="data-card telemetry-card" aria-labelledby="tool-usage-title">
           <div className="telemetry-heading"><div><h3 id="tool-usage-title">Uso por ferramenta</h3><span>Chamadas nos últimos 30 dias</span></div><strong>{toolMetrics.totalCalls.toLocaleString("pt-BR")}</strong></div>
@@ -216,7 +228,10 @@ export default function UserAdminPanel() {
         <section className="data-card telemetry-card" aria-labelledby="error-trend-title">
           <div className="telemetry-heading"><div><h3 id="error-trend-title">Erros no último mês</h3><span>Ocorrências por dia</span></div><strong>{toolMetrics.errorsByDay.reduce((sum, day) => sum + day.count, 0)}</strong></div>
           <div className="error-chart" role="img" aria-label="Gráfico diário de erros nos últimos 30 dias">
-            {toolMetrics.errorsByDay.map((day) => <div className="error-chart-column" key={day.date} title={`${shortDate(day.date)}: ${day.count} ${day.count === 1 ? "erro" : "erros"}`}><span className="error-chart-bar" style={{ height: `${day.count ? Math.max(4, day.count / maxDailyErrors * 100) : 2}%` }} /><span className="sr-only">{shortDate(day.date)}: {day.count} erros</span></div>)}
+            {toolMetrics.errorsByDay.map((day) => {
+              const barHeight = day.count ? Math.max(4, day.count / maxDailyErrors * 100) : 2;
+              return <div className="error-chart-column" key={day.date} title={`${shortDate(day.date)}: ${day.count} ${day.count === 1 ? "erro" : "erros"}`}><span className="error-chart-bar" style={{ height: `${barHeight}%` }} /><span className="error-chart-value" aria-hidden="true" style={{ bottom: `calc(${barHeight}% + 2px)` }}>{day.count}</span><span className="sr-only">{shortDate(day.date)}: {day.count} erros</span></div>;
+            })}
           </div>
           <div className="chart-axis-labels"><span>{toolMetrics.errorsByDay[0] ? shortDate(toolMetrics.errorsByDay[0].date) : ""}</span><span>Hoje</span></div>
         </section>
@@ -237,11 +252,5 @@ export default function UserAdminPanel() {
       <p className="quiet-message">Limite permitido: {MIN_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} a {MAX_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms. O padrão é {DEFAULT_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms.</p>
     </section>
 
-    <section className="admin-section" aria-labelledby="team-title">
-      <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div></div>
-      <p className="section-description">O acesso é validado pelo servidor. Cada pessoa precisa autorizar sua própria conta; os escopos abaixo vêm dos tokens ativos.</p>
-      <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit">Liberar acesso</button></form>
-      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.role === "master" ? "Administrador master" : "Analista"} · {item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.join(" · ") : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === item.email} aria-label={`Deslogar ${item.email}`}>{busy === item.email ? "…" : "Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === item.email} aria-label={`Remover ${item.email}`}>{busy === item.email ? "…" : "Remover"}</button></div></div>)}{users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
-    </section>
   </div>;
 }

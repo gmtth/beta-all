@@ -5,10 +5,8 @@ export const dynamic = "force-dynamic";
 
 export default async function ActionPage() {
   await requireChatGPTUser("/action");
-  return <main className="shell instructions-shell"><div className="ambient ambient-one" /><div className="ambient ambient-two" /><section className="card instructions-card" aria-labelledby="action-title">
+  return <main className="shell instructions-shell"><div className="ambient ambient-one" /><div className="ambient ambient-two" /><section className="card instructions-card" aria-label="Configuração da GPT Action">
     <header className="brandbar internal-brandbar"><a className="back-link" href="/">← Voltar ao acesso</a></header>
-    <div className="admin-hero"><h1 id="action-title">GPT Action <em>pronta.</em></h1><p className="lead">Siga estas instruções para conectar uma Action do ChatGPT ao endpoint seguro de consulta do Movidesk.</p></div>
     <ActionInstructionsPanel />
-    <footer className="card-footer"><span>Configuração protegida pela autenticação do ChatGPT</span></footer>
   </section></main>;
 }

@@ -38,6 +38,7 @@ O navegador pode mostrar chaves estrangeiras e relações como metadados de sche
 
 - O painel de controle é a fonte única de métricas Supabase: disponibilidade/latência, contagens agregadas e atividade de ingestão. Se uma métrica útil estiver faltando, registre a inclusão no backlog Supabase e implemente-a no painel de controle, sem duplicá-la em `/admin/database`.
 - `/admin/database` prioriza estrutura, chaves/índices/RLS e prévias paginadas das tabelas aprovadas. Pode indicar estado transitório da consulta e intervalo de linhas da página atual, mas não deve criar cartões de KPI, gráficos ou indicadores agregados concorrentes.
+- Para facilitar diagnósticos, a página deve resumir os controles de acesso por camada: gate de sessão/papel/scopes no Site/MCP e grants/RLS no Supabase. Não misturar nem listar tabelas D1 nesta página, não duplicar a lista de usuários/tokens do painel de controle e não exibir credenciais, tokens ou expressões SQL de políticas. Explicar que o Worker usa `service_role` (que ignora RLS), então a validação master server-side é obrigatória.
 - Manter `## Próximos passos` em [`DOSSIER.md`](./DOSSIER.md) atualizado; backlog não autoriza aplicar migration remota, publicar, commitar ou alterar permissões.
 
 ## Regra de commit e sincronização

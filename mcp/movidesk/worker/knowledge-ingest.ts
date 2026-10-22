@@ -73,10 +73,51 @@ const dateValue = (value: unknown) => {
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 };
 
+function ticketCandidates(value: unknown): Record<string, unknown>[] {
+  const candidates = Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results)
+    ? (value as { results: unknown[] }).results : [value];
+  return candidates.map(objectOf).filter((ticket) => Object.keys(ticket).length > 0);
+}
+
+/** Movidesk accepts both its internal ticket ID and its protocol as identifiers. */
+export function movideskTicketMatchesIdentifier(value: unknown, identifier: string): boolean {
+  return ticketCandidates(value).some((ticket) =>
+    ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(ticket[key]) === identifier),
+  );
+}
+
+export async function resolveMovideskTicketIdentifier(
+  identifier: string,
+  lookup: (kind: "id" | "protocol", value: string) => Promise<unknown | null>,
+): Promise<unknown> {
+  const byInternalId = await lookup("id", identifier);
+  const byProtocol = await lookup("protocol", identifier);
+  const internalIdMatches = Boolean(byInternalId && movideskTicketMatchesIdentifier(byInternalId, identifier));
+  const protocolMatches = Boolean(byProtocol && movideskTicketMatchesIdentifier(byProtocol, identifier));
+
+  if (internalIdMatches && protocolMatches) {
+    const internalRecord = ticketCandidates(byInternalId).find((ticket) =>
+      ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(ticket[key]) === identifier),
+    );
+    const protocolRecord = ticketCandidates(byProtocol).find((ticket) =>
+      ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(ticket[key]) === identifier),
+    );
+    const internalId = internalRecord && scalarText(firstValue(internalRecord, ["id", "ticketId", "ticket_id"]));
+    const protocolId = protocolRecord && scalarText(firstValue(protocolRecord, ["id", "ticketId", "ticket_id"]));
+    if (internalId && protocolId && internalId !== protocolId) throw new KnowledgeImportError("ticket_mismatch");
+  }
+  if (internalIdMatches) return byInternalId;
+  if (protocolMatches) return byProtocol;
+  if (byInternalId || byProtocol) throw new KnowledgeImportError("ticket_mismatch");
+  throw new KnowledgeImportError("ticket_not_found");
+}
+
 export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expectedTicketId: string): Promise<MovideskKnowledgeRecord> {
-  const ticket = Array.isArray(ticketValue) ? objectOf(ticketValue[0]) : objectOf(ticketValue);
+  const ticket = ticketCandidates(ticketValue).find((candidate) =>
+    ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(candidate[key]) === expectedTicketId),
+  ) ?? {};
   const actualId = scalarText(firstValue(ticket, ["id", "ticketId", "ticket_id"]));
-  if (!actualId || actualId !== expectedTicketId) throw new KnowledgeImportError("ticket_mismatch");
+  if (!actualId || !movideskTicketMatchesIdentifier(ticket, expectedTicketId)) throw new KnowledgeImportError("ticket_mismatch");
 
   const title = cleanKnowledgeText(firstValue(ticket, ["subject", "assunto", "title", "titulo"]))?.slice(0, 500);
   if (!title) throw new KnowledgeImportError("ticket_missing_title");
@@ -95,6 +136,8 @@ export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expecte
   if (!sections.length) throw new KnowledgeImportError("ticket_missing_content");
 
   const attributes: Record<string, string> = {};
+  const protocolValue = scalarText(firstValue(ticket, ["protocol", "protocolo"]));
+  if (protocolValue && /^\d{1,30}$/.test(protocolValue)) attributes.protocol = protocolValue;
   const attributeKeys: Array<[string, string[]]> = [
     ["category", ["category", "categoria"]], ["service", ["service", "serviceFirstLevel", "servico"]],
     ["urgency", ["urgency", "urgencyName", "urgencia"]], ["owner_team", ["ownerTeam", "owner_team"]],

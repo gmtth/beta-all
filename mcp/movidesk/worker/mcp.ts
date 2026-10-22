@@ -13,6 +13,7 @@ import { exposeToolSecuritySchemes, type ToolSecurityScheme } from "./tool-secur
 import { McpAuthorizationFailure, mcpAuthorizationError, missingMcpAuthorizationResponse } from "./oauth-auth-challenge";
 import { protectedResourceMetadata as buildProtectedResourceMetadata } from "../app/oauth/metadata";
 import { KnowledgeImportError } from "./knowledge-import-errors";
+import { resolveMovideskTicketIdentifier } from "./knowledge-ingest";
 
 const bearerToken = (authorization: string | null) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
 const json = (data: unknown, init: ResponseInit = {}) => new Response(JSON.stringify(data), { ...init, headers: { "content-type": "application/json", ...(init.headers ?? {}) } });
@@ -40,6 +41,22 @@ function toolErrorCode(value: unknown): string {
   return value && typeof value === "object" && (value as { isError?: unknown }).isError === true ? "tool_error" : "handler_exception";
 }
 
+function toolHttpStatus(value: unknown): number | null {
+  const error = value && typeof value === "object" ? value as { message?: unknown; content?: unknown; structuredContent?: unknown; error?: unknown } : {};
+  const structured = error.structuredContent && typeof error.structuredContent === "object"
+    ? error.structuredContent as { error?: unknown }
+    : error;
+  const details = structured.error && typeof structured.error === "object"
+    ? structured.error as { status?: unknown }
+    : {};
+  if (typeof details.status === "number" && Number.isInteger(details.status) && details.status >= 400 && details.status <= 599) return details.status;
+  const text = typeof error.message === "string" ? error.message : Array.isArray(error.content)
+    ? error.content.map((item) => item && typeof item === "object" && typeof (item as { text?: unknown }).text === "string" ? (item as { text: string }).text : "").join(" ")
+    : "";
+  const status = /\bHTTP\s+([45]\d{2})\b/i.exec(text)?.[1];
+  return status ? Number(status) : null;
+}
+
 function instrumentToolUsage(server: McpServer, accessToken: string, resource: string, context?: TelemetryContext) {
   const schemesByTool = new Map<string, ToolSecurityScheme[]>();
   return {
@@ -52,6 +69,8 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
         const startedAt = performance.now();
         let outcome: "success" | "error" = "success";
         let errorCode: string | null = null;
+        let httpStatus: number | null = null;
+        let userEmail: string | null = null;
         try {
           if (!schemes?.length) {
             outcome = "error";
@@ -65,20 +84,23 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
               errorCode = "authorization";
               return mcpAuthorizationError(authorization.error, resource, requiredScopes);
             }
+            userEmail = authorization.principal.email;
           }
           const result = await handler(...args);
           if (result?.isError) {
             outcome = "error";
             errorCode = toolErrorCode(result);
+            httpStatus = toolHttpStatus(result);
           }
           return result;
         } catch (error) {
           outcome = "error";
           errorCode = toolErrorCode(error);
+          httpStatus = toolHttpStatus(error);
           if (error instanceof McpAuthorizationFailure) return mcpAuthorizationError(error.reason, resource, requiredScopes);
           throw error;
         } finally {
-          const persistence = recordMcpToolEvent(name, outcome, errorCode, performance.now() - startedAt);
+          const persistence = recordMcpToolEvent(name, outcome, errorCode, performance.now() - startedAt, httpStatus, userEmail);
           if (context) context.waitUntil(persistence);
           else await persistence;
         }
@@ -106,17 +128,22 @@ class LocalMovideskClient implements MovideskReader {
   }
   getTicket(id: string, accessToken: string, signal?: AbortSignal) { return this.get("tickets", { id }, accessToken, signal); }
   async getTicketForKnowledge(id: string, accessToken: string) {
-    try { return await this.getTicket(id, accessToken); }
-    catch (error) {
-      if (error instanceof McpAuthorizationFailure) throw error;
-      if (!(error instanceof Error) || !error.message.includes("HTTP 404")) throw new KnowledgeImportError("movidesk_unavailable");
-      try { return await this.get("tickets", { id, include_past: true }, accessToken); }
-      catch (pastError) {
-        if (pastError instanceof McpAuthorizationFailure) throw pastError;
-        if (pastError instanceof Error && pastError.message.includes("HTTP 404")) throw new KnowledgeImportError("ticket_not_found");
-        throw new KnowledgeImportError("movidesk_unavailable");
+    const lookup = async (kind: "id" | "protocol", value: string): Promise<unknown | null> => {
+      const params = { [kind]: value };
+      try { return await this.get("tickets", params, accessToken); }
+      catch (error) {
+        if (error instanceof McpAuthorizationFailure) throw error;
+        if (!(error instanceof Error) || !error.message.includes("HTTP 404")) throw new KnowledgeImportError("movidesk_unavailable");
+        try { return await this.get("tickets", { ...params, include_past: true }, accessToken); }
+        catch (pastError) {
+          if (pastError instanceof McpAuthorizationFailure) throw pastError;
+          if (pastError instanceof Error && pastError.message.includes("HTTP 404")) return null;
+          throw new KnowledgeImportError("movidesk_unavailable");
+        }
       }
-    }
+    };
+    // A numeric identifier may be a protocol; try internal ID first, then protocol.
+    return resolveMovideskTicketIdentifier(id, lookup);
   }
   searchTickets(params: Record<string, string | number | boolean | undefined>, accessToken: string, signal?: AbortSignal) { return this.get("tickets", params, accessToken, signal); }
   searchPeople(params: Record<string, string | number | boolean | undefined>, accessToken: string) { return this.get("persons", params, accessToken); }

@@ -2,16 +2,22 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS, MAX_ACCESS_TOKEN_LIFETIME_MS, MIN_ACCESS_TOKEN_LIFETIME_MS } from "./oauth/token-lifetime";
+import LoadingSpinner from "./loading-spinner";
 
 type User = { email: string; role: string; active: number; created_at: number; scopes: string[]; activeTokenCount: number; latestTokenExpiry: number | null };
 type ConnectionDiagnostic = "configuration_missing" | "invalid_url" | "available" | "invalid_credentials" | "schema_unavailable" | "rate_limited" | "api_error" | "request_rejected" | "timeout" | "network_error";
 type KnowledgeDiagnostic = "available" | "configuration_missing" | "rpc_not_found" | "permission_denied" | "rate_limited" | "service_error" | "request_rejected" | "timeout" | "network_error" | "invalid_response";
 type ToolMetrics = {
   window: { start: string; end: string; days: number };
+  periodComparison: { current: { calls: number; errors: number }; previous: { calls: number; errors: number } };
   totalCalls: number;
   usageByTool: Array<{ toolName: string; calls: number; errors: number; successRatePercent: number; averageLatencyMs: number | null }>;
-  recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string }>;
-  errorsByDay: Array<{ date: string; count: number }>;
+  recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string; durationMs: number | null; httpStatus: number | null; userEmail: string | null }>;
+  callsByDay: Array<{ date: string; calls: number; errors: number }>;
+  httpErrorsByStatus: Array<{ status: number; count: number }>;
+  errorsByCategory: Array<{ errorCode: string; count: number; previousCount: number }>;
+  errorsByAccount: Array<{ userEmail: string; count: number }>;
+  latencyByTool: Array<{ toolName: string; samples: number; p50Ms: number; p95Ms: number }>;
 };
 type Overview = {
   connection: { status: "online" | "offline"; configured: boolean; latencyMs: number | null; diagnostic: ConnectionDiagnostic };
@@ -19,6 +25,8 @@ type Overview = {
 };
 
 const dateTime = (value: number | string | null) => value === null ? "—" : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(typeof value === "number" ? new Date(value) : new Date(value));
+const RECENT_IMPORTS_PAGE_SIZE = 3;
+const MAX_RECENT_IMPORTS = 30;
 const connectionDiagnostics: Record<ConnectionDiagnostic, string> = {
   configuration_missing: "Configuração do servidor ausente",
   invalid_url: "URL do Supabase inválida",
@@ -76,6 +84,8 @@ const scopeDescriptions: Record<string, string> = {
 };
 const toolTitle = (name: string) => toolTitles[name] ?? name;
 const shortDate = (value: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(`${value}T12:00:00Z`));
+const comparisonLabel = (current: number, previous: number) => previous === 0 ? current === 0 ? "sem registros nos dois períodos" : "novo neste período" : `${current > previous ? "+" : ""}${((current - previous) / previous * 100).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% vs período anterior`;
+const comparisonTone = (current: number, previous: number, lowerIsBetter: boolean) => current === previous ? "neutral" : lowerIsBetter ? current > previous ? "negative" : "positive" : "neutral";
 
 export default function UserAdminPanel() {
   const [email, setEmail] = useState("");
@@ -87,6 +97,8 @@ export default function UserAdminPanel() {
   const [savingTokenLifetime, setSavingTokenLifetime] = useState(false);
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
+  const [addingUser, setAddingUser] = useState(false);
+  const [recentImportsPage, setRecentImportsPage] = useState(0);
 
   const notify = useCallback((message: string, tone: "success" | "error") => setToast({ message, tone }), []);
 
@@ -102,7 +114,10 @@ export default function UserAdminPanel() {
       const results = await Promise.allSettled([fetch("/api/admin/users", { cache: "no-store" }), fetch("/api/admin/overview", { cache: "no-store" }), fetch("/api/admin/tool-metrics", { cache: "no-store" }), fetch("/api/admin/token-lifetime", { cache: "no-store" })]);
       const [userResult, overviewResult, metricsResult, tokenLifetimeResult] = results;
       if (userResult.status === "fulfilled" && userResult.value.ok) setUsers(await userResult.value.json());
-      if (overviewResult.status === "fulfilled" && overviewResult.value.ok) setOverview(await overviewResult.value.json());
+      if (overviewResult.status === "fulfilled" && overviewResult.value.ok) {
+        setOverview(await overviewResult.value.json());
+        setRecentImportsPage(0);
+      }
       if (metricsResult.status === "fulfilled" && metricsResult.value.ok) setToolMetricsResponse(await metricsResult.value.json());
       else setToolMetricsResponse({ status: "unavailable", data: null });
       if (tokenLifetimeResult.status === "fulfilled" && tokenLifetimeResult.value.ok) {
@@ -118,7 +133,7 @@ export default function UserAdminPanel() {
   useEffect(() => { void load(); }, [load]);
 
   async function submit(event: React.FormEvent) {
-    event.preventDefault(); setToast(null);
+    event.preventDefault(); setToast(null); setAddingUser(true);
     try {
       const response = await fetch("/api/admin/users", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email }) });
       const data = await response.json();
@@ -126,12 +141,14 @@ export default function UserAdminPanel() {
       setEmail(""); notify("Acesso liberado. A pessoa deverá autorizar as permissões no ChatGPT.", "success"); await load();
     } catch {
       notify("Não foi possível cadastrar. Tente novamente.", "error");
+    } finally {
+      setAddingUser(false);
     }
   }
 
   async function remove(target: User) {
     if (!window.confirm(`Remover o acesso de ${target.email}?`)) return;
-    setBusy(target.email); setToast(null);
+    setBusy(`remove:${target.email}`); setToast(null);
     try {
       const response = await fetch("/api/admin/users", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
       const data = await response.json();
@@ -146,7 +163,7 @@ export default function UserAdminPanel() {
 
   async function logout(target: User) {
     if (!window.confirm(`Deslogar ${target.email}? Todos os access tokens, refresh tokens e autorizações pendentes serão invalidados. A conta continuará autorizada e precisará conectar novamente.`)) return;
-    setBusy(target.email); setToast(null);
+    setBusy(`logout:${target.email}`); setToast(null);
     try {
       const response = await fetch("/api/admin/users/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email }) });
       const data = await response.json() as { error?: string };
@@ -182,9 +199,16 @@ export default function UserAdminPanel() {
   }
 
   const knowledge = overview?.knowledge.data;
+  const recentImports = knowledge?.recentImports.slice(0, MAX_RECENT_IMPORTS) ?? [];
+  const recentImportsPageCount = Math.ceil(recentImports.length / RECENT_IMPORTS_PAGE_SIZE);
+  const visibleRecentImports = recentImports.slice(recentImportsPage * RECENT_IMPORTS_PAGE_SIZE, (recentImportsPage + 1) * RECENT_IMPORTS_PAGE_SIZE);
   const toolMetrics = toolMetricsResponse?.data;
   const maxToolCalls = Math.max(1, ...(toolMetrics?.usageByTool.map((item) => item.calls) ?? []));
-  const maxDailyErrors = Math.max(1, ...(toolMetrics?.errorsByDay.map((item) => item.count) ?? []));
+  const maxDailyCalls = Math.max(1, ...(toolMetrics?.callsByDay.map((item) => item.calls) ?? []));
+  const maxHttpErrors = Math.max(1, ...(toolMetrics?.httpErrorsByStatus.map((item) => item.count) ?? []));
+  const maxLatencyP95 = Math.max(1, ...(toolMetrics?.latencyByTool.map((item) => item.p95Ms) ?? []));
+  const currentToolErrorRate = toolMetrics?.periodComparison.current.calls ? toolMetrics.periodComparison.current.errors / toolMetrics.periodComparison.current.calls * 100 : 0;
+  const previousToolErrorRate = toolMetrics?.periodComparison.previous.calls ? toolMetrics.periodComparison.previous.errors / toolMetrics.periodComparison.previous.calls * 100 : 0;
   return <div className="admin-content">
     {toast ? <div className={`toast toast-${toast.tone}`} role={toast.tone === "error" ? "alert" : "status"} aria-atomic="true">
       <span className="toast-icon" aria-hidden="true">{toast.tone === "success" ? "✓" : "!"}</span>
@@ -194,11 +218,11 @@ export default function UserAdminPanel() {
     <section className="admin-section" aria-labelledby="team-title">
       <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div></div>
       <p className="section-description">O acesso é validado pelo servidor. Cada pessoa precisa autorizar sua própria conta; os escopos abaixo vêm dos tokens ativos.</p>
-      <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit">Liberar acesso</button></form>
-      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === item.email} aria-label={`Deslogar ${item.email}`}>{busy === item.email ? "…" : "Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === item.email} aria-label={`Remover ${item.email}`}>{busy === item.email ? "…" : "Remover"}</button></div></div>)}{users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
+      <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit" disabled={addingUser}>{addingUser && <LoadingSpinner label="Liberando acesso" compact />}{addingUser ? "Liberando…" : "Liberar acesso"}</button></form>
+      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{loading && users.length === 0 ? <div className="loading-message"><LoadingSpinner label="Carregando contas autorizadas" />Carregando contas…</div> : users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === `logout:${item.email}` || busy === `remove:${item.email}`} aria-label={busy === `logout:${item.email}` ? `Deslogando ${item.email}` : `Deslogar ${item.email}`}>{busy === `logout:${item.email}` && <LoadingSpinner label={`Deslogando ${item.email}`} compact />}{"Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === `logout:${item.email}` || busy === `remove:${item.email}`} aria-label={busy === `remove:${item.email}` ? `Removendo ${item.email}` : `Remover ${item.email}`}>{busy === `remove:${item.email}` && <LoadingSpinner label={`Removendo ${item.email}`} compact />}{"Remover"}</button></div></div>)}{!loading && users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
     </section>
     <section className="admin-section" aria-labelledby="connection-title">
-      <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
+      <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading && <LoadingSpinner label="Atualizando painel" compact />}{loading ? "Atualizando…" : "Atualizar painel"}</button></div>
       <div className="connection-card">
         <span className={`connection-indicator ${overview?.connection.status === "online" ? "is-online" : "is-offline"}`} />
         <div className="connection-copy"><strong>{!overview ? "Verificando conexão" : overview.connection.status === "online" ? "Conexão disponível" : "Conexão indisponível"}</strong><span>{overview ? connectionDiagnostics[overview.connection.diagnostic] : "Consultando Data API do schema Beta"}</span></div>
@@ -209,16 +233,59 @@ export default function UserAdminPanel() {
         <div className="metric-grid"><div className="metric-card"><span>FONTES ATIVAS</span><strong>{knowledge.sources.filter((source) => source.active).length}</strong></div><div className="metric-card"><span>REGISTROS INDEXADOS</span><strong>{knowledge.recordCount.toLocaleString("pt-BR")}</strong></div><div className="metric-card"><span>TRECHOS INDEXADOS</span><strong>{knowledge.chunkCount.toLocaleString("pt-BR")}</strong></div></div>
         <div className="admin-data-grid">
           <section className="data-card"><h3>Fontes cadastradas</h3>{knowledge.sources.length ? knowledge.sources.map((source) => <div className="source-row" key={source.id ?? source.code}><div><strong>{source.name ?? source.code ?? "Fonte"}</strong><span>{source.active ? "Ativa" : "Inativa"}</span></div><span>{source.recordCount} registros · {source.chunkCount} trechos</span></div>) : <p className="quiet-message">Nenhuma fonte cadastrada.</p>}</section>
-          <section className="data-card"><h3>Importações recentes</h3>{knowledge.recentImports.length ? knowledge.recentImports.map((item, index) => <div className="source-row import-row" key={`${item.ticketId}-${item.createdAt}-${index}`}><div><strong>{item.title ?? `Chamado ${item.ticketId ?? ""}`}</strong><span>Movidesk {item.ticketId ? `· ${item.ticketId}` : ""} · {item.chunkCount} trechos · por {item.actorEmail ?? "analista"}</span></div><span>{dateTime(item.createdAt)}</span></div>) : <p className="quiet-message">Nenhuma importação registrada.</p>}</section>
+          <section className="data-card recent-imports-card"><h3>Importações recentes</h3>{recentImports.length ? <>
+            {visibleRecentImports.map((item, index) => <div className="source-row import-row" key={`${item.ticketId}-${item.createdAt}-${recentImportsPage}-${index}`}><div><strong>{item.title ?? `Chamado ${item.ticketId ?? ""}`}</strong><span>Movidesk {item.ticketId ? `· ${item.ticketId}` : ""} · {item.chunkCount} trechos · por {item.actorEmail ?? "analista"}</span></div><span>{dateTime(item.createdAt)}</span></div>)}
+            {recentImportsPageCount > 1 ? <nav className="recent-import-pagination" aria-label="Paginação das importações recentes"><span>Mostrando {recentImportsPage * RECENT_IMPORTS_PAGE_SIZE + 1}–{Math.min((recentImportsPage + 1) * RECENT_IMPORTS_PAGE_SIZE, recentImports.length)} de {recentImports.length} · página {recentImportsPage + 1} de {recentImportsPageCount}</span><div><button type="button" aria-label="Página anterior de importações" onClick={() => setRecentImportsPage((page) => Math.max(0, page - 1))} disabled={recentImportsPage === 0}>Anterior</button><button type="button" aria-label="Próxima página de importações" onClick={() => setRecentImportsPage((page) => Math.min(recentImportsPageCount - 1, page + 1))} disabled={recentImportsPage >= recentImportsPageCount - 1}>Próxima</button></div></nav> : <p className="recent-import-count">Últimas {recentImports.length} importações · máximo de 30</p>}
+          </> : <p className="quiet-message">Nenhuma importação registrada.</p>}</section>
         </div>
-      </> : <p className="quiet-message">{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Consulte o diagnóstico acima para identificar o próximo passo." : "Carregando indicadores do conhecimento…"}</p>}
+      </> : <p className={overview?.knowledge.status === "unavailable" ? "quiet-message" : "quiet-message loading-message"}>{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Consulte o diagnóstico acima para identificar o próximo passo." : <><LoadingSpinner label="Carregando indicadores do conhecimento" />Carregando indicadores do conhecimento…</>}</p>}
     </section>
 
     <section className="admin-section" aria-labelledby="telemetry-title">
       <div className="section-title"><div><span className="panel-heading">ATIVIDADE DO MCP</span><h2 id="telemetry-title">Uso e erros</h2></div></div>
       <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site.</p>
-      {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message">Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
-        <section className="data-card telemetry-card" aria-labelledby="tool-usage-title">
+      {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message loading-message"><LoadingSpinner label="Carregando métricas do MCP" />Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
+        <div className="period-comparison-grid" aria-label="Comparação dos últimos 30 dias com os 30 dias anteriores">
+          <div className="period-metric"><span>CHAMADAS · 30 DIAS</span><strong>{toolMetrics.periodComparison.current.calls.toLocaleString("pt-BR")}</strong><small className="comparison-neutral">{comparisonLabel(toolMetrics.periodComparison.current.calls, toolMetrics.periodComparison.previous.calls)}</small><small>{toolMetrics.periodComparison.previous.calls.toLocaleString("pt-BR")} no período anterior</small></div>
+          <div className="period-metric"><span>ERROS · 30 DIAS</span><strong>{toolMetrics.periodComparison.current.errors.toLocaleString("pt-BR")}</strong><small className={`comparison-${comparisonTone(toolMetrics.periodComparison.current.errors, toolMetrics.periodComparison.previous.errors, true)}`}>{comparisonLabel(toolMetrics.periodComparison.current.errors, toolMetrics.periodComparison.previous.errors)}</small><small>{toolMetrics.periodComparison.previous.errors.toLocaleString("pt-BR")} no período anterior</small></div>
+          <div className="period-metric"><span>TAXA DE ERRO</span><strong>{currentToolErrorRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%</strong><small className={`comparison-${comparisonTone(currentToolErrorRate, previousToolErrorRate, true)}`}>{currentToolErrorRate === previousToolErrorRate ? "estável vs período anterior" : `${currentToolErrorRate > previousToolErrorRate ? "+" : ""}${(currentToolErrorRate - previousToolErrorRate).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} p.p. vs período anterior`}</small><small>{previousToolErrorRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% no período anterior</small></div>
+        </div>
+        <div className="telemetry-error-grid">
+          <section className="data-card telemetry-card" aria-labelledby="activity-trend-title">
+          <div className="telemetry-heading"><div><h3 id="activity-trend-title">Atividade diária</h3><span>Chamadas e falhas nos últimos 30 dias</span></div><strong>{toolMetrics.callsByDay.reduce((sum, day) => sum + day.errors, 0)} erros</strong></div>
+          <div className="activity-chart" role="img" aria-label="Chamadas diárias, divididas entre sucesso e erro, nos últimos 30 dias">
+            {toolMetrics.callsByDay.map((day) => {
+              const barHeight = day.calls ? Math.max(3, day.calls / maxDailyCalls * 100) : 0;
+              const successes = Math.max(0, day.calls - day.errors);
+              return <div className="activity-chart-column" key={day.date} title={`${shortDate(day.date)}: ${day.calls} chamadas, ${successes} sucessos, ${day.errors} erros`}><span className="activity-count" aria-hidden="true" style={{ bottom: `calc(${barHeight}% + 3px)` }}>{day.calls > 0 && (day.calls >= maxDailyCalls * 0.45 || day.errors > 0) ? day.calls : ""}</span><span className="activity-bar" style={{ height: `${barHeight}%` }}><span className="activity-errors-segment" style={{ flexGrow: day.errors }} /><span className="activity-success-segment" style={{ flexGrow: successes }} /></span><span className="sr-only">{shortDate(day.date)}: {day.calls} chamadas, {successes} sucessos e {day.errors} erros</span></div>;
+            })}
+          </div>
+          <div className="chart-axis-labels"><span>{toolMetrics.callsByDay[0] ? shortDate(toolMetrics.callsByDay[0].date) : ""}</span><span>Hoje</span></div>
+          <div className="activity-legend"><span><i className="legend-success" />Sucesso</span><span><i className="legend-error" />Erro</span></div>
+          </section>
+          <section className="data-card telemetry-card" aria-labelledby="http-errors-title">
+            <div className="telemetry-heading"><div><h3 id="http-errors-title">Retornos HTTP de erro</h3><span>Códigos reportados pelas ferramentas · últimos 30 dias</span></div><strong>{toolMetrics.httpErrorsByStatus.reduce((sum, item) => sum + item.count, 0)}</strong></div>
+            {toolMetrics.httpErrorsByStatus.length ? <div className="http-status-chart" role="img" aria-label="Retornos HTTP de erro por código nos últimos 30 dias">
+              {toolMetrics.httpErrorsByStatus.map((item) => <div className="http-status-row" key={item.status} title={`HTTP ${item.status}: ${item.count} ${item.count === 1 ? "retorno" : "retornos"}`}>
+                <strong className="http-status-code">{item.status}</strong><span className="usage-bar-track"><span className="http-status-fill" style={{ width: `${Math.max(2, item.count / maxHttpErrors * 100)}%` }} /></span><strong>{item.count.toLocaleString("pt-BR")}</strong>
+              </div>)}
+            </div> : <p className="quiet-message">Nenhum código HTTP de erro identificado neste período.</p>}
+            <p className="http-status-note">Inclui erros que informaram um status HTTP; as demais falhas aparecem nas categorias e na lista recente.</p>
+          </section>
+          <section className="data-card telemetry-card" aria-labelledby="error-category-title">
+            <div className="telemetry-heading"><div><h3 id="error-category-title">Causas registradas</h3><span>Tipos de falha · últimos 30 dias</span></div><strong>{toolMetrics.errorsByCategory.reduce((sum, item) => sum + item.count, 0)}</strong></div>
+            {toolMetrics.errorsByCategory.length ? <div className="error-category-list">{toolMetrics.errorsByCategory.map((item) => <div className="error-category-row" key={item.errorCode}><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}<small>{item.count.toLocaleString("pt-BR")} atual · {item.previousCount.toLocaleString("pt-BR")} anterior · {comparisonLabel(item.count, item.previousCount)}</small></span><strong>{item.count.toLocaleString("pt-BR")}</strong></div>)}</div> : <p className="quiet-message">Nenhuma falha registrada neste período.</p>}
+          </section>
+          <section className="data-card telemetry-card" aria-labelledby="error-account-title">
+            <div className="telemetry-heading"><div><h3 id="error-account-title">Contas mais afetadas</h3><span>Somente erros com identidade validada · 30 dias</span></div></div>
+            {toolMetrics.errorsByAccount.length ? <div className="error-category-list">{toolMetrics.errorsByAccount.map((item) => <div className="error-category-row error-account-row" key={item.userEmail}><span title={item.userEmail}>{item.userEmail}</span><strong>{item.count.toLocaleString("pt-BR")}</strong></div>)}</div> : <p className="quiet-message">Sem erros associados a uma conta neste período.</p>}
+          </section>
+          <section className="data-card telemetry-card recent-errors-card" aria-labelledby="recent-errors-title">
+          <div className="telemetry-heading"><div><h3 id="recent-errors-title">Dez erros mais recentes</h3><span>Retenção de até 90 dias</span></div></div>
+          {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong>{toolTitle(item.toolName)}</strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span><span>{item.userEmail ?? "Conta não identificada"} · {item.durationMs === null ? "Duração indisponível" : `${item.durationMs.toLocaleString("pt-BR")} ms`}{item.httpStatus ? ` · HTTP ${item.httpStatus}` : ""}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
+          </section>
+        </div>
+        <section className="data-card telemetry-card usage-telemetry-card" aria-labelledby="tool-usage-title">
           <div className="telemetry-heading"><div><h3 id="tool-usage-title">Uso por ferramenta</h3><span>Últimos 30 dias · latência média das medições disponíveis</span></div><strong>{toolMetrics.totalCalls.toLocaleString("pt-BR")}</strong></div>
           {toolMetrics.usageByTool.length ? <div className="usage-chart" role="img" aria-label="Chamadas às ferramentas da Beta nos últimos 30 dias">
             {toolMetrics.usageByTool.map((item) => <div className="usage-bar-row" key={item.toolName} title={`${toolTitle(item.toolName)}: ${item.calls} chamadas, ${item.errors} erros`}>
@@ -226,19 +293,17 @@ export default function UserAdminPanel() {
             </div>)}
           </div> : <p className="quiet-message">Ainda não há chamadas registradas neste período.</p>}
         </section>
-        <section className="data-card telemetry-card" aria-labelledby="error-trend-title">
-          <div className="telemetry-heading"><div><h3 id="error-trend-title">Erros no último mês</h3><span>Ocorrências por dia</span></div><strong>{toolMetrics.errorsByDay.reduce((sum, day) => sum + day.count, 0)}</strong></div>
-          <div className="error-chart" role="img" aria-label="Gráfico diário de erros nos últimos 30 dias">
-            {toolMetrics.errorsByDay.map((day) => {
-              const barHeight = day.count ? Math.max(4, day.count / maxDailyErrors * 100) : 2;
-              return <div className="error-chart-column" key={day.date} title={`${shortDate(day.date)}: ${day.count} ${day.count === 1 ? "erro" : "erros"}`}><span className="error-chart-bar" style={{ height: `${barHeight}%` }} /><span className="error-chart-value" aria-hidden="true" style={{ bottom: `calc(${barHeight}% + 2px)` }}>{day.count}</span><span className="sr-only">{shortDate(day.date)}: {day.count} erros</span></div>;
-            })}
-          </div>
-          <div className="chart-axis-labels"><span>{toolMetrics.errorsByDay[0] ? shortDate(toolMetrics.errorsByDay[0].date) : ""}</span><span>Hoje</span></div>
-        </section>
-        <section className="data-card telemetry-card recent-errors-card" aria-labelledby="recent-errors-title">
-          <div className="telemetry-heading"><div><h3 id="recent-errors-title">Dez erros mais recentes</h3><span>Retenção de até 90 dias</span></div></div>
-          {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong>{toolTitle(item.toolName)}</strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
+        <section className="data-card telemetry-card latency-telemetry-card" aria-labelledby="latency-title">
+          <div className="telemetry-heading"><div><h3 id="latency-title">Ferramentas com maior latência</h3><span>P95 e P50 das execuções medidas · últimos 30 dias</span></div></div>
+          {toolMetrics.latencyByTool.length ? <>
+            <div className="latency-legend"><span><i className="latency-p95-key" />Faixa até P95</span><span><i className="latency-p50-key" />P50 (típica)</span></div>
+            <div className="latency-chart">{toolMetrics.latencyByTool.map((item) => <div className="latency-row" key={item.toolName} title={`${toolTitle(item.toolName)}: P50 ${item.p50Ms.toLocaleString("pt-BR")} ms, P95 ${item.p95Ms.toLocaleString("pt-BR")} ms em ${item.samples} execuções medidas`}>
+              <span className="latency-tool-name">{toolTitle(item.toolName)}<small>{item.samples.toLocaleString("pt-BR")} {item.samples === 1 ? "execução medida" : "execuções medidas"}</small></span>
+              <span className="latency-track"><span className="latency-p95" style={{ width: `${Math.max(2, item.p95Ms / maxLatencyP95 * 100)}%` }}><span className="latency-p50" style={{ width: `${item.p95Ms ? Math.min(100, item.p50Ms / item.p95Ms * 100) : 0}%` }} /></span></span>
+              <span className="latency-values"><strong>P95 {item.p95Ms.toLocaleString("pt-BR")} ms</strong><small>P50 {item.p50Ms.toLocaleString("pt-BR")} ms</small></span>
+            </div>)}</div>
+            <p className="http-status-note">P95 ajuda a perceber lentidão que a média pode esconder. Considere o número de execuções ao comparar ferramentas; amostras pequenas variam mais.</p>
+          </> : <p className="quiet-message">Ainda não há durações suficientes registradas neste período.</p>}
         </section>
       </div>}
     </section>
@@ -248,7 +313,7 @@ export default function UserAdminPanel() {
       <p className="section-description">Define a validade em milissegundos para access tokens novos e renovados. Tokens já emitidos mantêm a expiração atual; refresh tokens continuam com validade própria de até 90 dias.</p>
       <form onSubmit={saveTokenLifetime} className="user-form">
         <div className="input-wrap"><input aria-label="Validade do access token em milissegundos" type="number" min={MIN_ACCESS_TOKEN_LIFETIME_MS} max={MAX_ACCESS_TOKEN_LIFETIME_MS} step="1" value={tokenLifetimeDraft} onChange={(event) => setTokenLifetimeDraft(event.target.value)} required /><span aria-hidden="true">ms</span></div>
-        <button type="submit" disabled={savingTokenLifetime}>{savingTokenLifetime ? "Salvando…" : "Salvar validade"}</button>
+        <button type="submit" disabled={savingTokenLifetime}>{savingTokenLifetime && <LoadingSpinner label="Salvando validade" compact />}{savingTokenLifetime ? "Salvando…" : "Salvar validade"}</button>
       </form>
       <p className="quiet-message">Limite permitido: {MIN_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} a {MAX_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms. O padrão é {DEFAULT_ACCESS_TOKEN_LIFETIME_MS.toLocaleString("pt-BR")} ms.</p>
     </section>

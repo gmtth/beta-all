@@ -44,8 +44,11 @@ export const mcpToolEvents = sqliteTable("mcp_tool_events", {
   toolName: text("tool_name").notNull(),
   outcome: text("outcome", { enum: ["success", "error"] }).notNull(),
   errorCode: text("error_code"),
+  durationMs: integer("duration_ms"),
+  httpStatus: integer("http_status"),
   createdAt: integer("created_at").notNull(),
 }, (table) => [
   index("mcp_tool_events_created_at_idx").on(table.createdAt),
   index("mcp_tool_events_tool_created_at_idx").on(table.toolName, table.createdAt),
+  index("mcp_tool_events_http_status_created_at_idx").on(table.httpStatus, table.createdAt),
 ]);

@@ -23,3 +23,7 @@ export function mapToolUsageRows(rows: ToolUsageRow[]) {
 export function validToolDuration(value: number | null) {
   return typeof value === "number" && Number.isFinite(value) && value >= 0 ? Math.round(value) : null;
 }
+
+export function validToolHttpStatus(value: number | null) {
+  return typeof value === "number" && Number.isInteger(value) && value >= 400 && value <= 599 ? value : null;
+}

@@ -4,6 +4,8 @@ O código do Site e do endpoint MCP HTTP está em `mcp/movidesk/`. A raiz public
 
 ## Site em produção
 
+Atualização de 2026-10-22: `Beta MCP` está público na versão 102, deployment `appgdep_6ad99c33056481918a593ce41d6218e2` (`succeeded`), URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A fonte Sites (`ca8888a944c13b411465b312a8003adc511704bb`) foi sincronizada após a PR #14 entrar na `main` do GitHub pelo commit `80414b982662ff6e8d0141720dbfe8569882abe3`. A publicação inclui os insights de telemetria do painel administrativo. Não foram feitos smoke tests autenticados nem confirmação visual de dados reais nesta publicação.
+
 Em 2026-10-21, a integração Sites confirmou o projeto `Beta MCP` ativo e público, com versão publicada 81 e deployment `appgdep_6ad8ad335d608191813118e780180e4d`. A versão 81 registra o commit-fonte Sites `a231c84b31124890aec03f03c6d92daa93d7db86`; o deploy foi confirmado como `succeeded` e a audiência permaneceu pública. Ela inclui a implementação de reconexão OAuth descrita em `mcp/movidesk/DOSSIER.md`. A migration D1 de refresh tokens foi empacotada, mas o schema D1 não foi inspecionado depois da publicação e o ciclo de reconexão não foi validado em conversa real do ChatGPT.
 
 O armazenamento de fonte usado pela publicação do Sites é separado do GitHub e não veio vinculado como remote ao resultado de leitura do projeto. A versão publicada continua disponível como versão Sites para rollback. O runtime foi sincronizado do monorepo para um checkout isolado, empacotado e publicado; o commit-fonte Sites é separado do commit GitHub.

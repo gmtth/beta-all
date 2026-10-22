@@ -10,7 +10,7 @@ type ToolMetrics = {
   window: { start: string; end: string; days: number };
   totalCalls: number;
   usageByTool: Array<{ toolName: string; calls: number; errors: number; successRatePercent: number; averageLatencyMs: number | null }>;
-  recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string }>;
+  recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string; durationMs: number | null; httpStatus: number | null; userEmail: string | null }>;
   errorsByDay: Array<{ date: string; count: number }>;
   httpErrorsByStatus: Array<{ status: number; count: number }>;
 };
@@ -241,7 +241,7 @@ export default function UserAdminPanel() {
           </section>
           <section className="data-card telemetry-card recent-errors-card" aria-labelledby="recent-errors-title">
           <div className="telemetry-heading"><div><h3 id="recent-errors-title">Dez erros mais recentes</h3><span>Retenção de até 90 dias</span></div></div>
-          {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong>{toolTitle(item.toolName)}</strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
+          {toolMetrics.recentErrors.length ? <div className="recent-error-list">{toolMetrics.recentErrors.map((item, index) => <div className="recent-error-row" key={`${item.occurredAt}-${item.toolName}-${index}`}><div><strong>{toolTitle(item.toolName)}</strong><span>{errorTitles[item.errorCode] ?? "Falha na ferramenta"}</span><span>{item.userEmail ?? "Conta não identificada"} · {item.durationMs === null ? "Duração indisponível" : `${item.durationMs.toLocaleString("pt-BR")} ms`}{item.httpStatus ? ` · HTTP ${item.httpStatus}` : ""}</span></div><time dateTime={item.occurredAt}>{dateTime(item.occurredAt)}</time></div>)}</div> : <p className="quiet-message">Nenhum erro registrado.</p>}
           </section>
         </div>
         <section className="data-card telemetry-card usage-telemetry-card" aria-labelledby="tool-usage-title">

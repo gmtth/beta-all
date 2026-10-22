@@ -9,13 +9,13 @@ let toolUsageSchemaPromise: Promise<void> | undefined;
 export async function ensureToolUsageSchema() {
   if (!toolUsageSchemaPromise) {
     toolUsageSchemaPromise = db().batch([
-      db().prepare("CREATE TABLE IF NOT EXISTS mcp_tool_events (id INTEGER PRIMARY KEY AUTOINCREMENT, tool_name TEXT NOT NULL, outcome TEXT NOT NULL CHECK (outcome IN ('success', 'error')), error_code TEXT, duration_ms INTEGER, http_status INTEGER, created_at INTEGER NOT NULL)"),
+      db().prepare("CREATE TABLE IF NOT EXISTS mcp_tool_events (id INTEGER PRIMARY KEY AUTOINCREMENT, tool_name TEXT NOT NULL, outcome TEXT NOT NULL CHECK (outcome IN ('success', 'error')), error_code TEXT, duration_ms INTEGER, http_status INTEGER, user_email TEXT, created_at INTEGER NOT NULL)"),
       db().prepare("CREATE INDEX IF NOT EXISTS mcp_tool_events_created_at_idx ON mcp_tool_events(created_at DESC)"),
       db().prepare("CREATE INDEX IF NOT EXISTS mcp_tool_events_tool_created_at_idx ON mcp_tool_events(tool_name, created_at DESC)"),
     ]).then(async () => {
-      for (const column of ["duration_ms", "http_status"]) {
+      for (const column of ["duration_ms", "http_status", "user_email"]) {
         try {
-          await db().prepare(`ALTER TABLE mcp_tool_events ADD COLUMN ${column} INTEGER`).run();
+          await db().prepare(`ALTER TABLE mcp_tool_events ADD COLUMN ${column} ${column === "user_email" ? "TEXT" : "INTEGER"}`).run();
         } catch (error) {
           if (!/duplicate column name/i.test(error instanceof Error ? error.message : String(error))) throw error;
         }
@@ -25,12 +25,12 @@ export async function ensureToolUsageSchema() {
   }
   await toolUsageSchemaPromise;
 }
-export async function recordMcpToolEvent(toolName: string, outcome: "success" | "error", errorCode: string | null, durationMs: number | null, httpStatus: number | null) {
+export async function recordMcpToolEvent(toolName: string, outcome: "success" | "error", errorCode: string | null, durationMs: number | null, httpStatus: number | null, userEmail: string | null) {
   try {
     await ensureToolUsageSchema();
     const now = Date.now();
     await db().batch([
-      db().prepare("INSERT INTO mcp_tool_events (tool_name, outcome, error_code, duration_ms, http_status, created_at) VALUES (?, ?, ?, ?, ?, ?)").bind(toolName, outcome, errorCode, validToolDuration(durationMs), outcome === "error" ? validToolHttpStatus(httpStatus) : null, now),
+      db().prepare("INSERT INTO mcp_tool_events (tool_name, outcome, error_code, duration_ms, http_status, user_email, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)").bind(toolName, outcome, errorCode, validToolDuration(durationMs), outcome === "error" ? validToolHttpStatus(httpStatus) : null, outcome === "error" && userEmail ? userEmail.trim().toLowerCase().slice(0, 254) : null, now),
       db().prepare("DELETE FROM mcp_tool_events WHERE created_at < ?").bind(now - 90 * 24 * 60 * 60 * 1000),
     ]);
   } catch {

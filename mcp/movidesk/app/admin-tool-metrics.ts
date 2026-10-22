@@ -9,12 +9,12 @@ export type AdminToolMetrics = {
   window: { start: string; end: string; days: number };
   totalCalls: number;
   usageByTool: Array<{ toolName: string; calls: number; errors: number; successRatePercent: number; averageLatencyMs: number | null }>;
-  recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string }>;
+  recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string; durationMs: number | null; httpStatus: number | null; userEmail: string | null }>;
   errorsByDay: Array<{ date: string; count: number }>;
   httpErrorsByStatus: Array<{ status: number; count: number }>;
 };
 
-type ErrorRow = { tool_name: string; error_code: string | null; created_at: number };
+type ErrorRow = { tool_name: string; error_code: string | null; created_at: number; duration_ms: number | null; http_status: number | null; user_email: string | null };
 type DailyErrorRow = { day: number; count: number };
 type HttpErrorRow = { http_status: number; count: number };
 
@@ -29,7 +29,7 @@ export async function getAdminToolMetrics(): Promise<AdminToolMetrics> {
   const [usage, errors, daily, httpErrors] = await Promise.all([
     db().prepare("SELECT tool_name, COUNT(*) AS calls, SUM(CASE WHEN outcome = 'error' THEN 1 ELSE 0 END) AS errors, AVG(duration_ms) AS average_latency_ms FROM mcp_tool_events WHERE created_at >= ? AND created_at < ? GROUP BY tool_name ORDER BY calls DESC, tool_name ASC")
       .bind(startUtc, todayUtc + DAY_MS).all<ToolUsageRow>(),
-    db().prepare("SELECT tool_name, error_code, created_at FROM mcp_tool_events WHERE outcome = 'error' ORDER BY created_at DESC, id DESC LIMIT 10")
+    db().prepare("SELECT tool_name, error_code, created_at, duration_ms, http_status, user_email FROM mcp_tool_events WHERE outcome = 'error' ORDER BY created_at DESC, id DESC LIMIT 10")
       .all<ErrorRow>(),
     db().prepare("SELECT CAST(created_at / 86400000 AS INTEGER) AS day, COUNT(*) AS count FROM mcp_tool_events WHERE outcome = 'error' AND created_at >= ? AND created_at < ? GROUP BY day")
       .bind(startUtc, todayUtc + DAY_MS).all<DailyErrorRow>(),
@@ -52,6 +52,9 @@ export async function getAdminToolMetrics(): Promise<AdminToolMetrics> {
       toolName: row.tool_name,
       errorCode: safeErrorCode(row.error_code),
       occurredAt: new Date(row.created_at).toISOString(),
+      durationMs: row.duration_ms,
+      httpStatus: row.http_status,
+      userEmail: row.user_email,
     })),
     errorsByDay,
     httpErrorsByStatus: (httpErrors.results ?? []).map((row) => ({ status: row.http_status, count: row.count })),

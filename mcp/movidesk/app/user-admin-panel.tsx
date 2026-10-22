@@ -9,7 +9,7 @@ type KnowledgeDiagnostic = "available" | "configuration_missing" | "rpc_not_foun
 type ToolMetrics = {
   window: { start: string; end: string; days: number };
   totalCalls: number;
-  usageByTool: Array<{ toolName: string; calls: number; errors: number }>;
+  usageByTool: Array<{ toolName: string; calls: number; errors: number; successRatePercent: number; averageLatencyMs: number | null }>;
   recentErrors: Array<{ toolName: string; errorCode: string; occurredAt: string }>;
   errorsByDay: Array<{ date: string; count: number }>;
 };
@@ -218,10 +218,10 @@ export default function UserAdminPanel() {
       <p className="section-description">Métricas das chamadas processadas pelo MCP neste Site.</p>
       {toolMetricsResponse?.status === "unavailable" ? <p className="quiet-message">As métricas do MCP estão indisponíveis no momento.</p> : !toolMetrics ? <p className="quiet-message">Carregando métricas do MCP…</p> : <div className="admin-data-grid telemetry-grid">
         <section className="data-card telemetry-card" aria-labelledby="tool-usage-title">
-          <div className="telemetry-heading"><div><h3 id="tool-usage-title">Uso por ferramenta</h3><span>Chamadas nos últimos 30 dias</span></div><strong>{toolMetrics.totalCalls.toLocaleString("pt-BR")}</strong></div>
+          <div className="telemetry-heading"><div><h3 id="tool-usage-title">Uso por ferramenta</h3><span>Últimos 30 dias · latência média das medições disponíveis</span></div><strong>{toolMetrics.totalCalls.toLocaleString("pt-BR")}</strong></div>
           {toolMetrics.usageByTool.length ? <div className="usage-chart" role="img" aria-label="Chamadas às ferramentas da Beta nos últimos 30 dias">
             {toolMetrics.usageByTool.map((item) => <div className="usage-bar-row" key={item.toolName} title={`${toolTitle(item.toolName)}: ${item.calls} chamadas, ${item.errors} erros`}>
-              <span className="usage-tool-name">{toolTitle(item.toolName)}</span><span className="usage-bar-track"><span className="usage-bar-fill" style={{ width: `${Math.max(2, item.calls / maxToolCalls * 100)}%` }} /></span><strong>{item.calls.toLocaleString("pt-BR")}</strong><small>{item.errors} erros</small>
+              <span className="usage-tool-name" title={`${toolTitle(item.toolName)} · ${item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% de sucesso · ${item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms de latência média`}`}>{toolTitle(item.toolName)}<small>{item.successRatePercent.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% sucesso · {item.averageLatencyMs === null ? "latência indisponível" : `${item.averageLatencyMs.toLocaleString("pt-BR")} ms méd.`}</small></span><span className="usage-bar-track"><span className="usage-bar-fill" style={{ width: `${Math.max(2, item.calls / maxToolCalls * 100)}%` }} /></span><strong>{item.calls.toLocaleString("pt-BR")}</strong><small className="usage-error-count">{item.errors} erros</small>
             </div>)}
           </div> : <p className="quiet-message">Ainda não há chamadas registradas neste período.</p>}
         </section>

@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS, clientSecretFor, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, oauthClient, permissionLabelForScopes, OAUTH_SCOPE, OFFLINE_ACCESS_SCOPE, SUPPORTED_OAUTH_SCOPES, SUPPORTED_RESOURCE_SCOPES, validRedirectForClient, validateAuthorizationRequest, oauthTokenFailure, type OAuthTokenFailure } from "./clients";
 import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS } from "./token-lifetime";
+import { validToolDuration } from "../tool-telemetry-math";
 
 const encoder = new TextEncoder();
 export const db = () => env.DB as D1Database;
@@ -8,19 +9,25 @@ let toolUsageSchemaPromise: Promise<void> | undefined;
 export async function ensureToolUsageSchema() {
   if (!toolUsageSchemaPromise) {
     toolUsageSchemaPromise = db().batch([
-      db().prepare("CREATE TABLE IF NOT EXISTS mcp_tool_events (id INTEGER PRIMARY KEY AUTOINCREMENT, tool_name TEXT NOT NULL, outcome TEXT NOT NULL CHECK (outcome IN ('success', 'error')), error_code TEXT, created_at INTEGER NOT NULL)"),
+      db().prepare("CREATE TABLE IF NOT EXISTS mcp_tool_events (id INTEGER PRIMARY KEY AUTOINCREMENT, tool_name TEXT NOT NULL, outcome TEXT NOT NULL CHECK (outcome IN ('success', 'error')), error_code TEXT, duration_ms INTEGER, created_at INTEGER NOT NULL)"),
       db().prepare("CREATE INDEX IF NOT EXISTS mcp_tool_events_created_at_idx ON mcp_tool_events(created_at DESC)"),
       db().prepare("CREATE INDEX IF NOT EXISTS mcp_tool_events_tool_created_at_idx ON mcp_tool_events(tool_name, created_at DESC)"),
-    ]).then(() => undefined).catch((error) => { toolUsageSchemaPromise = undefined; throw error; });
+    ]).then(async () => {
+      try {
+        await db().prepare("ALTER TABLE mcp_tool_events ADD COLUMN duration_ms INTEGER").run();
+      } catch (error) {
+        if (!/duplicate column name/i.test(error instanceof Error ? error.message : String(error))) throw error;
+      }
+    }).catch((error) => { toolUsageSchemaPromise = undefined; throw error; });
   }
   await toolUsageSchemaPromise;
 }
-export async function recordMcpToolEvent(toolName: string, outcome: "success" | "error", errorCode: string | null) {
+export async function recordMcpToolEvent(toolName: string, outcome: "success" | "error", errorCode: string | null, durationMs: number | null) {
   try {
     await ensureToolUsageSchema();
     const now = Date.now();
     await db().batch([
-      db().prepare("INSERT INTO mcp_tool_events (tool_name, outcome, error_code, created_at) VALUES (?, ?, ?, ?)").bind(toolName, outcome, errorCode, now),
+      db().prepare("INSERT INTO mcp_tool_events (tool_name, outcome, error_code, duration_ms, created_at) VALUES (?, ?, ?, ?, ?)").bind(toolName, outcome, errorCode, validToolDuration(durationMs), now),
       db().prepare("DELETE FROM mcp_tool_events WHERE created_at < ?").bind(now - 90 * 24 * 60 * 60 * 1000),
     ]);
   } catch {

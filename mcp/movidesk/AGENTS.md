@@ -147,6 +147,14 @@ node scripts/validate-semantic-catalog.mjs
 
 Relate testes não executados, falhas preexistentes e limitações de ambiente. Não repetir silenciosamente até obter um resultado verde.
 
+## Ordem obrigatória entre GitHub e Sites
+
+- Pedido de **commit** pode ser atendido apenas com commit no GitHub; não implica publicação no Sites.
+- Pedido de **merge** pode ser atendido apenas com merge no GitHub; não implica publicação no Sites.
+- Pedido de **push** significa sincronizar o estado integrado no GitHub e a publicação no Sites quando o runtime deste componente tiver mudado.
+- Antes de publicar o Sites, todos os commits e merges do conjunto precisam estar aplicados no GitHub. Publique somente a fonte que corresponda ao estado integrado; não publique alterações locais ou uma branch ainda não mesclada.
+- Se GitHub, validação ou publicação falhar, relate o estado de cada etapa e não diga que ficou tudo sincronizado enquanto GitHub e Sites divergirem.
+
 ## Catálogo completo de autotestes
 
 Os autotestes são divididos por camada. Um teste verde prova somente a camada que ele exercita; nenhum teste local, isoladamente, prova que o Site publicado ou o manifesto da conexão ativa foi atualizado.

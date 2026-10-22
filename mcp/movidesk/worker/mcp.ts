@@ -38,6 +38,7 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
       const requiredScopes = schemes?.flatMap((scheme) => scheme.type === "oauth2" ? scheme.scopes : []) ?? [];
       const explicitlyPublic = Boolean(schemes?.length && schemes.every((scheme) => scheme.type === "noauth"));
       return server.registerTool(name, config as any, async (...args: any[]) => {
+        const startedAt = performance.now();
         let outcome: "success" | "error" = "success";
         let errorCode: string | null = null;
         try {
@@ -66,7 +67,7 @@ function instrumentToolUsage(server: McpServer, accessToken: string, resource: s
           if (error instanceof McpAuthorizationFailure) return mcpAuthorizationError(error.reason, resource, requiredScopes);
           throw error;
         } finally {
-          const persistence = recordMcpToolEvent(name, outcome, errorCode);
+          const persistence = recordMcpToolEvent(name, outcome, errorCode, performance.now() - startedAt);
           if (context) context.waitUntil(persistence);
           else await persistence;
         }

@@ -267,26 +267,9 @@ Ler [references/observabilidade.md](references/observabilidade.md) antes de prod
 
 ## Observabilidade sem cadeia de pensamento
 
-Ao final de cada resposta funcional relevante, incluir um bloco curto `Resumo de execução`.
+Usar os cartões de encerramento definidos em [protocolo-evidencias-e-handoffs.md](../protocolo-evidencias-e-handoffs.md). No texto visível ao usuário, informar apenas confiabilidade, estado funcional, evidências citáveis, validações, nomes exibidos das skills realmente ativadas no cartão próprio, feedback explícito e ações externas/persistentes relevantes. Não listar chamadas de conectores ou detalhes internos. Não criar cartão de próximo passo; orientação necessária permanece no texto principal.
 
-Informar somente fatos observáveis de execução. Não expor cadeia de pensamento, raciocínio interno ou conteúdo privado das Skills.
-
-Listar:
-- Skills efetivamente acionadas;
-- status de execução;
-- tempo por Skill, somente se mensurável pelo runtime;
-- tempo total, somente se mensurável pelo runtime;
-- número de chamadas de ferramentas/conectores, quando observável;
-- retries/erros, quando houver;
-- fontes consultadas, em contagem ou identificação curta;
-- ciclos de QA;
-- Dossiê atualizado: sim/não;
-- artefatos gerados: sim/não;
-- quantidade de Pendências/Divergências materiais ao final.
-
-Quando o runtime não expuser tempo confiável, escrever `não disponível`.
-
-Nunca estimar duração.
+Em contexto administrativo autorizado, métricas de QA, artefatos e atualizações de Dossiê podem ser informados quando forem pertinentes e observados. Latência, retries, erros e contagens de chamadas só são apresentados se medidos de forma confiável, autorizados e úteis; nunca estimar duração nem registrar zeros presumidos. Use cartões apenas quando houver mecanismo documentado no cliente; caso contrário, aplique a alternativa Markdown portátil do protocolo.
 
 ## Resultado esperado
 

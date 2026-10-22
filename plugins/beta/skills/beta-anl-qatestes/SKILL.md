@@ -2,7 +2,7 @@
 name: beta-anl-qatestes
 description: Criar checklists funcionais, smoke tests e cobertura de regressão proporcionais ao risco e ao escopo informado.
 metadata:
-  version: "3"
+  version: "4"
 ---
 
 ## Protocolo transversal obrigatório
@@ -243,7 +243,7 @@ Quando o usuário indicar que o checklist será publicado, comentado ou copiado 
 - apresente ambos como candidatos e converse com o usuário sobre o que incluir ou retirar antes de preparar o comentário final;
 - escreva itens curtos e operacionais, omitindo contexto que já esteja claro na descrição da tarefa;
 - no comentário final, use sempre o mesmo formato: título `**Checklist de testes**`, uma linha em branco e cada item selecionado em uma linha própria no formato `- [ ] <teste>`; não identifique itens ou grupos como Smoke/Testes estendidos nem inclua explicações ou conteúdo adicional;
-- mantenha grau de certeza e Resumo da operação fora do conteúdo copiável e do comentário;
+- mantenha os cartões de encerramento e a confiabilidade definidos pelo protocolo compartilhado fora do conteúdo copiável e do comentário;
 - mantenha o resultado esperado quando ele tornar a conferência mais clara;
 - em variações de códigos, separadores ou zeros à esquerda, explicite a conferência do reconhecimento e do vínculo correto quando aplicável.
 

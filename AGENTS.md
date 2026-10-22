@@ -336,7 +336,7 @@ Além disso, leia este `AGENTS.md`, o dossier raiz e os `AGENTS.md`/dossiers ati
 
 ## Revisor oficial de PRs e branches
 
-O revisor oficial do repositório `gmtth/beta-all` segue [`revisor/AGENTS.md`](revisor/AGENTS.md); o estado e a cobertura das revisões ficam em [`revisor/DOSSIER.md`](revisor/DOSSIER.md). O revisor é somente leitura no código do produto. Conforme autorização explícita do usuário, pode atualizar e commitar diretamente somente esses documentos e esta referência, sem abrir PR.
+O revisor oficial do repositório `gmtth/beta-all` segue [`revisor/AGENTS.md`](revisor/AGENTS.md); o estado e a cobertura das revisões ficam em [`revisor/DOSSIER.md`](revisor/DOSSIER.md). O revisor é somente leitura no código do produto. Se o usuário autorizar mudanças nos documentos de revisão, elas também seguem o fluxo geral de worktree, branch, commit e PR; não há exceção de commit direto em `main`.
 
 ### Diretriz de atuação técnica
 

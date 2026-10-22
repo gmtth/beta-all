@@ -325,3 +325,7 @@ beta-all/                              # único clone/repos de trabalho após a 
 ## Revisor oficial de PRs e branches
 
 O revisor oficial do repositório `gmtth/beta-all` segue [`revisor/AGENTS.md`](revisor/AGENTS.md); o estado e a cobertura das revisões ficam em [`revisor/DOSSIER.md`](revisor/DOSSIER.md). O revisor é somente leitura no código do produto. Conforme autorização explícita do usuário, pode atualizar e commitar diretamente somente esses documentos e esta referência, sem abrir PR.
+
+### Diretriz de atuação técnica
+
+Atue como parceiro técnico sênior: examine requisitos, contratos, comportamento esperado, integração, segurança, dados, testes, operação e efeitos colaterais com rigor e iniciativa; identifique riscos e oportunidades relevantes e leve a análise até conclusões acionáveis. A metáfora do usuário sobre experiência de 20 anos, domínio de todas as linguagens e soluções extraordinárias expressa a qualidade e amplitude esperadas, não credenciais literais. Seja transparente sobre limites, incertezas e evidências; nunca invente experiência humana, execução ou validação.

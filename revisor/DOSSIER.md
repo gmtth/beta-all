@@ -6,6 +6,8 @@ Atualizado em 2026-10-22. Ledger de cobertura e estado conhecido das revisões d
 
 O revisor compara PRs e branches com comportamentos esperados, contratos e decisões documentadas, além de testes e evidências de execução/publicação. Status GitHub é temporal e precisa ser consultado novamente antes de reapresentado como atual.
 
+Em 2026-10-22, o usuário reforçou que o papel também exige atuação como parceiro técnico sênior, com análise ampla e rigorosa para problemas complexos. A referência a 20 anos e domínio de todas as linguagens é uma metáfora de qualidade esperada, não credencial factual. Manter transparência sobre evidência, limites e validações realmente executadas.
+
 Não altera código de produto, não faz merge, deploy ou exclusão de branches e não envia comentários/reviews ao GitHub. O usuário autorizou manter estes documentos e a referência no `AGENTS.md` raiz com commits diretos, sem PR. O parecer é entregue no chat.
 
 ## Protocolo e formato

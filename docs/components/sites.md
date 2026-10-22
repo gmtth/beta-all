@@ -2,6 +2,8 @@
 
 O código do Site e do endpoint MCP HTTP está em `mcp/movidesk/`. A raiz publicada anteriormente era `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/`; o endpoint MCP configurado pelo plugin termina em `/mcp/`.
 
+Atualização de 2026-10-22: `Beta MCP` está público na versão 112, deployment `appgdep_6ada1a55b3448191b8ded7030c05209e` (`succeeded`), URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A PR #34 foi integrada ao `main` no commit `ec09154d9c5ab25b37f7abb2216525afc8a6f407`; a fonte Sites correspondente foi sincronizada no commit `b3914d074793e0d13e8fab00c851debbe167dbd7`. A alteração remove da lista de contas a repetição dos escopos do token e a mensagem redundante `Sem autorização ativa`, preservando o contador, a expiração e os controles individuais de permissões. A audiência pública existente foi mantida.
+
 ## Site em produção
 
 Atualização de 2026-10-22: `Beta MCP` está público na versão 103, deployment `appgdep_6ad9a91b13348191a90ffdf03e0bdc56` (`succeeded`), URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A fonte Sites (`65fcddae9735eb0f1edebde79dc15cd055462362`) foi sincronizada após a PR #17 entrar na `main` do GitHub pelo commit `50741c392293f004ad5cf1154e9d46738bb9cd59`. A versão inclui o campo `protocol` no retorno de `movidesk_get_ticket`; o smoke pelo conector para o ticket 5835 confirmou `20260702000000016`. A audiência pública foi preservada. O helper de build/empacotamento falhou no Windows ao resolver npm e `tar.exe`; o build direto e o empacotador oficial foram usados para concluir a publicação.

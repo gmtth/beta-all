@@ -46,13 +46,13 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 
 ### Validade de access token configurável (2026-10-21)
 
-- A PR #3 foi aberta na branch `codex/admin-access-token-expiration`; commit GitHub `efec8f8b8d4468141ce633377785f706be66af27`. A PR continua aberta, não mesclada.
+- A PR #3 foi mesclada por squash em `main`; commit `4afbec5c800788e8f96eb5ef538273962ddcb29b`.
 - O painel master permite configurar em milissegundos a validade de access tokens novos e renovados. O padrão permanece em 30 dias, com limites de um minuto a 30 dias. Tokens já emitidos preservam sua expiração gravada; refresh tokens mantêm a validade própria de até 90 dias.
 - A migration D1 `0003_oauth_settings.sql` e a inicialização idempotente da tabela `oauth_settings` fazem parte do runtime. Testes de migration, padrão, gravação e limites passaram; `npm test` passou (build e 10 testes do projeto) e 11 testes OAuth focados passaram.
 - Publicação Sites v83 concluída com status `succeeded`, deployment `appgdep_6ad8d27565208191984e249fbed0e4c2`, fonte Sites `1020fc078f7414868b44209a4c80097e9b0831f4`, URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. A audiência pública existente foi preservada. v83 exibia o botão mas o endpoint retornava 404; v84 inclui a rota corrigida.
 - O envio e empacotamento exigiram cópia temporária isolada do helper: o build Vinext passou, mas o helper instalado falhou no quoting do npm, caminho auxiliar do pacote e localização do tar no Windows. Nenhum arquivo do plugin instalado foi alterado. A correção permanente do workflow segue pendente no dossier MCP.
-- Falta mesclar a PR #3 e executar smoke test autenticado como master no painel publicado; ainda não foi testada uma alteração real do TTL na interface em produção.
-- O endpoint `POST /api/admin/users/logout` retornou 404 na v83 (request `b719147d…`). A rota foi sincronizada ao checkout do Site e publicada na v84; commit da fonte Sites `2c6860511760c6a5b988bf3c5205536033fc65dd`, deployment `appgdep_6ad8db1b112c8191b7f74972c426f50f`. Smoke sem identidade retornou 401 `unauthorized`, confirmando que a rota existe; nenhum token foi revogado. O código está no commit `1f22bff` da branch `codex/admin-access-token-expiration`, PR #3. Ver pendências no dossier MCP.
+- Smoke autenticado em produção como master: o painel carregou `432000000 ms` (5 dias), salvar esse valor retornou confirmação de sucesso e, após recarregar e aguardar a tela carregar, o GET exibiu novamente `432000000 ms`. O valor de produção não foi alterado. A tentativa local de `npm test` nesta sessão não iniciou porque o executável `vinext` não está instalado no checkout; não foram instaladas dependências. O PR registra testes anteriores aprovados, mas esses resultados não são uma execução nova desta sessão.
+- O endpoint `POST /api/admin/users/logout` retornou 404 na v83 (request `b719147d…`). A rota foi sincronizada ao checkout do Site e publicada na v84; commit da fonte Sites `2c6860511760c6a5b988bf3c5205536033fc65dd`, deployment `appgdep_6ad8db1b112c8191b7f74972c426f50f`. Smoke sem identidade retornou 401 `unauthorized`, confirmando que a rota existe; nenhum token foi revogado nesse smoke. O código estava no commit `1f22bff` da branch `codex/admin-access-token-expiration` e entrou em `main` pela PR #3, mesclada no commit squash `4afbec5c800788e8f96eb5ef538273962ddcb29b`. Ver pendências restantes no dossier MCP.
 
 ## Migração e rastreabilidade
 
@@ -98,7 +98,6 @@ Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 teste
 
 | Prioridade | Item | Estado / condição para conclusão |
 |---|---|---|
-| Alta | Mesclar a PR #3 da configuração da validade de access tokens e validar o campo como master. | Código publicado no Sites v82 (`1c8a611c656c2582dcc87a4b17d93422fe58f464`); branch GitHub `codex/admin-access-token-expiration`, PR #3 aberta. Após merge, conferir que o painel carrega o valor, salvar um TTL de teste e confirmar resposta persistida; restaurar o valor desejado pelo master. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
 | Alta | Testar logout e reautenticação com uma conta descartável. | Sites v84 implantado; `POST` sem identidade retorna 401, confirmando a rota sem executar revogação. Não testar com contas reais. |
 | Alta | Validar o ciclo nativo de reconexão OAuth no ChatGPT. | Etapas 1–5 foram mescladas pela PR #2 e publicadas no Sites v81; falta testar expiração, refresh, revogação, reconexão e repetição da operação em conversa real. Ver [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos). |
 | Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |

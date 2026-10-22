@@ -2,10 +2,12 @@
 name: beta-mod-sites
 description: Criar ou ajustar um clone web autônomo, visual e funcional do sistema CENCIHUB a partir do DOSSIE_CONTEXTO_MODELAGEM.md, regras de negócio confirmadas, HTML/CSS fornecidos e, opcionalmente, arquivos HAR. Usar quando o usuário pedir @beta-mod-sites, um site-clone do CENCIHUB, a materialização navegável de uma modelagem/regra em telas, ou a atualização desse clone após mudança de regra ou referência visual. Não integrar com backend, API, banco, autenticação ou ambiente real do CENCIHUB.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 # beta-mod-sites
+
+Antes de executar ou responder quando invocada diretamente, aplique o [protocolo transversal da Beta](../beta/references/protocolo-evidencias-e-handoffs.md). Ele centraliza evidências, linguagem, confiabilidade, cabeçalho e resumo final. Se chamada pela `beta`, considere-o já carregado e complemente com este contrato específico.
 
 ## Objetivo
 

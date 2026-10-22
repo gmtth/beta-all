@@ -36,7 +36,7 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 
 - **Objetivo:** consultar/analisar tickets Movidesk sem alterá-los e copiar chamados explicitamente solicitados para a base interna Supabase.
 - **Superfícies:** MCP, GPT Actions, REST interno e OAuth/PKCE coexistem no mesmo projeto Sites. O MCP roda no Worker consolidado (`worker/index.ts`, `worker/mcp.ts`, `worker/mcp-tools.ts`). A versão 81 declara `securitySchemes` por ferramenta e implementa metadados/desafio OAuth e refresh; o ciclo de reconexão durante chamada ainda não foi testado em conversa real do ChatGPT. O antigo `source-bundle` foi removido da árvore; deployment externo não identificado.
-- **Endpoint MCP:** `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` — a barra final é obrigatória.
+- **Endpoint MCP:** `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` é a URL canônica recomendada; o Worker também aceita `/mcp` sem a barra final.
 - **Raiz local canônica:** `D:\Google Drive\Documents\ChatGPT\Beta\beta-all\mcp\movidesk`.
 - **GitHub:** a branch `codex/oauth-reconnection-step-1` foi mesclada à `main` pela PR #2 em 2026-10-21; commit squash `aaf93342c211d74d24a54f9be43722d1374a8952`. Arquivos locais não rastreados `node_modules/` e `infra/supabase/.temp/` foram preservados fora do escopo.
 - **PR #3 — validade de access token:** mesclada por squash em `main` no commit `4afbec5c800788e8f96eb5ef538273962ddcb29b`. Smoke autenticado master em produção confirmou o GET de `432000000 ms` (5 dias), o PUT de gravação com sucesso e o mesmo valor no GET após recarga; não alterou a configuração vigente. GitHub não reportou checks configurados para o head. A execução local de `npm test` nesta sessão não iniciou porque `vinext` não está instalado; o PR preserva evidência de testes anteriores aprovados.
@@ -96,12 +96,15 @@ As etapas 1 a 5 foram mescladas pela PR #2 e publicadas no Sites v81. Em 2026-10
 | Alta | Validar reconexão nativa no ChatGPT, incluindo access token expirado, refresh bem-sucedido, refresh revogado/reutilizado, nova autorização e repetição da operação. | Implementação mesclada pela PR #2 e publicada no Sites v81; tabela D1 presente e metadados/desafio HTTP smoke-testados em 2026-10-21. Falta executar o ciclo pelo cliente MCP real sem copiar credenciais. |
 | Alta | Testar logout e reautenticação com uma conta descartável; manter a correção permanente do helper Windows como melhoria operacional. | Sites v84 publicado pelo commit `2c6860511760c6a5b988bf3c5205536033fc65dd`, deployment `appgdep_6ad8db1b112c8191b7f74972c426f50f`. `POST` sem identidade retorna 401 `unauthorized`, confirmando a rota; não houve revogação. |
 | Média | Implementar a etapa 6: observabilidade segura de falhas OAuth e prevenção de loops de renovação/reconexão. | Adicionar testes para falha de refresh e limite de tentativas; não registrar tokens, códigos ou erros brutos. |
-| Média | Corrigir a compatibilidade do helper Sites no Windows. | Nas publicações v85, v87, v88, v91, v92 e v93, o wrapper mostrou falha de resolução npm e/ou `tar.exe`; build e publicação foram concluídos usando `npm.cmd` e `package-site.mjs` direto. Corrigir e exercitar o wrapper do monorepo sem editar o plugin instalado. |
+| Média | Integrar e exercitar a correção do workflow Sites no Windows. | Implementação local em `codex/fix-sites-publish-windows`: usar `cmd.exe /c npm.cmd run build`, manter o `archivePath` Windows nativo, limpar apenas variáveis de lifecycle npm herdadas e priorizar `System32` para o `tar.exe`. Ainda falta revisão/merge e um publish real pelo fluxo corrigido. |
 | Alta | Completar a revisão formal do aviso de privacidade. | Identificar controlador e canal de contato, confirmar base/finalidade legal, região e transferências aplicáveis, processo para pedidos de titulares e a política de retenção/exclusão da base. Coordenar retenção Supabase com `infra/supabase/DOSSIER.md`; não afirmar conformidade legal sem revisão adequada. |
 | Média | Avaliar avisos de dependências do build do Sites. | O `npm ci` na cópia isolada de publicação reportou 35 vulnerabilidades (1 crítica, 24 altas, 9 moderadas e 1 baixa). Revisar `npm audit` para separar dependências de produção e desenvolvimento antes de decidir atualizações; nenhuma dependência foi alterada nesta publicação. |
 | Média | Tornar `tsc --noEmit` e o lint completo verificações confiáveis e verdes. | A execução local de 2026-10-21 falhou por tipos de Cloudflare Worker ausentes e erros de tipagem em outros arquivos; o lint completo também apontou dívida preexistente. Gerar/configurar os tipos Worker corretos, corrigir os erros remanescentes e validar novamente. Não bloqueia o build e testes OAuth atuais. |
 | Baixa | Substituir o adaptador de `tools/list` que usa `_requestHandlers` internos, quando a versão do SDK oferecer uma API pública equivalente. | Atualizar o SDK somente após confirmar compatibilidade; manter o teste de `securitySchemes` no manifesto serializado. |
 | Alta | Validar integração e concluir o piloto de feedback/autodiagnóstico. | Implementação integrada pela PR #21 e publicada no Sites v106. Build e 10 testes passaram; smokes sem sessão confirmaram proteções e rotas públicas. Migrations aplicadas e jobs ativos, ainda sem execução registrada. Falta teste autenticado de MCP/painel, inspeção visual, execução do Cron e piloto. Captura permanece desligada até revisão dos textos públicos e designação do contato organizacional. Ver plano canônico e `infra/supabase/README.md`. |
+| Alta | **Permissões de escopo por conta no painel master.** | Implementação base integrada pela PR #26 e publicada no Sites v109. Na branch local `codex/fix-sites-publish-windows`, a autorização OAuth passa a conceder os scopes habilitados no painel por e-mail e ferramentas continuam revalidando o scope específico. Após integrar/publicar, confirmar o fluxo com conta de teste e bloqueio imediato no MCP. |
+| Média | Validar configuração da GPT Action no editor e executar uma chamada de leitura no Preview. | A página `/action` agora orienta Authorization Code, envio de credenciais por POST no corpo, Client Secret e callback gerado pelo GPT; validar o fluxo autenticado após publicar, sem reutilizar configuração MCP. |
+| Baixa | **Validar visualmente as seções recolhíveis com sessão master.** | PR #32 integrada ao `main` em `8558e26`; a versão Sites 111 foi publicada a partir do commit de fonte `27dd0b1b2a8f0838e713b0edf003b1700ee7ae88` e deployment `appgdep_6ada1455f0ac81918f5a72ce4ba04a96` concluiu com `succeeded`. Falta conferir no navegador os quatro cartões e as ações após expansão. |
 
 Itens de ingestão e busca da base compartilhada permanecem no dossier Supabase; esta lista cobre o runtime MCP/OAuth.
 
@@ -574,6 +577,162 @@ Se uma falha aparecer em uma fase anterior, abrir hotfix isolado na fase respons
 8. Em recorrências, `min_occurrences` é aplicado antes da paginação; candidatos não enriquecidos não geram grupos; truncamento é explicitado em `meta`.
 9. Tendência é derivada diretamente de `deltaPercentage`: positivo `rising`, negativo `falling`, zero `stable`; menos de dois meses `insufficient_data`.
 10. O fallback semântico é reduzido e padronizado; alterações de política devem ocorrer no catálogo, não como listas espalhadas no código.
+
+## Racional histórico das decisões técnicas
+
+Registro histórico de razões e consequências que ajudaram a formar as regras atuais. Use-o para recuperar contexto; as regras normativas vigentes são as do `AGENTS.md` do componente e da raiz. Datas, estados e evidências de execução devem ser consultados na linha do tempo deste dossier.
+
+### Arquitetura, superfícies e publicação
+
+1. **MCP, GPT Actions, OAuth e Site são superfícies independentes.**
+   - **Motivo:** código semelhante não implica manifesto, schema, transporte, autenticação ou ciclo de publicação iguais.
+   - **Conseqüência:** testar uma Action não prova que a ferramenta MCP está publicada; testar OAuth não prova que o manifesto MCP mudou.
+
+2. **O mesmo Site pode hospedar OAuth, páginas e MCP, mas as rotas são contratos separados.**
+   - **Motivo:** o Site é um empacotamento/deployment comum, enquanto consumidores acessam caminhos diferentes.
+   - **Conseqüência:** validar raiz, configuração/OAuth e `/mcp/` separadamente; nunca usar uma página `Not Found` da raiz como diagnóstico do endpoint MCP.
+
+3. **O endpoint publicado do MCP é `/mcp/`; a rota aceita também `/mcp`.**
+   - **Motivo:** `/mcp/` é a forma canônica recomendada, e o Worker normaliza barras finais antes de tratar a requisição.
+   - **Conseqüência:** não trocar por `/`, `/api` ou pelo domínio OAuth ao atualizar README, Site ou instruções; não afirmar que a barra final é obrigatória.
+
+4. **OAuth usa PKCE e não deve ser alterado por uma correção de ferramenta.**
+   - **Motivo:** autorização e lógica de consulta têm riscos, credenciais e ciclos de vida diferentes.
+   - **Conseqüência:** mudanças funcionais não podem alterar audiência, scopes, callbacks, domínio ou bindings sem pedido específico e teste próprio.
+
+5. **Manifesto publicado é a prova de exposição de uma ferramenta.**
+   - **Motivo:** existir uma função no repositório não garante que ela foi registrada, empacotada ou reconectada pelo cliente.
+   - **Conseqüência:** para declarar uma nova ferramenta disponível, verificar o manifesto/conexão real, o schema de entrada e uma chamada de smoke test.
+
+6. **Commit, push, PR, merge, release e deploy são estados distintos.**
+   - **Motivo:** cada etapa pode falhar ou apontar para um SHA diferente.
+   - **Conseqüência:** o relatório deve declarar cada estado separadamente; “publicado” só pode ser usado com evidência do deployment e da versão.
+
+7. **Releases são pontos de rollback, não prova automática de correção.**
+   - **Motivo:** uma versão recuperável ajuda a reduzir risco, mas não substitui testes nem validação do endpoint.
+   - **Conseqüência:** registrar tag/versão, SHA e caminho de restauração quando houver publicação.
+
+### Governança de código e fases
+
+8. **Branch, worktree e PR seguem a diretriz transversal atual.**
+   - **Motivo:** cada conversa precisa manter mudanças isoladas e rastreáveis.
+   - **Conseqüência:** use worktree/branch exclusiva e ciclo de PR do AGENT raiz; nunca faça commit direto em `main`.
+
+9. **Preservar histórico e distinguir estados remotos.**
+   - **Motivo:** commit, push, PR, merge e deploy são etapas distintas.
+   - **Conseqüência:** nunca reescrever histórico nem contornar proteções; siga os gatilhos e verificações do AGENT raiz.
+
+10. **“Não alterar o que funciona” é uma restrição técnica, não apenas uma preferência.**
+    - **Motivo:** o projeto foi validado incrementalmente por ferramentas e tickets reais; mudanças amplas reabrem defeitos já encerrados.
+    - **Conseqüência:** limitar arquivos, funções e contratos; registrar explicitamente o que ficou intocado.
+
+11. **Correções devem ser acompanhadas de testes de regressão públicos.**
+    - **Motivo:** testes internos que não passam pelo mesmo contrato do consumidor podem esconder erro de schema ou publicação.
+    - **Conseqüência:** testar entradas reais, envelopes, campos, paginação e falhas, não só funções auxiliares.
+
+12. **Documentação e histórico não são runtime.**
+    - **Motivo:** `AGENTS.md` orienta o futuro, enquanto `DOSSIER.md` explica o passado; nenhum dos dois deve virar banco de dados de tickets ou secrets.
+    - **Conseqüência:** regras permanentes entram aqui; fatos, commits, PRs, versões e lacunas entram no dossiê.
+
+### Catálogo semântico
+
+13. **O YAML é a fonte legível/política; o JSON é snapshot de runtime.**
+    - **Motivo:** separar autoria humana, validação e consumo determinístico evita duplicidade semântica escondida.
+    - **Conseqüência:** editar a política no YAML, regenerar/validar o JSON conforme o pipeline e não manter listas paralelas no código.
+
+14. **Aliases, sinais, stopwords, boilerplate, classificação de conteúdo e validação estrutural são grupos diferentes.**
+    - **Motivo:** um alias ajuda a reconhecer termos; um sinal explica similaridade; validação estrutural decide se uma resposta é válida. Misturá-los causa falsos positivos e contratos frágeis.
+    - **Conseqüência:** cada ferramenta deve consumir somente os grupos compatíveis com sua finalidade.
+
+15. **Fallback semântico deve ser padrão, pequeno e controlado.**
+    - **Motivo:** fallback amplo despeja sujeira no código e faz qualquer texto administrativo parecer evidência.
+    - **Conseqüência:** manter no catálogo um fallback equivalente a 10% do conjunto fornecido, documentar o critério de seleção e preservar a cobertura essencial.
+
+16. **Nenhuma informação semântica pode ser descartada silenciosamente durante a consolidação.**
+    - **Motivo:** a redução do fallback não autoriza perder aliases, sinais ou regras que pertencem a grupos ativos.
+    - **Conseqüência:** validar contagens, grupos, referências e diferenças entre YAML/JSON; registrar itens removidos apenas quando forem fallback deliberadamente reduzido.
+
+### Timeline, conteúdo e análise de tickets
+
+17. **`type=1` representa nota/ação interna e nunca é resposta pública da equipe.**
+    - **Motivo:** uma nota interna pode ser posterior à resposta pública, mas não foi enviada ao cliente.
+    - **Conseqüência:** mantê-la na timeline, porém excluí-la de `lastTeamResponse`; usar tipo, origem, perfil e autor em conjunto.
+
+18. **`firstClientManifestation` e `lastTeamResponse` são atribuições semânticas.**
+    - **Motivo:** `origin` isolado e posição na lista não distinguem cliente, equipe, nota interna e automação.
+    - **Conseqüência:** ordenar por `createdDate`, preservar `sourceIndex` e cruzar metadados antes de escolher a primeira/última manifestação.
+
+19. **Autor deve ser extraído de `createdBy` como identificador textual estável.**
+    - **Motivo:** converter objeto diretamente produz `[object Object]` e destrói a rastreabilidade.
+    - **Conseqüência:** preferir e-mail/identificador/nome textual explícito e nunca serializar objeto bruto em campos de saída.
+
+20. **Busca de conteúdo pesquisa assunto, descrição inicial e ações/interações.**
+    - **Motivo:** ocorrências reais frequentemente aparecem depois da abertura do ticket.
+    - **Conseqüência:** `matchedIn` precisa apontar para a origem verdadeira; conteúdo de ações não pode ser rotulado como `initialDescription`.
+
+21. **`$select` da busca de conteúdo é detalhe interno por padrão.**
+    - **Motivo:** o backend/OData exige campos selecionados, mas o modelo não deve conhecer uma exigência técnica escondida no schema.
+    - **Conseqüência:** definir seleção mínima no backend e expor `select` apenas se houver necessidade comprovada e contrato documentado.
+
+22. **Resumo, evidência, hipótese e classificação não podem ser confundidos.**
+    - **Motivo:** fato extraído do ticket tem grau de certeza diferente de inferência analítica.
+    - **Conseqüência:** não transformar uma hipótese em evidência; manter `historyIncomplete`, confiança e a categoria oficial quando aplicável.
+
+23. **Confiança alta exige evidências independentes e de qualidade.**
+    - **Motivo:** contar palavras, metadados ou boilerplate pode elevar confiança sem aumentar a certeza factual.
+    - **Conseqüência:** status, ano, ID, atendente, equipe, assinatura e disclaimer não sustentam sozinhos `high`.
+
+### Similaridade e recorrência
+
+24. **Busca por `ticket_id` usa o conteúdo carregado do ticket, não o protocolo em query textual.**
+    - **Motivo:** colocar descrição/interações na URL causou HTTP 414; usar o protocolo como texto produziu zero similares.
+    - **Conseqüência:** resolver o ID, extrair assunto/descrição com segurança, excluir o ticket de origem e processar o texto internamente.
+
+25. **Similaridade prioriza o problema e explica seus sinais.**
+    - **Motivo:** termos institucionais e textos padrão geram falsos positivos e scores inflados.
+    - **Conseqüência:** filtrar `[object Object]`, `object`, IDs, anos, nomes, contatos, assinaturas, disclaimers e boilerplate; priorizar assunto/descrição e retornar `signalDetails` quando disponível.
+
+26. **Ações são classificadas antes de receber peso.**
+    - **Motivo:** toda interação não é técnica; saudações, acompanhamento, assinatura e disclaimer não comprovam o mesmo incidente.
+    - **Conseqüência:** separar `actions.technical`, `actions.operational` e `actions.noise`; peso alto somente para conteúdo técnico real.
+
+27. **Falhas transitórias do upstream não devem ser confundidas com defeito determinístico.**
+    - **Motivo:** 502/timeout podem desaparecer em repetição, enquanto 414, schema inválido e 404 têm diagnósticos diferentes.
+    - **Conseqüência:** preservar retry quando existente, retornar erro estruturado e registrar tentativa, resposta e classificação da falha.
+
+28. **Recorrência limita candidatos e declara amostragem.**
+    - **Motivo:** enriquecer centenas de tickets sequencialmente causa timeout e não permite afirmar cobertura total.
+    - **Conseqüência:** manter `candidateCount`, `enrichedCount`, `enrichmentFailures`, `maxCandidates` e `truncated`; `truncated=true` significa análise parcial.
+
+29. **Falha parcial de enriquecimento não inventa recorrência.**
+    - **Motivo:** agrupar um ticket sem assunto/categoria confiável fabrica evidência.
+    - **Conseqüência:** contar a falha, retornar grupos válidos dos enriquecidos e não incluir o candidato incompleto.
+
+30. **`min_occurrences` é aplicado antes de `top`/`skip`.**
+    - **Motivo:** paginação deve operar sobre grupos que realmente satisfazem o critério, não sobre candidatos brutos.
+    - **Conseqüência:** preservar `total`, `returned`, `top`, `skip` e documentar se `total` representa a página ou o universo.
+
+31. **Tendência é derivada diretamente de `deltaPercentage`.**
+    - **Motivo:** rótulo contraditório destrói confiança na análise temporal.
+    - **Conseqüência:** positivo = `rising`, negativo = `falling`, zero = `stable`; `insufficient_data` somente sem dados suficientes para comparar meses.
+
+### Segurança, dados e rastreabilidade
+
+32. **Nenhum segredo, PII ou URL assinada vai para código, logs, fixtures ou documentação.**
+    - **Motivo:** histórico de tickets e tokens são dados operacionais sensíveis e podem permanecer em Git/artefatos.
+    - **Conseqüência:** sanitizar transcripts e logs, usar identificadores mínimos e preferir comprimentos/contagens a conteúdo bruto.
+
+33. **Toda afirmação de estado publicado precisa de evidência direta.**
+    - **Motivo:** confundir commit local, origin/main, Site e conexão reconectada foi uma fonte recorrente de diagnósticos incorretos.
+    - **Conseqüência:** informar SHA, PR, versão, URL, manifesto e smoke test; na ausência de qualquer item, dizer `não verificado`.
+
+34. **Horários não disponíveis não devem ser inventados.**
+    - **Motivo:** prompts e testes nem sempre carregam timestamp auditável.
+    - **Conseqüência:** usar ordem conversacional e marcar a hora como indisponível; só registrar data/hora quando fornecida por Git, PR, Site ou log.
+
+35. **O dossiê é retroativo, mas não deve criar causalidade artificial.**
+    - **Motivo:** proximidade temporal entre prompt e commit não prova que um causou o outro.
+    - **Conseqüência:** classificar relações como direta, contextual ou sem evidência explícita e manter lacunas visíveis.
 
 ## Linha do tempo canônica resumida
 
@@ -1840,3 +1999,89 @@ O cartão “Importações recentes” do painel master foi ajustado para exibir
 ## Refinamento visual do painel de feedback (2026-10-22)
 
 Na branch `codex/feedback-page-style`, a rota `/admin/feedback` ganhou cabeçalho compacto, sem kicker/descrição redundantes, e os rótulos decorativos repetidos foram removidos das seções. O rodapé foi retirado a pedido do usuário (incluindo o link para o painel de controle). A visualização de dados, expansão de grupos, leitura de eventos, correção de contexto, revisão, confirmação/remoção de agrupamentos, exclusões com confirmação e carregamento incremental permanecem. O spinner compartilhado agora identifica o carregamento inicial, atualização, busca dos detalhes dos grupos, carregamento de grupos adicionais e ações em andamento; os estados recebem `aria-busy` onde há espera. **Verificação:** `npm test` passou: build Vinext e 10 testes de HTML/renderização. PR #24 foi mesclada em `main` (merge commit `91de48874808cd09fb53a21e82f1ce5bbcd2ac24`). O código-fonte integrado foi sincronizado ao repositório do Sites no commit `349c5e4078baee94aae6423fcbd3919c9c69d7ae`, e a versão 108 foi publicada com sucesso no deployment `appgdep_6ad9c4f27c8c81919903abc6f1616b28`; a URL pública foi preservada. O smoke visual autenticado de `/admin/feedback` confirmou o cabeçalho compacto, os dados e ações preservados, o spinner durante o carregamento inicial e a ausência do rodapé.
+
+## Permissões OAuth de escopo por conta no painel (2026-10-22)
+
+O pedido é permitir que uma conta master ative ou desative individualmente, no painel de controle, cada scope OAuth suportado para cada master/analista. Os scopes `feedback:write`, `knowledge:read` e `offline_access` devem começar ativos para ambos os papéis. `movidesk:read` permanece ativo como permissão base já usada pelo conector. `knowledge:write` não é concedido por padrão a novas contas, pois permite escrever/importar na base compartilhada; na inicialização, concessões legadas só são preservadas quando aparecem em access tokens ainda válidos ou refresh tokens ainda válidos, não consumidos e não revogados.
+
+A implementação local adiciona `oauth_user_scopes` ao schema D1 inicializado pelo runtime e uma rota `PUT /api/admin/users` somente para master. A interface separa scopes habilitados pela administração dos scopes presentes nos tokens ativos e apresenta descrição junto a cada controle. O backend verifica a permissão atual ao autorizar cada ferramenta, ao aceitar/emitir código OAuth e ao girar refresh tokens. Desativar um scope bloqueia seu uso em tokens já emitidos; desligar `offline_access` impede novas renovações, sem remover outros scopes ainda permitidos. Reativar scope ausente do token só o libera para novos consentimentos; o painel informa que a conta precisa reconectar. Reativar scope que ainda consta em token ativo permite seu uso novamente enquanto esse token não expirar/revogar.
+
+**Revisão e correção:** a revisão identificou que tokens expirados e refresh tokens consumidos/revogados não devem reativar `knowledge:write` durante a inicialização. A consulta de access tokens agora filtra `expires_at > now`; a consulta de refresh tokens também exige `expires_at > now`, `consumed_at IS NULL` e `revoked_at IS NULL`. Foram adicionados casos de regressão para tokens expirados, consumidos, revogados e válidos.
+
+**Verificação e publicação:** após a correção, os testes de scopes, clientes, refresh, desafios OAuth e validade passaram (29/29). `npm test` passou com build Vinext e 10 testes de renderização; `git diff --check` passou. A correção foi integrada à `main` pela PR #26, commit squash `d6a88e2f43c4d4fd88b92716a102bb53d39144d8`. A fonte correspondente foi sincronizada ao repositório do Sites no commit `17128764c601a9e001563dbea9b28c6c83a4638d` e publicada como versão 109; deployment `appgdep_6ad9f27fca3881919240886973ad4e44` concluiu com sucesso em `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. O D1 recebe a tabela no `ensureSchema()` do Worker, sem migration Supabase ou mudança nos demais projetos.
+
+**Ajuste visual dos escopos (2026-10-22):** os controles individuais de permissão foram condensados em etiquetas cinza compactas, preservando checkbox, salvamento, indicador de carregamento e descrições no hover/foco. A implementação foi feita na branch de trabalho `codex/compact-user-scopes`.
+
+**Integração e publicação do ajuste visual (2026-10-22):** a PR #29 foi integrada à `main` pelo commit `d6b62bf03bebbe9aeb0e8e1a4e41470ffc8f946e`. O build Vinext e os 10 testes de renderização passaram. Após sincronizar a fonte integrada, o commit do repositório de origem do Sites foi `393722973374b29c87d5543fe7cb957711aaf13f`; a versão 110 foi implantada com status `succeeded` no deployment `appgdep_6ad9f71a5c808191b90bea3f505aafbe`, preservando a audiência pública e a URL `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site`. No Windows, o comando de build embutido no wrapper do workflow falhou por resolução/aspas de `npm`; o build direto com `npm.cmd run build` passou antes do empacotamento e publicação pelo helper oficial.
+
+## Seções recolhíveis do painel de controle (2026-10-22)
+
+Os cartões principais Equipe Beta, Supabase, Uso e erros e Expiração do access token foram convertidos em seções recolhíveis com botões `+`/`−`. Cada seção começa fechada, carrega apenas seu endpoint ao abrir, cancela a consulta em andamento e limpa os dados locais ao fechar. Falhas de carregamento exibem estado de erro e opção para tentar novamente. Os controles preservam rótulos acessíveis e estado `aria-busy`. **Verificação:** build Vinext passou; testes não foram executados; o ESLint direcionado apontou somente `jsx-a11y/no-noninteractive-tabindex` no tooltip focável que já existia no arquivo antes desta mudança. **Integração/publicação:** PR #32 mesclada por squash em `8558e26b26594dd9d08e7a3a067732f04bf8fbce`. O checkout de origem do Sites recebeu a fonte integrada no commit `27dd0b1b2a8f0838e713b0edf003b1700ee7ae88`; versão Sites 111 e deployment `appgdep_6ada1455f0ac81918f5a72ce4ba04a96` concluíram com status `succeeded`, preservando a URL pública existente. O wrapper Windows falhou ao localizar `npm-prefix.js` e `tar.exe`; o build foi executado diretamente e o empacotador oficial `package-site.mjs` concluiu com `C:\Windows\System32` no `PATH`. A inspeção visual autenticada permanece pendente.
+
+## Remoção de informação redundante na lista de contas (2026-10-22)
+
+Na branch `codex/remove-redundant-token-scope-list`, a linha com os scopes presentes no token foi removida de cada conta do painel, pois repetia a área de controles de permissão abaixo. O texto `Sem autorização ativa`, exibido quando não havia scopes no token, também foi removido: o contador/expiração já informa a ausência de token ativo. Permanecem o contador de tokens e a configuração individual de permissões. **Verificação:** build Vinext e `git diff --check` passaram; testes não foram executados. **Integração/publicação:** PR #34 integrada por squash no commit `ec09154d9c5ab25b37f7abb2216525afc8a6f407`; a fonte Sites foi sincronizada no commit `b3914d074793e0d13e8fab00c851debbe167dbd7`; versão 112 e deployment `appgdep_6ada1a55b3448191b8ded7030c05209e` concluíram com `succeeded`, preservando a URL pública.
+
+## Diagnóstico do workflow Sites no Windows (2026-10-22)
+
+Falhas repetidas foram reproduzidas e localizadas em duas camadas do wrapper. Primeiro, o helper instalado do Sites monta `cmd.exe /d /s /c` com cada argumento do `npm run build` entre aspas; nessa forma, o Windows procurou `npm-prefix.js` e `npm-cli.js` dentro do `node_modules` do checkout do Site e encerrou o build. A chamada compatível é `cmd.exe /d /s /c "npm.cmd run build"`, usada pelo wrapper do `npm ci`. Segundo, o wrapper convertia `archivePath` para `/c/...`, mas executa o empacotador com Node nativo; no Windows, esse caminho resolve para um diretório `c` na unidade atual, não para o caminho de arquivo original. O pacote oficial funcionou com o caminho Windows original e `C:\Windows\System32` priorizado no `PATH`, que contém o `tar.exe` nativo.
+
+**Correção local:** branch `codex/fix-sites-publish-windows`; substitui a chamada de build no Windows pela forma compatível, remove a conversão MSYS do caminho do arquivo, prioriza o `tar.exe` nativo e remove do processo filho variáveis de lifecycle npm herdadas do `npm run` externo, preservando configurações gerais do npm. O helper instalado não foi editado. **Verificação local (2026-10-22):** `node --check scripts/run-sites-workflow.mjs` e `git diff --check` passaram; `cmd.exe /d /s /c npm.cmd run build` concluiu o build Vinext no checkout Sites preservado; `package-site.mjs` gerou e validou um arquivo de 744.068 bytes usando caminho Windows absoluto e `C:\Windows\System32\tar.exe`. O arquivo diagnóstico foi criado fora do checkout. **Pendente:** integrar a branch e fazer um publish real pelo wrapper corrigido; não houve push nem publicação desta correção.
+
+## Alinhamento do carregamento de contas (2026-10-22)
+
+O estado "Carregando contas…" agora usa padding horizontal e altura mínima iguais aos itens da lista, alinhando o spinner/texto com o conteúdo das contas; no mobile aplica o mesmo recuo compacto das linhas. **Verificação:** build Vinext e git diff --check passaram. Mudança local, sem publicação.
+
+## Escopos da conta como fonte de autorização OAuth (2026-10-22)
+
+**Comportamento esperado definido pelo usuário:** o acesso começa pelo cadastro do e-mail ativo no painel; scopes marcados para esse e-mail determinam os recursos disponíveis. A página OAuth apenas informa essas permissões e coleta o aceite dos Termos/Aviso; o `scope` recebido do cliente não é um pedido do usuário nem deve exigir correspondência exata com os checkboxes do painel.
+
+**Correção nesta branch:** GET e POST de `/oauth/authorize` calculam o grant a partir de `oauth_user_scopes` para o e-mail autenticado, limitado aos scopes suportados pelo cliente. Scopes habilitados são concedidos mesmo se o cliente pedir uma combinação diferente; scopes desativados são omitidos e não bloqueiam os demais. Quando o grant difere do pedido, o callback declara `scope`; o authorization code e a resposta do token usam o grant efetivo. Contas sem scopes habilitados para o cliente recebem uma mensagem clara. A validação de cada ferramenta, troca do código e refresh continua conferindo o scope específico e a permissão atual, então não há ampliação de acesso além dos controles do painel.
+
+**Verificação local (2026-10-22):** testes focados de OAuth e contrato/renderização passaram (38/38); `npm test` passou com build Vinext e 11/11 testes de renderização; `git diff --check` passou. Os testes confirmam que um scope desativado é omitido dos grants sem bloquear os demais e que rota GET/POST usa as permissões cadastradas. Ainda não é teste end-to-end no ChatGPT. Após merge/publicação, testar `service25` no cliente: autorizar sem `knowledge:write`, confirmar Movidesk e `knowledge:read`, e verificar que importação continua negada. Nenhuma permissão ou token de produção foi alterado nesta implementação local.
+
+**Adendo de smoke aprofundado (2026-10-22):** foram acrescentados cenários para escopos desconhecidos enviados pelo cliente, desativação independente de `offline_access`, mensagens de escopo legíveis no conteúdo MCP e segurança ASCII das descrições em `WWW-Authenticate` para `invalid_token`, `insufficient_scope` e aceite de termos pendente. O conteúdo MCP mantém português acentuado; apenas o valor do cabeçalho HTTP usa texto ASCII equivalente, evitando falhas de codificação em clientes Fetch/Workers.
+
+**Verificação atualizada:** a suíte completa do MCP passou com 136/136 testes (`tsx --test tests/*.test.ts tests/*.test.mjs`); `npm test` passou (build Vinext e 11/11 testes de renderização); `npm run validate:semantic-catalog` passou (13 categorias). O ESLint direcionado passou nos cinco arquivos de autorização e testes afetados. Smokes HTTP locais em `localhost:3106` confirmaram metadados OAuth (200), rejeição de pedido OAuth inválido (400), pedido sem PKCE (400), scope não suportado (400), pedido válido redirecionado ao gate de login (302) e `/mcp/` sem token (401) com `WWW-Authenticate` ASCII e `resource_metadata`. O servidor local foi encerrado sem warning de caractere não ASCII no cabeçalho. `npm run lint` global ainda falha com 42 erros/6 avisos distribuídos pelo componente, principalmente regras de navegação, effects React e `no-explicit-any`; esses problemas estão fora dos arquivos desta correção e não foram alterados. Não houve teste autenticado no ChatGPT, push, merge nem publicação; comportamento live permanece não verificado.
+
+## Revisão e compactação da página GPT Action (2026-10-22)
+
+A rota `/action` foi reorganizada para seguir o padrão compacto das páginas administrativas: título H1 contextual, blocos com menor espaçamento, schema fechado por padrão com opção de visualizar, valores copiáveis que podem ser selecionados integralmente e feedback acessível quando a cópia falha. O retorno à home usa navegação interna Next. A tela informa de forma dinâmica se `OAUTH_GPT_ACTION_CLIENT_SECRET` está configurado, sem enviar nem renderizar seu valor; quando ausente, orienta a configurar o segredo nos segredos do Sites e repetir o mesmo valor no editor.
+
+A revisão do fluxo confirmou: OpenAPI 3.1 parseável, servidor e rotas do Site corretos, operações GET somente leitura em `/api/tickets` e `/api/ticket-content`, scope `movidesk:read`, authorization/token URLs corretas, Authorization Code sem PKCE para `movidesk-gpt-action`, e endpoint de token que lê credenciais do corpo `application/x-www-form-urlencoded`. A página agora orienta esse método de envio e distingue a configuração da GPT Action do MCP. O callback é gerado pelo editor do GPT e deve ser usado no cadastro OAuth, conforme aceitação do cliente no servidor.
+
+A documentação oficial atual de GPT Actions informa que a configuração OAuth pede Client ID, Client Secret, URLs de autorização/token, scope e método de troca do token; também orienta validar a Action no Preview ([OpenAI Help Center](https://help.openai.com/en/articles/9442513-configuring-actions-in-gpts)). O runtime conserva a compatibilidade existente: exige o secret configurado quando presente; esta revisão não alterou credenciais, OAuth, schema publicado ou Site. **Validação local:** `npm test` passou com build Vinext e 13 testes de renderização/contrato, incluindo parse real do YAML e alinhamento entre editor, scope, endpoints e comportamento sem PKCE. A validação autenticada no editor do GPT e uma chamada no Preview ainda não foram possíveis nesta alteração local; nenhuma publicação foi feita.
+
+## Revisão da página de configuração MCP (2026-10-22)
+
+A rota `/mcp` está ativa e renderiza as instruções após a autenticação; o endpoint de ferramentas é atendido separadamente por `POST /mcp`. A revisão encontrou orientações desatualizadas: a página dizia que a barra final era obrigatória embora o Worker normalize `/mcp` e `/mcp/`; a lista omitia `knowledge_search`; e os scopes visíveis não incluíam `feedback:write` e `offline_access`, embora o bloco de referência já listasse feedback. Corrigido o conteúdo, com `knowledge:write` identificado como opcional segundo as permissões da conta.
+
+A página foi compactada no padrão da GPT Action, com a lista extensa de ferramentas e os parâmetros técnicos recolhidos por padrão. A lista foi comparada aos registros do servidor (15 ferramentas). A cópia agora apresenta estado de sucesso/erro acessível, e o bloco técnico informa que serve apenas como referência, não como arquivo importável no ChatGPT. As operações MCP mantêm Authorization Code com PKCE S256; o metadata servido em `/.well-known/oauth-authorization-server` anuncia refresh e `offline_access`.
+
+A referência de configuração do ChatGPT foi conferida no [OpenAI Help Center](https://help.openai.com/en/articles/12584461-connecting-custom-mcp-servers-in-chatgpt), que orienta adicionar o servidor MCP remoto, configurar OAuth e aguardar a descoberta das ferramentas. **Validação local:** ESLint direcionado passou; `npm test` passou (build e 13/13 testes de renderização/contrato); suíte completa passou com 138/138 testes. A conexão no editor do ChatGPT e a publicação do Site permanecem sem validação nesta alteração local.
+
+## Navegador de banco: índice de expressão (2026-10-22)
+
+A falha `invalid_response` exibida no catálogo foi rastreada ao formato legítimo de metadados do índice `source_record_movidesk_protocol_idx`, criado pela migration `20261022120000_add_movidesk_protocol_search.sql`. A consulta da RPC agrega colunas de índices via join em `pg_attribute`; índices cujas chaves são expressões não têm coluna associada, então `jsonb_agg` produz `null`. O parser aceitava apenas arrays e por isso descartava a resposta inteira. O parser agora trata esse `null` específico como lista vazia, que a interface já apresenta como “Expressão/colunas especiais”.
+
+Na mesma revisão, removidos os dois painéis internos de acesso e o link “Painel de controle →” no cabeçalho de `/admin/database`; o texto explicativo e o retorno ao acesso permanecem. **Estado:** correção e teste de regressão locais; publicação e confirmação live ainda não realizadas.
+
+## Navegação de retorno do painel de feedback (2026-10-22)
+
+O link “Voltar ao acesso” em `/admin/feedback` usa agora uma navegação HTML completa (`<a href="/">`) em vez da navegação client-side do Next. Isso força a passagem pelo roteamento do Sites para a página inicial protegida por autenticação do ChatGPT; o link apenas com client navigation era suspeito de não reaplicar o contexto de identidade fornecido pela plataforma. Teste de contrato verifica que o link permanece apontando para `/` e usa navegação completa. Alteração local; comportamento hospedado depende de publicação e validação no browser.
+
+## Padrão do controle de expansão do feedback (2026-10-22)
+
+Os grupos de eventos agora mostram o estado recolhido/expandido no mesmo botão quadrado “+ / −” usado nos cartões do painel de controle. O botão externo da linha continua acionando a expansão e mantém `aria-expanded`/`aria-controls`; detalhes e carregamento sob demanda permanecem intactos. Contrato de renderização cobre os sinais e atributos. Alteração local, sem publicação.
+
+O cabeçalho isolado “Feedback da Beta” foi removido da tela; a navegação de retorno e os títulos das seções seguem presentes. O teste de renderização confirma sua ausência.
+
+Revisão visual adicional: as seções agora usam os rótulos curtos em caixa alta do painel administrativo; os quatro resumos deixaram de ser cartões aninhados; grupos e eventos seguem listas com divisórias discretas, mantendo as ações e os detalhes expansíveis. Sem alterações nos contratos das APIs ou nos fluxos de moderação. Testes de renderização/build locais; publicação não realizada.
+
+O link “Voltar ao acesso” em `/terms` também foi trocado de navegação client-side para `<a href="/">`, para recarregar a página inicial pelo Sites com o contexto de autenticação. Teste de renderização cobre esse retorno; produção permanece sem confirmação até publicar.
+
+**Diretriz visual para nomes de ferramentas:** painéis administrativos exibem primeiro o título amigável da ferramenta e, ao lado, o identificador MCP completo em cinza discreto. A lista de erros recentes, uso e latência segue esse padrão, com mapeamento para todas as ferramentas registradas. A regra normativa está em `mcp/movidesk/AGENTS.md`.
+
+O gráfico “Uso por ferramenta” foi reorganizado em duas linhas por ferramenta: nome amigável/técnico e contagem com `calls` acima; abaixo, sucesso e latência alinhados à esquerda, barra central e total de erros à direita. Em telas estreitas os erros permanecem visíveis e a grade comprime os espaços de forma responsiva.
+
+O gráfico “Ferramentas com maior latência” segue a mesma hierarquia: nome amigável/técnico e quantidade de medições acima; P95/P50 alinhados à esquerda e faixa comparativa à direita. A grade mantém a faixa legível em telas estreitas. Verificação da atualização: teste de renderização e build Vinext; alteração local, sem publicação.

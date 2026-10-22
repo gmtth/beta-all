@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { ACCESS_TOKEN_TTL_SECONDS, REFRESH_TOKEN_TTL_SECONDS, BETA_TERMS_VERSION, clientSecretFor, FEEDBACK_WRITE_SCOPE, GPT_ACTION_CLIENT_ID, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, MCP_CLIENT_ID, oauthClient, permissionLabelForScopes, OAUTH_SCOPE, OFFLINE_ACCESS_SCOPE, SUPPORTED_OAUTH_SCOPES, SUPPORTED_RESOURCE_SCOPES, validRedirectForClient, validateAuthorizationRequest, oauthTokenFailure, type OAuthTokenFailure } from "./clients";
 import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS } from "./token-lifetime";
 import { validToolDuration, validToolHttpStatus } from "../tool-telemetry-math";
+import { areUserScopesEnabled } from "./user-scopes";
 
 const encoder = new TextEncoder();
 export const db = () => env.DB as D1Database;
@@ -51,6 +52,7 @@ export async function ensureSchema() {
     db().prepare("CREATE TABLE IF NOT EXISTS oauth_settings (setting_key TEXT PRIMARY KEY NOT NULL, setting_value INTEGER NOT NULL CHECK (setting_value BETWEEN 60000 AND 2592000000))"),
     db().prepare("INSERT OR IGNORE INTO oauth_settings (setting_key, setting_value) VALUES ('access_token_lifetime_ms', ?)").bind(DEFAULT_ACCESS_TOKEN_LIFETIME_MS),
     db().prepare("CREATE TABLE IF NOT EXISTS oauth_users (email TEXT PRIMARY KEY, role TEXT NOT NULL, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)"),
+    db().prepare("CREATE TABLE IF NOT EXISTS oauth_user_scopes (user_email TEXT NOT NULL, scope TEXT NOT NULL, enabled INTEGER NOT NULL CHECK (enabled IN (0, 1)), updated_at INTEGER NOT NULL, PRIMARY KEY (user_email, scope))"),
   ];
   await db().batch(statements);
   for (const statement of [
@@ -85,6 +87,7 @@ export async function authorizeOAuthPrincipal(accessToken: string, requiredScope
   const role = await getUserRole(email);
   if (!role) return { authorized: false, error: "invalid_token" };
   if (error) return { authorized: false, error };
+  if (!await areUserScopesEnabled(db(), email, requiredScopes)) return { authorized: false, error: "insufficient_scope" };
   if (!await hasCurrentTermsAcceptance(row.user_id, email)) return { authorized: false, error: "terms_not_accepted" };
   return { authorized: true, principal: { email, role, userId: row.user_id.trim() } };
 }

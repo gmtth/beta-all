@@ -15,14 +15,13 @@ function usage() {
     [
       "Executa o workflow oficial do Sites em um workspace temporário isolado.",
       "Valida projeto, dependências e destino do pacote antes do build/commit/push.",
-      "No Windows, localiza o Git Bash e adapta archivePath para o empacotador.",
+      "No Windows, usa npm.cmd sem o quoting incompatível do helper e prioriza o tar nativo.",
       "",
       "Uso:",
       "  npm run sites:workflow -- --helper <caminho-absoluto-site-workflow.mjs> --project-id <id>",
       "",
       "Envie um único objeto JSON pelo stdin. Credenciais nunca devem ir em argumentos, arquivos ou logs.",
       "Workspaces com checkout são preservados; workspaces vazios são removidos.",
-      "No Windows, SITES_BASH_BIN pode apontar para bash.exe se o Git Bash não estiver no caminho padrão.",
       "",
     ].join("\n"),
   );
@@ -85,47 +84,8 @@ function readInput() {
   });
 }
 
-function gitBashPath() {
-  if (process.platform !== "win32") return undefined;
-  const configured = process.env.SITES_BASH_BIN;
-  const candidates = [
-    ...(configured ? [configured] : []),
-    path.join(process.env.ProgramFiles || "C:\\Program Files", "Git", "bin", "bash.exe"),
-    path.join(process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)", "Git", "bin", "bash.exe"),
-    path.join(process.env.LOCALAPPDATA || "", "Programs", "Git", "bin", "bash.exe"),
-    ...((process.env.PATH || "").split(path.delimiter).map((entry) => path.join(entry, "bash.exe"))),
-  ];
-
-  for (const candidate of candidates) {
-    if (candidate && path.isAbsolute(candidate) && statFile(candidate)) return realpathSync(candidate);
-  }
-  throw new Error("Git Bash não foi encontrado. Instale Git for Windows ou defina SITES_BASH_BIN com o caminho de bash.exe.");
-}
-
 function statFile(filePath) {
   try { return statSync(filePath).isFile(); } catch { return false; }
-}
-
-function windowsToMsysPath(filePath) {
-  if (typeof filePath !== "string" || !path.win32.isAbsolute(filePath)) {
-    throw new Error("No Windows, archivePath precisa ser um caminho absoluto com letra de unidade.");
-  }
-  const match = /^([A-Za-z]):[\\/](.*)$/.exec(filePath);
-  if (!match) throw new Error("No Windows, archivePath precisa apontar para uma unidade local.");
-  return `/${match[1].toLowerCase()}/${match[2].replaceAll("\\", "/")}`;
-}
-
-function updateArchivePath(inputText) {
-  if (process.platform !== "win32") return { inputText, archiveMsysPath: undefined, archiveWindowsPath: undefined };
-  let request;
-  try { request = JSON.parse(inputText); } catch { return { inputText, archiveMsysPath: undefined, archiveWindowsPath: undefined }; }
-  if (!request || typeof request !== "object" || typeof request.archivePath !== "string") {
-    return { inputText, archiveMsysPath: undefined, archiveWindowsPath: undefined };
-  }
-  const archiveWindowsPath = request.archivePath;
-  const archiveMsysPath = windowsToMsysPath(archiveWindowsPath);
-  request.archivePath = archiveMsysPath;
-  return { inputText: JSON.stringify(request), archiveMsysPath, archiveWindowsPath };
 }
 
 function isWithin(parent, candidate) {
@@ -159,6 +119,11 @@ function parseWorkflowInput(inputText, projectId, helperPath) {
       if (request.commands !== undefined && !validCommands(request.commands)) {
         throw new Error("commands precisa conter comandos no formato de listas de argumentos.");
       }
+      if (process.platform === "win32") {
+        const systemRoot = process.env.SystemRoot || process.env.WINDIR || "C:\\Windows";
+        const nativeTar = path.join(systemRoot, "System32", "tar.exe");
+        if (!statFile(nativeTar)) throw new Error(`Windows package publishing requires the native tar.exe at ${nativeTar}.`);
+      }
       if (typeof request.archivePath !== "string" || !path.isAbsolute(request.archivePath)) throw new Error("archivePath precisa ser um caminho absoluto.");
       const archivePath = path.resolve(request.archivePath);
       const archiveParent = path.dirname(archivePath);
@@ -187,8 +152,15 @@ function parseWorkflowInput(inputText, projectId, helperPath) {
 
 function ensureBuildCommand(commands, buildHelperPath) {
   if (!statFile(buildHelperPath)) throw new Error("O helper build-site.mjs não foi encontrado junto ao workflow oficial.");
-  const alreadyBuilds = commands.some((args) => args.some((arg) => typeof arg === "string" && /(?:^|[\\/])build-site\.mjs$/i.test(arg)));
-  if (!alreadyBuilds) commands.push([process.execPath, buildHelperPath]);
+  const buildIndex = commands.findIndex((args) => args.some((arg) => typeof arg === "string" && /(?:^|[\\/])build-site\.mjs$/i.test(arg)));
+  // The installed Sites helper quotes each package-manager token for cmd.exe;
+  // that form resolves npm-prefix.js relative to the project and fails on Windows.
+  // cmd.exe /c with one fixed npm.cmd command string is also how npm ci runs above.
+  if (process.platform === "win32") {
+    const command = [process.env.ComSpec || "cmd.exe", "/d", "/s", "/c", "npm.cmd run build"];
+    if (buildIndex >= 0) commands[buildIndex] = command;
+    else commands.push(command);
+  } else if (buildIndex < 0) commands.push([process.execPath, buildHelperPath]);
 }
 
 function validCommands(commands) {
@@ -246,19 +218,7 @@ function runNpmCi(cwd) {
 function lstatSafe(filePath) { try { return lstatSync(filePath); } catch { return undefined; } }
 function readJsonSafe(filePath) { try { return JSON.parse(readFileSync(filePath, "utf8")); } catch { return undefined; } }
 
-function printHelperOutput(line, archiveMsysPath, archiveWindowsPath, ending = "\n") {
-  let output = line;
-  if (archiveMsysPath && archiveWindowsPath) {
-    try {
-      const result = JSON.parse(line);
-      if (result?.archive === archiveMsysPath) {
-        result.archive = archiveWindowsPath;
-        output = JSON.stringify(result);
-      }
-    } catch {}
-  }
-  process.stdout.write(output + ending);
-}
+function printHelperOutput(line, ending = "\n") { process.stdout.write(line + ending); }
 
 async function main() {
   const args = process.argv.slice(2);
@@ -275,13 +235,9 @@ async function main() {
   process.stderr.write(`Workspace isolado do Sites: ${workspace}\n`);
 
   let input;
-  let adapted;
-  let bashPath;
   try {
     input = await readInput();
     const validatedInput = parseWorkflowInput(input, selected.projectId, selected.helperPath);
-    adapted = updateArchivePath(validatedInput.inputText);
-    if (adapted.archiveMsysPath) bashPath = gitBashPath();
     if (validatedInput.checkoutPath) await prepareSiteDependencies(validatedInput.checkoutPath);
   } catch (error) {
     process.stderr.write(`${error.message}\n`);
@@ -291,10 +247,27 @@ async function main() {
   }
 
   const environment = { ...process.env };
-  if (bashPath) {
-    const bashDirectory = path.dirname(bashPath);
+  if (process.platform === "win32") {
+    const systemRoot = environment.SystemRoot || environment.WINDIR || "C:\\Windows";
+    const system32 = path.join(systemRoot, "System32");
+    const nativeTar = path.join(system32, "tar.exe");
+    if (!statFile(nativeTar)) {
+      process.stderr.write(`Windows package publishing requires the native tar.exe at ${nativeTar}.\n`);
+      rmSync(workspace, { recursive: true, force: true });
+      process.exitCode = 1;
+      return;
+    }
     const nodeDirectory = path.dirname(process.execPath);
-    environment.PATH = `${bashDirectory}${path.delimiter}${nodeDirectory}${path.delimiter}${environment.PATH || ""}`;
+    environment.PATH = `${system32}${path.delimiter}${nodeDirectory}${path.delimiter}${environment.PATH || ""}`;
+    // Do not let the outer `npm run sites:workflow` lifecycle redirect nested npm
+    // commands to the monorepo's prefix or package metadata.
+    for (const key of Object.keys(environment)) {
+      const normalized = key.toLowerCase();
+      if (normalized.startsWith("npm_lifecycle_") || normalized.startsWith("npm_package_") ||
+          ["npm_execpath", "npm_node_execpath", "npm_command", "npm_config_local_prefix", "npm_config_user_agent", "init_cwd"].includes(normalized)) {
+        delete environment[key];
+      }
+    }
   }
 
   const child = spawn(process.execPath, [selected.helperPath, "--project-id", selected.projectId], {
@@ -311,7 +284,7 @@ async function main() {
     let newline;
     while ((newline = pending.indexOf("\n")) !== -1) {
       const line = pending.slice(0, newline).replace(/\r$/, "");
-      printHelperOutput(line, adapted.archiveMsysPath, adapted.archiveWindowsPath);
+      printHelperOutput(line);
       pending = pending.slice(newline + 1);
     }
   });
@@ -321,7 +294,7 @@ async function main() {
   });
   child.once("close", (code, signal) => {
     pending += decoder.end();
-    if (pending) printHelperOutput(pending, adapted.archiveMsysPath, adapted.archiveWindowsPath, "");
+    if (pending) printHelperOutput(pending, "");
 
     const remaining = readdirSync(workspace);
     if (remaining.length === 0) {
@@ -333,7 +306,7 @@ async function main() {
     else process.exitCode = code ?? 1;
   });
 
-  child.stdin.end(`${adapted.inputText}\n`);
+  child.stdin.end(`${input}\n`);
 }
 
 main().catch((error) => {

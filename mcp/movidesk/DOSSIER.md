@@ -578,6 +578,162 @@ Se uma falha aparecer em uma fase anterior, abrir hotfix isolado na fase respons
 9. Tendência é derivada diretamente de `deltaPercentage`: positivo `rising`, negativo `falling`, zero `stable`; menos de dois meses `insufficient_data`.
 10. O fallback semântico é reduzido e padronizado; alterações de política devem ocorrer no catálogo, não como listas espalhadas no código.
 
+## Racional histórico das decisões técnicas
+
+Registro histórico de razões e consequências que ajudaram a formar as regras atuais. Use-o para recuperar contexto; as regras normativas vigentes são as do `AGENTS.md` do componente e da raiz. Datas, estados e evidências de execução devem ser consultados na linha do tempo deste dossier.
+
+### Arquitetura, superfícies e publicação
+
+1. **MCP, GPT Actions, OAuth e Site são superfícies independentes.**
+   - **Motivo:** código semelhante não implica manifesto, schema, transporte, autenticação ou ciclo de publicação iguais.
+   - **Conseqüência:** testar uma Action não prova que a ferramenta MCP está publicada; testar OAuth não prova que o manifesto MCP mudou.
+
+2. **O mesmo Site pode hospedar OAuth, páginas e MCP, mas as rotas são contratos separados.**
+   - **Motivo:** o Site é um empacotamento/deployment comum, enquanto consumidores acessam caminhos diferentes.
+   - **Conseqüência:** validar raiz, configuração/OAuth e `/mcp/` separadamente; nunca usar uma página `Not Found` da raiz como diagnóstico do endpoint MCP.
+
+3. **O endpoint publicado do MCP é `/mcp/`; a rota aceita também `/mcp`.**
+   - **Motivo:** `/mcp/` é a forma canônica recomendada, e o Worker normaliza barras finais antes de tratar a requisição.
+   - **Conseqüência:** não trocar por `/`, `/api` ou pelo domínio OAuth ao atualizar README, Site ou instruções; não afirmar que a barra final é obrigatória.
+
+4. **OAuth usa PKCE e não deve ser alterado por uma correção de ferramenta.**
+   - **Motivo:** autorização e lógica de consulta têm riscos, credenciais e ciclos de vida diferentes.
+   - **Conseqüência:** mudanças funcionais não podem alterar audiência, scopes, callbacks, domínio ou bindings sem pedido específico e teste próprio.
+
+5. **Manifesto publicado é a prova de exposição de uma ferramenta.**
+   - **Motivo:** existir uma função no repositório não garante que ela foi registrada, empacotada ou reconectada pelo cliente.
+   - **Conseqüência:** para declarar uma nova ferramenta disponível, verificar o manifesto/conexão real, o schema de entrada e uma chamada de smoke test.
+
+6. **Commit, push, PR, merge, release e deploy são estados distintos.**
+   - **Motivo:** cada etapa pode falhar ou apontar para um SHA diferente.
+   - **Conseqüência:** o relatório deve declarar cada estado separadamente; “publicado” só pode ser usado com evidência do deployment e da versão.
+
+7. **Releases são pontos de rollback, não prova automática de correção.**
+   - **Motivo:** uma versão recuperável ajuda a reduzir risco, mas não substitui testes nem validação do endpoint.
+   - **Conseqüência:** registrar tag/versão, SHA e caminho de restauração quando houver publicação.
+
+### Governança de código e fases
+
+8. **Branch, worktree e PR seguem a diretriz transversal atual.**
+   - **Motivo:** cada conversa precisa manter mudanças isoladas e rastreáveis.
+   - **Conseqüência:** use worktree/branch exclusiva e ciclo de PR do AGENT raiz; nunca faça commit direto em `main`.
+
+9. **Preservar histórico e distinguir estados remotos.**
+   - **Motivo:** commit, push, PR, merge e deploy são etapas distintas.
+   - **Conseqüência:** nunca reescrever histórico nem contornar proteções; siga os gatilhos e verificações do AGENT raiz.
+
+10. **“Não alterar o que funciona” é uma restrição técnica, não apenas uma preferência.**
+    - **Motivo:** o projeto foi validado incrementalmente por ferramentas e tickets reais; mudanças amplas reabrem defeitos já encerrados.
+    - **Conseqüência:** limitar arquivos, funções e contratos; registrar explicitamente o que ficou intocado.
+
+11. **Correções devem ser acompanhadas de testes de regressão públicos.**
+    - **Motivo:** testes internos que não passam pelo mesmo contrato do consumidor podem esconder erro de schema ou publicação.
+    - **Conseqüência:** testar entradas reais, envelopes, campos, paginação e falhas, não só funções auxiliares.
+
+12. **Documentação e histórico não são runtime.**
+    - **Motivo:** `AGENTS.md` orienta o futuro, enquanto `DOSSIER.md` explica o passado; nenhum dos dois deve virar banco de dados de tickets ou secrets.
+    - **Conseqüência:** regras permanentes entram aqui; fatos, commits, PRs, versões e lacunas entram no dossiê.
+
+### Catálogo semântico
+
+13. **O YAML é a fonte legível/política; o JSON é snapshot de runtime.**
+    - **Motivo:** separar autoria humana, validação e consumo determinístico evita duplicidade semântica escondida.
+    - **Conseqüência:** editar a política no YAML, regenerar/validar o JSON conforme o pipeline e não manter listas paralelas no código.
+
+14. **Aliases, sinais, stopwords, boilerplate, classificação de conteúdo e validação estrutural são grupos diferentes.**
+    - **Motivo:** um alias ajuda a reconhecer termos; um sinal explica similaridade; validação estrutural decide se uma resposta é válida. Misturá-los causa falsos positivos e contratos frágeis.
+    - **Conseqüência:** cada ferramenta deve consumir somente os grupos compatíveis com sua finalidade.
+
+15. **Fallback semântico deve ser padrão, pequeno e controlado.**
+    - **Motivo:** fallback amplo despeja sujeira no código e faz qualquer texto administrativo parecer evidência.
+    - **Conseqüência:** manter no catálogo um fallback equivalente a 10% do conjunto fornecido, documentar o critério de seleção e preservar a cobertura essencial.
+
+16. **Nenhuma informação semântica pode ser descartada silenciosamente durante a consolidação.**
+    - **Motivo:** a redução do fallback não autoriza perder aliases, sinais ou regras que pertencem a grupos ativos.
+    - **Conseqüência:** validar contagens, grupos, referências e diferenças entre YAML/JSON; registrar itens removidos apenas quando forem fallback deliberadamente reduzido.
+
+### Timeline, conteúdo e análise de tickets
+
+17. **`type=1` representa nota/ação interna e nunca é resposta pública da equipe.**
+    - **Motivo:** uma nota interna pode ser posterior à resposta pública, mas não foi enviada ao cliente.
+    - **Conseqüência:** mantê-la na timeline, porém excluí-la de `lastTeamResponse`; usar tipo, origem, perfil e autor em conjunto.
+
+18. **`firstClientManifestation` e `lastTeamResponse` são atribuições semânticas.**
+    - **Motivo:** `origin` isolado e posição na lista não distinguem cliente, equipe, nota interna e automação.
+    - **Conseqüência:** ordenar por `createdDate`, preservar `sourceIndex` e cruzar metadados antes de escolher a primeira/última manifestação.
+
+19. **Autor deve ser extraído de `createdBy` como identificador textual estável.**
+    - **Motivo:** converter objeto diretamente produz `[object Object]` e destrói a rastreabilidade.
+    - **Conseqüência:** preferir e-mail/identificador/nome textual explícito e nunca serializar objeto bruto em campos de saída.
+
+20. **Busca de conteúdo pesquisa assunto, descrição inicial e ações/interações.**
+    - **Motivo:** ocorrências reais frequentemente aparecem depois da abertura do ticket.
+    - **Conseqüência:** `matchedIn` precisa apontar para a origem verdadeira; conteúdo de ações não pode ser rotulado como `initialDescription`.
+
+21. **`$select` da busca de conteúdo é detalhe interno por padrão.**
+    - **Motivo:** o backend/OData exige campos selecionados, mas o modelo não deve conhecer uma exigência técnica escondida no schema.
+    - **Conseqüência:** definir seleção mínima no backend e expor `select` apenas se houver necessidade comprovada e contrato documentado.
+
+22. **Resumo, evidência, hipótese e classificação não podem ser confundidos.**
+    - **Motivo:** fato extraído do ticket tem grau de certeza diferente de inferência analítica.
+    - **Conseqüência:** não transformar uma hipótese em evidência; manter `historyIncomplete`, confiança e a categoria oficial quando aplicável.
+
+23. **Confiança alta exige evidências independentes e de qualidade.**
+    - **Motivo:** contar palavras, metadados ou boilerplate pode elevar confiança sem aumentar a certeza factual.
+    - **Conseqüência:** status, ano, ID, atendente, equipe, assinatura e disclaimer não sustentam sozinhos `high`.
+
+### Similaridade e recorrência
+
+24. **Busca por `ticket_id` usa o conteúdo carregado do ticket, não o protocolo em query textual.**
+    - **Motivo:** colocar descrição/interações na URL causou HTTP 414; usar o protocolo como texto produziu zero similares.
+    - **Conseqüência:** resolver o ID, extrair assunto/descrição com segurança, excluir o ticket de origem e processar o texto internamente.
+
+25. **Similaridade prioriza o problema e explica seus sinais.**
+    - **Motivo:** termos institucionais e textos padrão geram falsos positivos e scores inflados.
+    - **Conseqüência:** filtrar `[object Object]`, `object`, IDs, anos, nomes, contatos, assinaturas, disclaimers e boilerplate; priorizar assunto/descrição e retornar `signalDetails` quando disponível.
+
+26. **Ações são classificadas antes de receber peso.**
+    - **Motivo:** toda interação não é técnica; saudações, acompanhamento, assinatura e disclaimer não comprovam o mesmo incidente.
+    - **Conseqüência:** separar `actions.technical`, `actions.operational` e `actions.noise`; peso alto somente para conteúdo técnico real.
+
+27. **Falhas transitórias do upstream não devem ser confundidas com defeito determinístico.**
+    - **Motivo:** 502/timeout podem desaparecer em repetição, enquanto 414, schema inválido e 404 têm diagnósticos diferentes.
+    - **Conseqüência:** preservar retry quando existente, retornar erro estruturado e registrar tentativa, resposta e classificação da falha.
+
+28. **Recorrência limita candidatos e declara amostragem.**
+    - **Motivo:** enriquecer centenas de tickets sequencialmente causa timeout e não permite afirmar cobertura total.
+    - **Conseqüência:** manter `candidateCount`, `enrichedCount`, `enrichmentFailures`, `maxCandidates` e `truncated`; `truncated=true` significa análise parcial.
+
+29. **Falha parcial de enriquecimento não inventa recorrência.**
+    - **Motivo:** agrupar um ticket sem assunto/categoria confiável fabrica evidência.
+    - **Conseqüência:** contar a falha, retornar grupos válidos dos enriquecidos e não incluir o candidato incompleto.
+
+30. **`min_occurrences` é aplicado antes de `top`/`skip`.**
+    - **Motivo:** paginação deve operar sobre grupos que realmente satisfazem o critério, não sobre candidatos brutos.
+    - **Conseqüência:** preservar `total`, `returned`, `top`, `skip` e documentar se `total` representa a página ou o universo.
+
+31. **Tendência é derivada diretamente de `deltaPercentage`.**
+    - **Motivo:** rótulo contraditório destrói confiança na análise temporal.
+    - **Conseqüência:** positivo = `rising`, negativo = `falling`, zero = `stable`; `insufficient_data` somente sem dados suficientes para comparar meses.
+
+### Segurança, dados e rastreabilidade
+
+32. **Nenhum segredo, PII ou URL assinada vai para código, logs, fixtures ou documentação.**
+    - **Motivo:** histórico de tickets e tokens são dados operacionais sensíveis e podem permanecer em Git/artefatos.
+    - **Conseqüência:** sanitizar transcripts e logs, usar identificadores mínimos e preferir comprimentos/contagens a conteúdo bruto.
+
+33. **Toda afirmação de estado publicado precisa de evidência direta.**
+    - **Motivo:** confundir commit local, origin/main, Site e conexão reconectada foi uma fonte recorrente de diagnósticos incorretos.
+    - **Conseqüência:** informar SHA, PR, versão, URL, manifesto e smoke test; na ausência de qualquer item, dizer `não verificado`.
+
+34. **Horários não disponíveis não devem ser inventados.**
+    - **Motivo:** prompts e testes nem sempre carregam timestamp auditável.
+    - **Conseqüência:** usar ordem conversacional e marcar a hora como indisponível; só registrar data/hora quando fornecida por Git, PR, Site ou log.
+
+35. **O dossiê é retroativo, mas não deve criar causalidade artificial.**
+    - **Motivo:** proximidade temporal entre prompt e commit não prova que um causou o outro.
+    - **Conseqüência:** classificar relações como direta, contextual ou sem evidência explícita e manter lacunas visíveis.
+
 ## Linha do tempo canônica resumida
 
 Esta é a linha do tempo que uma LLM deve usar primeiro; o histórico retroativo e o ledger de commits fornecem os detalhes.

@@ -112,19 +112,9 @@ Também confira:
 
 Arquivos `references/origem-*.md` são fontes de rastreabilidade e não devem ser reescritos durante ajustes de estilo ou roteamento. Regras específicas devem permanecer na skill correspondente. O protocolo compartilhado não substitui conteúdo especializado.
 
-## Estrutura obrigatória dos dossiers
+## Estrutura e atualização do dossier
 
-Todo dossier ativo deste componente deve seguir esta ordem fixa de seções, usando estes títulos:
-
-1. `## Resumo e escopo` — finalidade, limites do componente, caminho canônico e limites de reconstrução quando aplicável.
-2. `## Estado atual` — fatos observáveis com data de referência, versão/integrações, estado de validação e limites conhecidos. Não apresentar estados históricos como atuais.
-3. `## Decisões vigentes` — decisões aprovadas e regras de referência; distinguir claramente o que está confirmado do que foi substituído.
-4. `## Mapa dos componentes` — diretórios, arquivos e relações necessários para localizar e entender a implementação.
-5. `## Histórico de mudanças` — marcos em ordem cronológica, com data, estado, evidência e impacto; preservar proveniência sem reescrever o passado.
-6. `## Próximos passos` — backlog ativo, com tarefa, prioridade, evidência/contexto e condição para conclusão; remover itens comprovadamente resolvidos.
-7. `## Fontes de verdade` — links para instruções e fontes canônicas, com ordem de precedência e tratamento de snapshots/legado.
-
-No início do documento, informar a data de atualização e o componente. Use tabelas para mudanças ou estados que precisem ser comparados. Mantenha cada fato na fonte canônica e resuma com links nos demais dossiers; não replique conteúdo operacional completo. Se uma seção não tiver conteúdo, mantenha o título e escreva “Nenhuma pendência conhecida” ou “Sem histórico adicional identificado”, em vez de omiti-la. Orientações sobre como editar dossiers ficam no `AGENTS.md`, não como uma seção extra que altere a ordem fixa.
+Siga o padrão comum de dossier no [`AGENTS.md` raiz](../../AGENTS.md#padrão-comum-dos-dossiers). Para o plugin, deixe claro o estado do manifesto, das skills, do roteamento, do pacote e da publicação; inclua tabelas quando comparar versões ou conjuntos de skills. Preserve links existentes e use subseções próprias quando ajudarem a localizar contratos específicos. Mantenha cada fato em sua fonte canônica e resuma com links nos demais dossiers.
 
 Ao identificar trabalho futuro ou receber pedido para guardar um item, adicione-o a `## Próximos passos` no dossier canônico. Lembre ocasionalmente os itens em aberto quando a tarefa se relacionar a eles. Ao verificar que um item foi concluído, retire-o dessa seção e registre a evidência em `## Histórico de mudanças` ou `## Estado atual`. Backlog não significa autorização para executar.
 

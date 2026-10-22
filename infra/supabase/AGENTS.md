@@ -48,3 +48,7 @@ O navegador pode mostrar chaves estrangeiras e relações como metadados de sche
 - `/admin/database` prioriza estrutura, chaves/índices/RLS e prévias paginadas das tabelas aprovadas. Pode indicar estado transitório da consulta e intervalo de linhas da página atual, mas não deve criar cartões de KPI, gráficos ou indicadores agregados concorrentes.
 - Para facilitar diagnósticos, a página deve resumir os controles de acesso por camada: gate de sessão/papel/scopes no Site/MCP e grants/RLS no Supabase. Não misturar nem listar tabelas D1 nesta página, não duplicar a lista de usuários/tokens do painel de controle e não exibir credenciais, tokens ou expressões SQL de políticas. Explicar que o Worker usa `service_role` (que ignora RLS), então a validação master server-side é obrigatória.
 - Manter `## Próximos passos` em [`DOSSIER.md`](./DOSSIER.md) atualizado; backlog não autoriza aplicar migration remota, publicar, commitar ou alterar permissões.
+
+## Estrutura e atualização do dossier
+
+Siga o padrão comum definido no [`AGENTS.md` raiz](../../AGENTS.md#padrão-comum-dos-dossiers). Neste componente, mantenha explícitos o ambiente sem credenciais, migrations e seus estados, segurança/acesso, evidência local versus remota, prontidão por etapa e próximos passos. Atualize o estado atual somente com confirmação datada; preserve execuções anteriores como histórico.

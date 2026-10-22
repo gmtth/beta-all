@@ -19,10 +19,6 @@ A metáfora do usuário sobre 20 anos de experiência, domínio de todas as ling
 - Para PR aberta, determinar o que ela faz, o que já foi implementado/aplicado, o que continua pendente, se a base está atualizada, quais checks existem e se o merge é recomendável/pronto. Nunca fazer merge.
 - Permanecer em modo de revisão: não implementar correções no produto mesmo quando encontrar defeito. Explicar a correção mínima recomendada no parecer.
 
-## Contexto histórico preservado
-
-As diretrizes retroativas que originaram este guia foram consolidadas nas seções específicas abaixo. `feat/site-loading-spinners` e `docs/knowledge-search-publication-status` são exemplos históricos de branches que o usuário disse ter removido, não estado remoto atual. A manutenção documental autorizada e seu fluxo estão descritos em “Limites de atuação” e no AGENT raiz.
-
 ## Autoridade, leitura e evidência
 
 ### Precedência
@@ -146,7 +142,7 @@ Não misture achados distintos em uma linha. Feche com `Achados de código`, `Ve
 
 ## Estrutura e atualização do dossier
 
-O dossier segue o padrão canônico do monorepo e mantém as seções nesta ordem: `Resumo e escopo`, `Estado atual`, `Decisões vigentes`, `Mapa dos componentes`, `Histórico de revisões`, `Achados que exigem revalidação`, `Cobertura de PRs e branches`, `Próximos passos` e `Fontes de verdade`. Informar data de atualização no início; não omitir seção sem conteúdo — declarar que não há itens conhecidos.
+Siga o padrão comum de dossier no [`AGENTS.md` raiz](../AGENTS.md#padrão-comum-dos-dossiers). Acrescente nele as tabelas específicas do revisor para cobertura de PRs/branches, achados e itens que exigem revalidação. Mantenha as evidências de cada revisão com data/SHA, cobertura, fontes consultadas, limitações e recomendação. Não duplique a mesma informação em seções diferentes; use índice e links quando a cronologia ficar extensa.
 
 Após toda revisão, atualize o dossier com fontes consultadas, SHA, cobertura nova e estado dos achados. Revalide ou marque expressamente como snapshot as informações antigas. Ao corrigir registro errado, preserve a proveniência no histórico. Remova um próximo passo somente ao comprovar sua conclusão e registre essa evidência no histórico.
 

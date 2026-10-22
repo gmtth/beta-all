@@ -1,6 +1,6 @@
 # Contexto do projeto Beta
 
-Este arquivo preserva decisões e fatos do projeto para orientar futuras alterações neste workspace. Para a arquitetura detalhada, consulte [`arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md).
+Este arquivo contém regras atuais e o contexto mínimo para orientar o trabalho neste workspace. Estado, evidências e decisões históricas ficam nos dossiers canônicos. Para a arquitetura detalhada, consulte [`arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md).
 
 ## Roteamento de contexto e manutenção documental
 
@@ -40,7 +40,11 @@ Este `AGENTS.md` é a entrada e o roteador do monorepositório: estabelece regra
 - Próximos passos são backlog, não autorização para executá-los. Respeite o pedido e os limites de publicação, Git, acesso e dados definidos para cada tarefa.
 - `legacy/` e `docs/migration/source-documents/` são snapshots históricos. Não atualize seus dossiers como se fossem estado atual; quando uma instrução preservada precisar apontar para esta rotina, faça apenas um adendo datado e deixe claro qual dossier canônico está ativo.
 
-O plano original de consolidação foi preservado em [`docs/migration/monorepo-consolidation-plan.md`](docs/migration/monorepo-consolidation-plan.md) como registro histórico. O inventário e a reconciliação de migração informam o estado atual; etapas históricas não devem ser repetidas como instruções ativas.
+### Padrão comum dos dossiers
+
+Todo dossier ativo deve deixar localizáveis, nesta ordem lógica: **resumo e escopo; estado atual com data de referência e limites da evidência; decisões vigentes; componentes/dependências e fontes de verdade; histórico de mudanças verificável; próximos passos; fontes consultadas**. Registros históricos trazem data e fonte; incluem SHA, PR, versão, deployment ou comandos quando aplicáveis, sem inferir causalidade nem inventar dados ausentes. Componentes podem acrescentar seções técnicas e índices próprios, sem duplicar a mesma fonte de verdade. Títulos podem variar para preservar links existentes, desde que cada informação seja fácil de localizar.
+
+Ao criar ou reorganizar um dossier, aplique esse padrão. Não reestruture todo um dossier longo apenas para renomear títulos: adicione índice/mapeamento quando isso resolver a localização. Separe claramente estado atual de registros históricos; entradas históricas guardam data, fonte, estado e limitações, nunca se apresentam como situação vigente. Regras de construção e atualização ficam nos `AGENTS.md`; decisões, fatos, evidências e pendências ficam nos dossiers.
 
 ## Objetivo
 
@@ -67,45 +71,20 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 - Não armazenar chain-of-thought. O histórico de conversas deve ser separado do conhecimento validado e pode guardar identidade autenticada do analista, assunto, perguntas de esclarecimento, evidências recuperadas, resumo funcional, recomendação, resultado/feedback, lacunas, latência e falhas. Conteúdo de conversa não vira conhecimento confirmado sem validação humana.
 - Diretriz de evolução contínua: projetar ferramentas, skills, conexões, bancos e plugins para aprender com o uso por meio de feedback ativo e sinais operacionais úteis. Identificar frustrações e lacunas de conhecimento, capacidade, desempenho, conexão e experiência; propor soluções concretas que melhorem o trabalho dos usuários e registrar ideias ainda não implementadas em `## Próximos passos`.
 - Registrar somente feedback explícito ou sinais/autodiagnósticos que a Beta realmente recebeu ou observou. Não presumir acesso ao histórico integral do ChatGPT; guardar apenas dados estruturados, evidência mínima e resumo funcional sanitizado. Não persistir chain-of-thought nem transformar feedback automaticamente em conhecimento confirmado ou mudança de produto.
-- Separação de persistência: telemetria operacional de ferramentas MCP (contagens, latência, sucesso e categorias técnicas seguras) permanece no D1 do Sites. Por decisão explícita de 2026-10-22, eventos de erro autenticados também podem registrar o e-mail da conta para diagnóstico no painel master, por até 90 dias; sucessos e falhas sem identidade validada não guardam identidade. Eventos contextuais de frustração, feedback e lacunas para autodiagnóstico pertencem ao Supabase, com autorização, retenção e acesso mínimos. Essa exceção não muda o destino dos logs operacionais nem permite armazenar transcrições completas no Supabase.
+- Separação de persistência: telemetria operacional de ferramentas MCP (contagens, latência, sucesso e categorias técnicas seguras) permanece no D1 do Sites. Eventos de erro podem guardar o e-mail somente quando a identidade foi validada, para diagnóstico master e por até 90 dias; sucessos e falhas sem identidade validada não guardam identidade. Eventos contextuais de frustração, feedback e lacunas para autodiagnóstico pertencem ao Supabase, com autorização, retenção e acesso mínimos. Não armazenar transcrições completas no Supabase.
 - Minimizar dados pessoais e nunca registrar tokens ou segredos em arquivos, prompts ou logs.
 
 ## Identidade, autorização e escopos
 
-- O projeto OAuth existente é `gmtth/movidesk-mcp-oauth`. A análise fornecida do código indicou que cada conta ChatGPT autoriza individualmente e o token do conector fica associado ao ID e e-mail daquela pessoa. Consultas ao Movidesk usam uma credencial de serviço compartilhada `MOVIDESK_TOKEN`; o Movidesk não recebe um token OAuth individual do analista.
-- O backend deve validar token OAuth, expiração, escopo e estado/papel ativo do usuário em cada ferramenta. Não confiar em identidade ou papel enviados como texto ou parâmetro pelo modelo.
-- Preservar `movidesk:read` para as ferramentas Movidesk e usar `knowledge:read` para consultas à base. Reservar `knowledge:write` para futura escrita, com papéis autorizados e validação/aprovação. Conceder escopos mínimos; tokens já emitidos precisam de nova autorização para receber escopos novos.
-- A chave Supabase de servidor não autentica o analista e não substitui checagens OAuth. Nunca a expor ao cliente, ao modelo ou ao Git.
-
-## Supabase: decisões e estado confirmado em 2026-10-19
-
-- Supabase foi escolhido para hospedar PostgreSQL e `pgvector`, começando no plano Free como piloto. Reavaliar limites, pausa por inatividade, backup, disponibilidade e custo antes de produção; manter exportação independente.
-- Projeto Supabase: `https://ywqoanfqcbcdecmkguze.supabase.co`. O endereço não é segredo; chaves e credenciais são.
-- Extensão vetorial habilitada. Schema `beta` e tabelas `source_system`, `source_record` e `record_chunk` criados.
-- Inspeção do catálogo feita em 2026-10-20: RLS está habilitado nas três tabelas, sem políticas; as ACLs então observadas foram posteriormente endurecidas pela migration `20261020130000` (registrada no histórico remoto conforme saída CLI compartilhada pelo usuário). O `service_role` conserva leitura de `source_system`, sem DML direto nas tabelas. Uma próxima migration local prepara RPC estreita de ingestão, ainda não aplicada.
-- `pgvector` está instalado, mas a inspeção não encontrou coluna `vector`, índice vetorial, RPC/função ou trigger; a busca existente é lexical por `tsvector` com índice GIN. Ainda não existe busca semântica/híbrida implementada no banco.
-- As tabelas e RPC do schema `beta` usam a Data API exposta. A exposição não concede, por si só, privilégio SQL; manter privilégios mínimos. `service_role`/chave secreta ignora RLS; portanto, aplicar autorização OAuth e filtros de classificação server-side antes de qualquer leitura ou gravação.
-- Teste inicial no SQL Editor retornou as três fontes; depois, `knowledge_list_sources` via MCP/Sites também retornou Movidesk, ClickUp e Documentos administrativos. Isso confirma leitura do catálogo pelo runtime para essa operação; não confirma busca de conteúdo ou ingestão.
-- Uma chave secreta Supabase foi compartilhada anteriormente na conversa e deve ser considerada comprometida. O usuário confirmou em 2026-10-20 que a substituiu e atualizou `SUPABASE_SECRET_KEY` no Sites. O inventário do Sites confirma o nome da variável na revisão 13, mas mascara seu valor; não copiar, recuperar nem armazenar nenhum valor. O runtime deve usar somente a chave atual guardada como segredo do servidor.
+- O backend deve validar token OAuth, expiração, escopos e estado/papel do usuário em cada ferramenta. Nunca confiar em identidade ou papel enviados como texto ou parâmetro pelo modelo.
+- As ferramentas exigem somente os escopos mínimos definidos em seus contratos. A autorização por conta é configurada no painel administrativo; a tela OAuth informa as permissões cadastradas e não permite ao usuário pedir escopos. Uma permissão ausente não deve bloquear outros escopos concedidos.
+- Credenciais de serviço para Movidesk ou Supabase são separadas da identidade OAuth do analista e permanecem somente no servidor. Nunca expor esses valores ao cliente, ao modelo ou ao Git.
 
 ## Runtime e integração
 
 - A Beta/MCP está hospedada no Sites em `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/`, com rota MCP `/mcp/`. O servidor hospedado em Workers deve acessar Supabase por HTTPS via Data API/PostgREST ou RPC; Workers não devem usar conexão TCP PostgreSQL direta.
 - Não colocar connection string/chave no navegador nem enviar ao modelo. A configuração esperada no servidor usa `SUPABASE_URL` e `SUPABASE_SECRET_KEY`.
 - Expor somente operações estreitas necessárias. Preferir RPCs/views ou consultas server-side com colunas e limites explícitos; limitar resultados e sanitizar erros.
-
-## Implementação Supabase no MCP — estado consolidado
-
-- O código canônico em `mcp/movidesk/` inclui `knowledge:read`/`knowledge_list_sources` e, nesta implementação local, `knowledge:write`/`knowledge_import_movidesk_ticket`. A ingestão exige também `movidesk:read`, lê somente o ticket solicitado e grava uma cópia interna por RPC transacional com trilha de auditoria; a migração nova e o runtime ainda precisam ser aplicados/publicados antes do teste real. Busca de trechos para diagnóstico continua pendente.
-- A implementação foi integrada pela PR #42 ao `main` do repositório de origem antes da consolidação. A branch original foi preservada em `legacy/source-archives/mcp-feature-supabase-scope/`; não é branch ativa para desenvolvimento. Detalhes e evidências estão em [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md).
-- A execução histórica registrada para a PR #42 teve 69 testes relevantes aprovados e build aprovado. Esses resultados não substituem a verificação do estado atual após mudanças posteriores.
-- O inventário do Sites registra a revisão 13 das variáveis; o usuário confirmou a rotação da chave e sua atualização. Valores permanecem mascarados. Após a reautorização, o usuário confirmou que `knowledge_list_sources` retornou Movidesk, ClickUp e Documentos administrativos. Isso valida essa leitura via MCP/Sites/Supabase, não busca de conteúdo.
-- Antes de criar dados reais, revisar e reduzir privilégios amplos e preparar migrações reproduzíveis. A listagem de fontes não valida ingestão, busca semântica/híbrida, classificação ou histórico de conversas.
-- O dossier raiz, `infra/supabase/DOSSIER.md` e `mcp/movidesk/DOSSIER.md` são os índices atuais de prontidão; não usar snapshots temporais abaixo como estado vivo.
-
-## Consolidação do monorepo — registro histórico
-
-A consolidação de `gmtth/beta-all` foi concluída. O inventário e a reconciliação em [`docs/migration/source-inventory.md`](docs/migration/source-inventory.md) e [`docs/migration/document-reconciliation.md`](docs/migration/document-reconciliation.md) são as fontes atuais para esse estado. O plano original e suas fases foram preservados em [`docs/migration/monorepo-consolidation-plan.md`](docs/migration/monorepo-consolidation-plan.md), apenas como histórico; suas aprovações e instruções de execução não são autorização atual.
 
 ## Fluxo geral de desenvolvimento, GitHub e publicação
 
@@ -154,7 +133,7 @@ Além disso, leia este `AGENTS.md`, o dossier raiz e os `AGENTS.md`/dossiers ati
 ### Relato comum de entrega e evidências
 
 - Comece pelo resultado observável e informe os arquivos/superfícies alterados, a mudança de comportamento e os invariantes preservados que importam para o pedido.
-- Separe evidências por etapa: verificações executadas e seus resultados; commit e push; PR e merge; publicação; disponibilidade ao usuário. Use `confirmado`, `parcial`, `não verificado` ou `não aplicável`; não deduza um estado a partir do anterior.
+- Separe evidências por etapa: verificações executadas e seus resultados; commit e push; PR e merge; publicação; disponibilidade ao usuário. Use `confirmado`, `parcial`, `não verificado` ou `não aplicável`; não deduza um estado a partir do anterior. “Disponível ao cliente” exige comprovação da conexão/manifesto consumido e um smoke da operação relevante.
 - Indique limitações, riscos e rollback quando forem relevantes. Não liste arquivos deliberadamente não alterados em toda entrega; faça isso quando a delimitação evitar uma ambiguidade importante.
 - Guias de componente podem acrescentar evidências próprias (por exemplo, contrato MCP, manifesto, migração ou smoke), sem repetir este protocolo geral.
 

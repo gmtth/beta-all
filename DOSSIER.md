@@ -31,8 +31,9 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 ### Organização e coerência das instruções (2026-10-22)
 
 - Regras transversais — isolamento por conversa, escada antes de qualquer alteração, ciclo GitHub/Sites e relato baseado em evidências — ficam centralizadas em [`AGENTS.md`](AGENTS.md). Os guias ativos de componente leem a raiz primeiro e mantêm apenas arquitetura, contratos, comandos, riscos e critérios próprios.
-- O plano concluído de consolidação foi movido integralmente para [`docs/migration/monorepo-consolidation-plan.md`](docs/migration/monorepo-consolidation-plan.md), marcado como histórico. Os antigos exemplos de branches removidas seguem como relato histórico em `revisor/AGENTS.md`, sem representar estado remoto atual.
-- O registro de resposta comum deixa de ser duplicado no MCP; ali permanecem os campos adicionais próprios de contratos, manifesto, rota `/mcp/` e smokes. A regra de nome amigável com identificador técnico em cinza permanece específica das interfaces administrativas MCP.
+- Referências ao plano concluído e exemplos de branches removidas foram retirados dos `AGENTS.md`. O snapshot longo do plano foi removido depois de confirmar que o estado e a proveniência necessários estão no dossier raiz, no inventário e na reconciliação documental. Arquivos em `legacy/` e `docs/migration/source-documents/` permanecem preservados como snapshots de origem.
+- O padrão de construção e atualização de dossiers agora é transversal, definido no AGENT raiz e referenciado por cada AGENT ativo; detalhes MCP sobre contratos, manifesto, rota `/mcp/` e smokes continuam locais. A regra de nome amigável com identificador técnico em cinza permanece específica das interfaces administrativas MCP.
+- A auditoria cobriu os cinco AGENTS.md ativos e os cinco dossiers ativos: todos os agents referenciam o padrão comum e todos os dossiers têm ## Próximos passos. Extensões específicas (revisões/achados no revisor, manifesto/skills no plugin, migrations/RLS no Supabase, contratos e smokes no MCP) permanecem somente nos componentes que as usam.
 
 ### Sincronização de alterações no GitHub e Sites (2026-10-21)
 

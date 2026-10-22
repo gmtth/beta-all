@@ -7,12 +7,15 @@ Para o estado, decisões, evidências e ordem de prontidão, consulte [`DOSSIER.
 ## Estado confirmado pela documentação e pelo código
 
 - Schema `beta` com `source_system`, `source_record` e `record_chunk`.
-- Estado implantado observado: `pgvector` está instalado; RLS ativo nas três tabelas. Não foram encontradas políticas, coluna/índice vetorial, RPC ou trigger. A busca atual no banco é lexical via `tsvector` + GIN.
+- Estado observado: `pgvector` está instalado; RLS ativo nas três tabelas. A busca lexical usa `record_chunk.search_vector` (`tsvector` + GIN) e a RPC `beta.search_knowledge()` aplicada em 2026-10-22. Ainda não há coluna/índice vetorial, modelo de embedding ou geração de vetores.
 - ACLs antes observadas: `service_role`, `anon` e `authenticated` tinham grants de tabela amplos, embora somente `service_role` tivesse `USAGE` no schema. O usuário executou as migrations baseline e hardening e mostrou ambas em Local/Remote; confirmou que `knowledge_list_sources` continuou funcionando.
 - Após o hardening, `service_role` lê `source_system`, sem DML direto em tabelas do schema `beta`. A migration `20261020140000_enable_movidesk_knowledge_ingestion.sql` foi aplicada remotamente conforme confirmação do usuário em 2026-10-20; concede ao `service_role` somente execução da RPC transacional.
 - A Data API expõe o schema `beta` e as tabelas. Isso não substitui a autorização OAuth no MCP.
 - A ferramenta inicial `knowledge_list_sources` exige `knowledge:read`, limita a resposta a dez fontes e consulta `beta.source_system`.
 - O usuário confirmou que a chamada `knowledge_list_sources` via MCP/Sites retornou Movidesk, ClickUp e Documentos administrativos.
+- A migration `20261022100000_add_knowledge_search.sql` criou `beta.search_knowledge()`, RPC somente leitura com limite de 10 resultados e filtro para registros não excluídos classificados como `internal` ou `shareable`. Só `service_role` pode executá-la; o MCP valida OAuth `knowledge:read`.
+- A migration `20261022110000_rank_one_chunk_per_record.sql` limita cada resposta ao melhor trecho de cada registro, para que vários trechos de um chamado não ocultem outros casos. Foi aplicada remotamente em 2026-10-22.
+- A busca usa `tsvector`/GIN e termos prefixados em OR para tolerar consultas em linguagem natural. Ainda não é busca semântica; não há coluna de embedding, modelo escolhido ou geração de vetores.
 
 ## Migrações reproduzíveis
 
@@ -20,9 +23,9 @@ Para o estado, decisões, evidências e ordem de prontidão, consulte [`DOSSIER.
 
 ### Adoção no projeto já existente
 
-O workspace local do Supabase CLI está em `infra/supabase/`; execute a partir da raiz do monorepo com `--workdir infra`. A configuração usa um `project_id` local e não contém credenciais. A saída do CLI fornecida pelo usuário confirmou as versões `20261020120000` e `20261020130000` no histórico remoto.
+O workspace local do Supabase CLI está em `infra/supabase/`; execute a partir da raiz do monorepo com `--workdir infra`. A configuração persistente não contém credenciais. Em 2026-10-22, o CLI confirmou as versões `20261020120000` a `20261022110000` em Local e Remote.
 
-Fluxo para a migration de ingestão, ainda sem aplicar ao remoto:
+Histórico de adoção do banco existente:
 
 1. Instalar/usar o Supabase CLI e autenticar-se localmente; não copiar senha do banco ou token pessoal para o chat, Git ou arquivo de configuração.
 2. Vincular o workspace ao projeto ref `ywqoanfqcbcdecmkguze` e consultar `supabase migration list` para descobrir a história remota atual.
@@ -31,11 +34,11 @@ Fluxo para a migration de ingestão, ainda sem aplicar ao remoto:
 
 Não usar `supabase db reset --linked` no projeto existente: esse comando pode apagar o schema/dados remotos. A referência do Supabase documenta `migration list` e `migration repair` para reconciliar os arquivos locais com a história remota; `repair` muda apenas o registro de migrations ([CLI reference](https://supabase.com/docs/reference/cli/supabase-migration-list), [database migrations guide](https://supabase.com/docs/guides/deployment/database-migrations)).
 
-### Painel administrativo (preparação local)
+### Painel administrativo (migration aplicada)
 
 A migration `20261020150000_admin_knowledge_overview.sql` adiciona uma RPC somente de leitura para o painel master do MCP. Ela retorna contagens por fonte e até dez importações recentes, sem conteúdo dos trechos. A execução fica concedida somente a `service_role`; o backend continua exigindo sessão ChatGPT e papel master. O rollback remove apenas a função.
 
-Esta migration está preparada no repositório, mas ainda não foi aplicada ao Supabase. Até sua aplicação e publicação do runtime correspondente, o painel pode mostrar a conexão online e os indicadores de conhecimento indisponíveis.
+Esta migration foi aplicada remotamente em 2026-10-22. A validação ponta a ponta do painel e da rota correspondente ainda está pendente.
 
 ## Segredos e configuração
 

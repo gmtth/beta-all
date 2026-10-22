@@ -2,7 +2,7 @@
 
 ## Execução dentro do monorepositório
 
-O repositório Git e o diretório de trabalho únicos são a raiz `beta-all/`; este componente está em `plugins/beta/`. Leia primeiro o `AGENTS.md` da raiz e este arquivo. Para comandos abaixo que usam caminhos relativos (`scripts/`, `.codex-plugin/`, `skills/`), execute-os com o diretório atual em `plugins/beta/`. Faça commits no repositório monorepo, respeitando o escopo da pasta.
+O repositório Git é `beta-all/`; cada conversa usa sua worktree/branch exclusiva definida pelo AGENT raiz. Este componente está em `plugins/beta/`. Leia primeiro o [`AGENTS.md`](../../AGENTS.md) e [`DOSSIER.md`](../../DOSSIER.md) da raiz, depois este `AGENTS.md` e [`DOSSIER.md`](./DOSSIER.md). Para comandos abaixo que usam caminhos relativos (`scripts/`, `.codex-plugin/`, `skills/`), execute-os com o diretório atual em `plugins/beta/`.
 
 ## Objetivo
 
@@ -112,19 +112,9 @@ Também confira:
 
 Arquivos `references/origem-*.md` são fontes de rastreabilidade e não devem ser reescritos durante ajustes de estilo ou roteamento. Regras específicas devem permanecer na skill correspondente. O protocolo compartilhado não substitui conteúdo especializado.
 
-## Estrutura obrigatória dos dossiers
+## Estrutura e atualização do dossier
 
-Todo dossier ativo deste componente deve seguir esta ordem fixa de seções, usando estes títulos:
-
-1. `## Resumo e escopo` — finalidade, limites do componente, caminho canônico e limites de reconstrução quando aplicável.
-2. `## Estado atual` — fatos observáveis com data de referência, versão/integrações, estado de validação e limites conhecidos. Não apresentar estados históricos como atuais.
-3. `## Decisões vigentes` — decisões aprovadas e regras de referência; distinguir claramente o que está confirmado do que foi substituído.
-4. `## Mapa dos componentes` — diretórios, arquivos e relações necessários para localizar e entender a implementação.
-5. `## Histórico de mudanças` — marcos em ordem cronológica, com data, estado, evidência e impacto; preservar proveniência sem reescrever o passado.
-6. `## Próximos passos` — backlog ativo, com tarefa, prioridade, evidência/contexto e condição para conclusão; remover itens comprovadamente resolvidos.
-7. `## Fontes de verdade` — links para instruções e fontes canônicas, com ordem de precedência e tratamento de snapshots/legado.
-
-No início do documento, informar a data de atualização e o componente. Use tabelas para mudanças ou estados que precisem ser comparados. Mantenha cada fato na fonte canônica e resuma com links nos demais dossiers; não replique conteúdo operacional completo. Se uma seção não tiver conteúdo, mantenha o título e escreva “Nenhuma pendência conhecida” ou “Sem histórico adicional identificado”, em vez de omiti-la. Orientações sobre como editar dossiers ficam no `AGENTS.md`, não como uma seção extra que altere a ordem fixa.
+Siga o padrão comum de dossier no [`AGENTS.md` raiz](../../AGENTS.md#padrão-comum-dos-dossiers). Para o plugin, deixe claro o estado do manifesto, das skills, do roteamento, do pacote e da publicação; inclua tabelas quando comparar versões ou conjuntos de skills. Preserve links existentes e use subseções próprias quando ajudarem a localizar contratos específicos. Mantenha cada fato em sua fonte canônica e resuma com links nos demais dossiers.
 
 Ao identificar trabalho futuro ou receber pedido para guardar um item, adicione-o a `## Próximos passos` no dossier canônico. Lembre ocasionalmente os itens em aberto quando a tarefa se relacionar a eles. Ao verificar que um item foi concluído, retire-o dessa seção e registre a evidência em `## Histórico de mudanças` ou `## Estado atual`. Backlog não significa autorização para executar.
 
@@ -142,10 +132,7 @@ Antes de publicar:
 4. confirmar que a versão do manifesto corresponde à release;
 5. só então criar e enviar o commit ao GitHub conforme o `AGENTS.md` raiz; criar tag ou release apenas quando o usuário pedir esse passo.
 
-## Regra de commit e sincronização
+## Git e release
 
-- Quando o usuário pedir **commit**, crie o commit e envie-o ao GitHub na branch de trabalho; só mantenha commit local se o usuário pedir explicitamente para não enviar.
-- Inclua apenas alterações rastreadas e diretamente relacionadas ao pedido. Preserve alterações preexistentes não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
-- Pedido de commit não autoriza merge, PR, tag/release nem publicação no Sites. Faça cada uma dessas ações somente quando solicitada.
-- Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
-- Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.
+- Worktree, branch, commit, push, PR, merge e publicação seguem exclusivamente o [`AGENTS.md` raiz](../../AGENTS.md). As regras específicas abaixo tratam apenas do versionamento e empacotamento do plugin.
+- Antes de empacotar, rode as validações locais e confirme a versão do manifesto conforme esta seção. Não crie tag/release sem solicitação explícita.

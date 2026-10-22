@@ -69,6 +69,7 @@ As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pas
 - Operar conectores em somente leitura quando assim definido pela skill ou MCP. A exceção atual é a importação explícita de um chamado para a base interna Supabase, descrita na skill Movidesk; ela nunca altera o chamado de origem.
 - Não simular acesso a Movidesk, ClickUp, Figma ou qualquer outro conector.
 - `beta-anl-clickupchecklist` só pode ser invocada com link explícito de tarefa ou comentário do ClickUp e só pode alterar o comentário de checklist determinado pelo seu contrato.
+- Diretriz do projeto: evoluir skills, ferramentas, conexões e plugins com base em feedback ativo e evidência de uso. Skills devem reconhecer reclamação explícita, acolher correção, apontar a limitação observada e, quando o contrato comum estiver implementado, enviar um evento estruturado de feedback/autodiagnóstico. Inferir frustração com cautela, distinguir suspeita de confirmação, não insistir nem criar loops e nunca registrar transcript integral ou chain-of-thought. Não inventar uma ferramenta de gravação antes de seu contrato e scope MCP existirem; manter lacunas e ideias em `## Próximos passos`.
 - `beta-mod-sites` permanece isolada do backend, API, banco, autenticação e ambientes reais do CENCIHUB.
 - Preservar regras específicas de cada subskill; alterações transversais devem ser feitas no protocolo compartilhado e refletidas nos testes.
 
@@ -133,4 +134,12 @@ Antes de publicar:
 2. revisar `git status` e o diff completo;
 3. confirmar que não há segredos, caches ou arquivos temporários;
 4. confirmar que a versão do manifesto corresponde à release;
-5. só então criar commit, tag e release.
+5. só então criar e enviar o commit ao GitHub conforme o `AGENTS.md` raiz; criar tag ou release apenas quando o usuário pedir esse passo.
+
+## Regra de commit e sincronização
+
+- Quando o usuário pedir **commit**, crie o commit e envie-o ao GitHub na branch de trabalho; só mantenha commit local se o usuário pedir explicitamente para não enviar.
+- Inclua apenas alterações rastreadas e diretamente relacionadas ao pedido. Preserve alterações preexistentes não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
+- Pedido de commit não autoriza merge, PR, tag/release nem publicação no Sites. Faça cada uma dessas ações somente quando solicitada.
+- Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
+- Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.

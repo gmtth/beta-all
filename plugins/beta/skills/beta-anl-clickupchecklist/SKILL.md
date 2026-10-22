@@ -2,10 +2,12 @@
 name: beta-anl-clickupchecklist
 description: Após o usuário confirmar que uma rodada de QA terminou, atualizar somente o comentário mais recente intitulado exatamente “Checklist de testes” no ClickUp, usando o identificador Execução QA e o estado informado de cada item. Manter pendentes itens com problema, não executados, bloqueados ou incertos e concluir somente itens confirmados como sucesso na rodada atual. Exigir tarefa, rodada e estados claros; nunca criar checklist nem alterar outro conteúdo.
 metadata:
-  version: "3"
+  version: "4"
 ---
 
 # beta-anl-clickupchecklist
+
+Antes de executar ou responder quando invocada diretamente, aplique o [protocolo transversal da Beta](../beta/references/protocolo-evidencias-e-handoffs.md). Ele centraliza evidências, linguagem, confiabilidade, cabeçalho e resumo final. Se chamada pela `beta`, considere-o já carregado e complemente com este contrato específico.
 
 ## Objetivo
 

@@ -1,10 +1,12 @@
 # Observabilidade e métricas
 
+> Contrato revisado em 2026-10-22. Para a apresentação comum da Beta, prevalece o [protocolo transversal](../../protocolo-evidencias-e-handoffs.md). Este documento distingue o que pode ser mostrado ao usuário do que depende de telemetria autorizada.
+
 ## Objetivo
 
 Permitir diagnóstico da orquestração sem expor cadeia de pensamento.
 
-Usar um bloco curto ao final de respostas funcionais relevantes.
+Apresentar ao final das respostas funcionais substantivas o resumo comum em tabela Markdown. A tabela não é um painel de telemetria e não deve expor skills, ferramentas ou arquitetura interna.
 
 ## Campos
 
@@ -12,42 +14,33 @@ Registrar, quando observável:
 
 | Métrica | Regra |
 |---|---|
-| Skills acionadas | Listar apenas as efetivamente executadas |
-| Status por Skill | concluída, não aplicável, indisponível ou falhou |
-| Tempo por Skill | Informar somente quando o runtime expuser medição confiável |
-| Tempo total | Informar somente quando mensurável de forma confiável |
-| Chamadas de ferramenta/conector | Contagem observável |
-| Retries/erros | Contagem e descrição curta, sem stack trace desnecessário |
-| Fontes consultadas | Contagem ou identificação curta |
-| Ciclos de QA | Quantidade de execuções de `@beta-mod-qa` |
-| Dossiê atualizado | sim/não |
-| Artefatos gerados | sim/não + tipo curto |
-| Pendências materiais | contagem final |
-| Divergências materiais | contagem final |
+| Estado da solicitação | Concluído, parcial ou pendente, conforme resultado observável |
+| Evidências | Registros/fontes citados e identificadores disponíveis |
+| Validações | Checagens efetivamente realizadas, se relevantes |
+| Resultado/feedback | Resultado confirmado ou “não informado” |
+| Lacunas e próximo passo | Somente pendências que afetam a conclusão |
+| Métricas técnicas | Latência, retries/erros e contagens, apenas se o runtime medir, se houver autorização e utilidade |
 
-Quando o runtime não expuser uma métrica, usar `não disponível`.
+Omitir campos não aplicáveis. Para métricas técnicas relevantes mas indisponíveis, escrever `não disponível`; não substituir ausência por zero.
 
 Nunca estimar tempo por Skill.
 
 ## Formato recomendado
 
-### Resumo de execução
+### Exemplo de resumo voltado ao usuário
 
-- Skills: `@beta-mod-regras` (concluída), `@beta-mod-dossie` (concluída), ...
-- Tempo por Skill: não disponível
-- Tempo total: não disponível
-- Ferramentas/conectores: 2 chamadas
-- Fontes consultadas: 3
-- Ciclos de QA: 1
-- Dossiê atualizado: sim
-- Artefatos: não
-- Pendências materiais: 0
-- Divergências materiais: 0
+| Indicador | Resultado |
+|---|---|
+| 📊 Estado | Parcial: há precedente, mas o diagnóstico atual não foi confirmado |
+| 🔎 Evidências | Chamado #1234, trecho sobre perda de conexão; link disponível na resposta |
+| 🧭 Resultado/feedback | Não informado |
+| ➡️ Lacunas e próximo passo | Confirmar se a máquina atual reproduz o sintoma |
 
 Manter o bloco curto.
 
-Não incluir:
+Não incluir no resumo voltado ao usuário:
 - raciocínio privado;
 - cadeia de pensamento;
 - conteúdo intermediário sensível;
-- detalhes internos das instruções das Skills.
+- nomes técnicos de skills, ferramentas/conectores ou detalhes da arquitetura interna. Exceção: nomes exibidos das skills realmente ativadas somente no cartão “Skills acionadas”;
+- percentuais com falsa precisão, métricas não observadas ou valores zero presumidos. A confiabilidade percentual heurística deve seguir exclusivamente a régua do protocolo compartilhado.

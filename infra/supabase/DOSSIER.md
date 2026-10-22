@@ -58,7 +58,7 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 | Média | Definir sincronização em lote para ClickUp e documentos administrativos. | Especificar atualização incremental, idempotência, remoções, retries, quarentena e auditoria antes de importar em massa. |
 | Média | Fechar política operacional de retenção, backup e recuperação. | Testar exportação e restauração e rever limites/disponibilidade do plano antes de ampliar o piloto. |
 | Média | Aplicar a migration dos indicadores agregados do painel administrativo, se ainda necessária. | Confirmar o estado remoto antes de aplicar; validar RPC e painel end-to-end sem retornar conteúdo de tickets. |
-| Alta | Concluir o navegador administrativo do Supabase. | Etapa 2 (RPCs e rotas protegidas) está implementada e passou testes locais nesta worktree; a migration `20261021160000_admin_database_browser.sql` ainda não foi aplicada remotamente. Construir a interface `/admin/database`, revisar/aplicar a migration pelo fluxo autorizado e validar no Site com conta master. |
+| Alta | Validar o navegador administrativo do Supabase de ponta a ponta. | Etapas 2 e 3 estão implementadas e passaram testes/build local nesta worktree. Revisar e aplicar a migration `20261021160000_admin_database_browser.sql` no Supabase, publicar a versão correspondente somente após merge no GitHub, e validar catálogo/prévias com conta master. O teste visual e o end-to-end real ainda estão pendentes. |
 
 Quando algum item for concluído, remova-o desta lista e registre a evidência em `## Prontidão por etapa` ou no histórico apropriado.
 
@@ -68,7 +68,13 @@ Implementadas duas RPCs estreitas na migration `20261021160000_admin_database_br
 
 O runtime adiciona `/api/admin/database/schema` e `/api/admin/database/preview`. Ambas validam sessão ChatGPT e papel master no servidor antes de acessar Supabase; parâmetros de tabela/cursor/tamanho são allowlisted e respostas são validadas/sanitizadas. Erros retornam diagnósticos categorizados sem payload bruto. O RPC usa `service_role` server-side; a página deve explicar que esse papel ignora RLS, mantendo obrigatório o gate master. A migração é local e **não foi aplicada ao Supabase remoto**; não houve consulta ao banco real nem deploy.
 
-**Verificação local:** seis testes focados (quatro novos e dois existentes) passaram; `npm run build` passou e incluiu as duas rotas; `git diff --check` passou. Isso valida o contrato e o empacotamento, não a execução PostgreSQL/PostgREST. Falta testar as RPCs contra o schema real após revisão/aplicação autorizada da migration e completar a página administrativa.
+**Verificação local:** seis testes focados (quatro novos e dois existentes) passaram; `npm run build` passou e incluiu as duas rotas; `git diff --check` passou. Isso valida o contrato e o empacotamento, não a execução PostgreSQL/PostgREST. A interface foi concluída na etapa 3 abaixo; permanece pendente o teste das RPCs contra o schema real após revisão/aplicação autorizada da migration.
+
+## Navegador administrativo do banco — interface da etapa 3 (2026-10-22)
+
+A nova rota master-only `/admin/database` exibe seletor das quatro tabelas aprovadas, metadados estruturais, constraints/relações, índices, estado RLS e nomes/comandos das políticas, grants de schema/tabela e roles autorizados a executar RPCs. Oferece prévia paginada para `source_system`, `source_record` e `knowledge_ingest_audit`; `record_chunk` permite consultar estrutura, sem carregar linhas. Inclui resumo dos gates de acesso do Site/MCP e do papel Supabase `service_role`, sem replicar usuários/tokens nem criar métricas. Um link “Banco de dados” aparece na home apenas para masters.
+
+**Verificação local:** build reconhece `/admin/database` e ambas as rotas; seis testes focados passaram; `git diff --check` passou. A suíte de renderização também foi executada: 15 passaram e 1 falhou pela asserção preexistente de texto antigo na home (`Conecte o ChatGPT às ferramentas da sua equipe`), incompatível com o conteúdo atual já documentado; esta etapa não alterou essa asserção. Sem acesso SQL local, a migration não foi executada em PostgreSQL e não foi aplicada remotamente. Também não houve smoke test visual/end-to-end nem deploy.
 
 ## Painel administrativo e refinamento da conexão (2026-10-20)
 

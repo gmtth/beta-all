@@ -21,6 +21,36 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .privacy-content p:last-child { margin-bottom: 0; }.privacy-content a { color: #ffb36f; text-underline-offset: 3px; }.privacy-content a:hover { color: #ffd0a2; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 14px 18px; }
 .instructions-card { width: min(1040px, 100%); }
+.database-card { width: min(1040px, 100%); }
+.database-content { margin-top: 34px; }
+.database-hero { padding: 10px 0 20px; }
+.database-hero h1 { margin: 9px 0 10px; font-size: clamp(38px, 5vw, 54px); letter-spacing: -.055em; }
+.database-hero .lead { max-width: 700px; font-size: 14px; }
+.database-title-row,.database-detail-heading,.database-preview-heading,.database-pagination { display:flex; align-items:center; justify-content:space-between; gap:16px; }
+.database-access-grid,.database-structure-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+.database-access-grid .data-card p,.database-detail-heading p,.database-preview-heading p,.database-rpc-list>p { color:#928c96; font-size:12px; line-height:1.6; }
+.database-access-grid .data-card p { margin:9px 0 0; }.database-access-grid code,.database-meta-list code { color:#ffbf84; overflow-wrap:anywhere; }
+.database-layout { display:grid; grid-template-columns:220px minmax(0,1fr); gap:16px; margin-top:18px; align-items:start; }
+.database-table-nav { display:grid; gap:7px; position:sticky; top:18px; }
+.database-table-button { display:grid; gap:5px; padding:12px; text-align:left; border:1px solid var(--line); border-radius:11px; color:var(--ink); background:rgba(255,255,255,.025); cursor:pointer; }
+.database-table-button strong { font-size:12px; overflow-wrap:anywhere; }.database-table-button span { color:#928c96; font-size:10px; }
+.database-table-button:hover,.database-table-button.is-active { border-color:rgba(255,164,78,.55); background:rgba(255,138,36,.09); }.database-table-button:disabled { opacity:.55; cursor:not-allowed; }
+.database-table-detail { min-width:0; padding:17px; border:1px solid var(--line); border-radius:14px; background:rgba(0,0,0,.1); }
+.database-detail-heading { padding-bottom:14px; border-bottom:1px solid var(--line); }.database-detail-heading h3,.database-rpc-list h3 { margin:0; font-size:18px; }.database-detail-heading p { margin:7px 0 0; }.database-detail-heading .role-badge { flex:0 0 auto; }
+.database-subsection { min-width:0; margin-top:18px; }.database-subsection h4 { margin:0 0 9px; color:#f5f2f4; font-size:13px; }
+.database-schema-table-wrap { max-width:100%; overflow:auto; border:1px solid var(--line); border-radius:10px; }
+.database-schema-table { width:100%; border-collapse:collapse; font-size:11px; text-align:left; }
+.database-schema-table th,.database-schema-table td { min-width:88px; padding:9px 11px; border-bottom:1px solid var(--line); white-space:nowrap; }
+.database-schema-table th { color:#928c96; font-size:9px; letter-spacing:.07em; font-weight:700; background:rgba(255,255,255,.035); }
+.database-schema-table td { color:#e8e3e7; }.database-schema-table tr:last-child td { border-bottom:0; }.database-schema-table td code { color:#ffbf84; }
+.database-meta-list { list-style:none; display:grid; gap:0; margin:0; padding:0; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+.database-meta-list li { display:grid; grid-template-columns:minmax(82px,.55fr) minmax(0,1fr); gap:5px 12px; padding:10px; border-bottom:1px solid var(--line); font-size:10px; }.database-meta-list li:last-child { border-bottom:0; }
+.database-meta-list li>strong { color:#ffb36f; text-transform:uppercase; font-size:9px; letter-spacing:.04em; }.database-meta-list li>code { font-size:10px; }.database-meta-list li>span { grid-column:2; color:#928c96; overflow-wrap:anywhere; }
+.database-preview { padding-top:3px; }.database-preview-heading { align-items:flex-start; }.database-preview-heading p { margin:0; }.database-preview-heading>span { flex:0 0 auto; color:#a7a0aa; font-size:10px; }
+.database-preview-table th,.database-preview-table td { max-width:260px; overflow:hidden; text-overflow:ellipsis; }.database-preview-table td { white-space:nowrap; }
+.database-pagination { margin-top:10px; color:#928c96; font-size:10px; }.database-pagination>div { display:flex; gap:8px; }.database-empty { margin:0; padding:15px; }.database-rpc-list { margin-top:20px; padding-top:16px; border-top:1px solid var(--line); }.database-rpc-list>p { margin:7px 0 10px; }.database-alert { display:grid; gap:5px; margin:12px 0; padding:12px; border:1px solid rgba(255,138,36,.3); border-radius:10px; color:#ffba82; background:rgba(255,138,36,.07); font-size:11px; line-height:1.5; }.database-alert button { justify-self:start; }
+@media(max-width:800px) { .database-layout { grid-template-columns:1fr; }.database-table-nav { position:static; grid-template-columns:repeat(2,minmax(0,1fr)); }.database-table-detail { padding:13px; } }
+@media(max-width:600px) { .database-content { margin-top:22px; }.database-title-row { align-items:flex-start; flex-direction:column; }.database-access-grid,.database-structure-grid { grid-template-columns:1fr; }.database-table-nav { grid-template-columns:1fr 1fr; }.database-meta-list li { grid-template-columns:1fr; }.database-meta-list li>span { grid-column:1; }.database-detail-heading { align-items:flex-start; flex-direction:column; }.database-preview-heading { flex-direction:column; gap:6px; }.database-schema-table th,.database-schema-table td { padding:8px; } }
 .instructions-shell { display: block; min-height: 100vh; overflow: visible; }
 .instructions-shell .instructions-card { margin: 28px 0; }
 .instructions-shell .instructions-card { margin-left: auto; margin-right: auto; min-width: 0; }

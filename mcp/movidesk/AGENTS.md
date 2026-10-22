@@ -16,7 +16,7 @@ Este documento é o manual normativo e o `DOSSIER.md` é o registro histórico/p
 2. Ler o `DOSSIER.md` para descobrir por que as decisões foram tomadas, qual era o estado em cada fase e quais evidências existem.
 3. Consultar o código, os testes, o GitHub e o Sites somente para confirmar o estado atual; não substituir evidência por memória.
 4. Separar sempre quatro camadas: intenção do usuário, decisão normativa, implementação e estado publicado.
-5. Classificar toda afirmação como `confirmado`, `provável`, `não verificado` ou `obsoleto` quando houver incerteza.
+5. Classificar afirmações factuais incertas como `confirmado`, `provável`, `não verificado` ou `obsoleto`. Para estado de entrega, use os rótulos comuns do AGENT raiz (`confirmado`, `parcial`, `não verificado`, `não aplicável`); são dimensões diferentes.
 
 ### Precedência de instruções
 
@@ -539,7 +539,7 @@ Registrar no plano de trabalho: pedido literal, interpretação operacional, sup
 
 ### Depois da mudança
 
-Relatar sempre nesta ordem: resultado; arquivos alterados; arquivos não alterados; antes/depois; testes executados; limitações; commit/branch; PR/merge; publicação/versão; rollback. Para cada item usar `confirmado`, `não verificado` ou `não aplicável`.
+Siga o formato comum de entrega e evidências do [`AGENTS.md` raiz](../../AGENTS.md#relato-comum-de-entrega-e-evidências). Para mudanças MCP, acrescente somente o que for pertinente entre: contrato/wire e ferramenta afetada; build/testes/smokes; migration ou segredo/configuração; manifesto/conexão; rota `/mcp/`; rollback. Não declare a ferramenta disponível ao cliente apenas por estar implementada ou publicada.
 
 ### Vocabulário controlado de estado
 
@@ -597,17 +597,6 @@ Use “não verificado” quando a evidência não existir. Nunca preencher um e
 - Para cada publicação, registrar o SHA exato do artefato, número da versão, deployment, URL e estado terminal; se qualquer item faltar, declarar publicação incompleta/não verificada.
 - Manter um ledger de commits no `DOSSIER.md`, incluindo commits de merge e commits de branch quando eles alterarem comportamento, contratos, documentação, OAuth, UI ou artefatos de build.
 
-### Protocolo de entendimento para LLM
+### Leitura e decisão específicas do MCP
 
-Antes de responder ou agir, a LLM deve identificar explicitamente:
-
-1. **pedido atual:** o que o usuário está autorizando agora;
-2. **superfície:** código, teste, GitHub, Sites, MCP, GPT Action, OAuth ou documentação;
-3. **escopo:** ferramenta/arquivo/fase autorizado;
-4. **baseline:** commit, versão ou comportamento antes da mudança;
-5. **invariantes:** o que não pode regredir;
-6. **evidência:** teste, diff, API, PR, versão ou manifesto necessário;
-7. **estado:** confirmado, parcial, não verificado ou bloqueado;
-8. **próxima ação segura:** somente dentro da autorização atual.
-
-Ao resumir o projeto, use a ordem: objetivo → arquitetura → ferramentas → fases → estado publicado → pendências → histórico. Ao relatar uma entrega, não misture intenção com resultado e não use “publicado” como sinônimo de “commitado”.
+O roteamento de tarefa e a escada pré-alteração são definidos pelo [`AGENTS.md` raiz](../../AGENTS.md). Depois deles, identifique a superfície concreta — MCP, GPT Action, OAuth, REST ou Sites — e confira contrato da ferramenta, autenticação, manifesto/runtime e consumidores. O roteiro de decisão rápida acima serve para triagem MCP, não substitui as regras gerais. Ao resumir o projeto, use a ordem: objetivo → arquitetura → ferramentas → fases → estado publicado → pendências → histórico.

@@ -28,11 +28,17 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - `movidesk:read`, `knowledge:read` e `knowledge:write` são capacidades separadas. O usuário autorizou importar para a base interna apenas chamados explicitamente indicados; alterações em tickets do Movidesk e ingestão em massa continuam fora do escopo.
 - `beta-all` é o repositório de trabalho ativo. As origens relacionadas foram preservadas e arquivadas conforme o inventário; não presumir que Sites ou integrações externas já publiquem a partir do monorepo.
 
+### Organização e coerência das instruções (2026-10-22)
+
+- Regras transversais — isolamento por conversa, escada antes de qualquer alteração, ciclo GitHub/Sites e relato baseado em evidências — ficam centralizadas em [`AGENTS.md`](AGENTS.md). Os guias ativos de componente leem a raiz primeiro e mantêm apenas arquitetura, contratos, comandos, riscos e critérios próprios.
+- O plano concluído de consolidação foi movido integralmente para [`docs/migration/monorepo-consolidation-plan.md`](docs/migration/monorepo-consolidation-plan.md), marcado como histórico. Os antigos exemplos de branches removidas seguem como relato histórico em `revisor/AGENTS.md`, sem representar estado remoto atual.
+- O registro de resposta comum deixa de ser duplicado no MCP; ali permanecem os campos adicionais próprios de contratos, manifesto, rota `/mcp/` e smokes. A regra de nome amigável com identificador técnico em cinza permanece específica das interfaces administrativas MCP.
+
 ### Sincronização de alterações no GitHub e Sites (2026-10-21)
 
 - Regra definida pelo usuário: pedido de commit pode resultar somente em commit no GitHub; pedido de merge pode resultar somente em merge no GitHub. Nenhum desses pedidos implica publicar no Sites.
 - Pedido de push significa sincronizar GitHub e Sites: primeiro aplicar no GitHub todos os commits e merges do conjunto; depois publicar a versão correspondente no Sites quando o runtime tiver mudado. Se qualquer etapa falhar, informar a divergência e não declarar a sincronização concluída.
-- Regra normativa completa em [`AGENTS.md`](AGENTS.md#sincronização-github-e-publicação-no-sites) e instruções específicas do runtime em [`mcp/movidesk/AGENTS.md`](mcp/movidesk/AGENTS.md#ordem-obrigatória-entre-github-e-sites).
+- Regra normativa completa em [`AGENTS.md`](AGENTS.md#fluxo-geral-de-desenvolvimento-github-e-publicação) e instruções específicas do runtime em [`mcp/movidesk/AGENTS.md`](mcp/movidesk/AGENTS.md#limites-de-publicação-do-mcp).
 
 ### Telemetria do painel no Sites (2026-10-20)
 

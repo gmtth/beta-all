@@ -1,5 +1,6 @@
 import type { KnowledgeStore, KnowledgeSourceSummary } from "./knowledge-tools";
 import type { MovideskKnowledgeRecord } from "./knowledge-ingest";
+import { KnowledgeImportError } from "./knowledge-import-errors";
 
 const safeText = (value: unknown) => typeof value === "string" && value.trim() ? value.trim().slice(0, 120) : null;
 const safeAdminText = (value: unknown) => typeof value === "string" || typeof value === "number" ? String(value).trim().slice(0, 180) || null : null;
@@ -26,13 +27,13 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
   private configuration() {
     const projectUrl = process.env.SUPABASE_URL?.trim();
     const secretKey = process.env.SUPABASE_SECRET_KEY?.trim();
-    if (!projectUrl || !secretKey) throw new Error("Supabase is not configured.");
+    if (!projectUrl || !secretKey) throw new KnowledgeImportError("supabase_configuration");
     try {
       const base = new URL(projectUrl);
-      if (base.protocol !== "https:" || !base.hostname.endsWith(".supabase.co")) throw new Error("Invalid Supabase URL.");
+      if (base.protocol !== "https:" || !base.hostname.endsWith(".supabase.co")) throw new KnowledgeImportError("supabase_configuration");
       return { base, secretKey };
     } catch {
-      throw new Error("Invalid Supabase URL.");
+      throw new KnowledgeImportError("supabase_configuration");
     }
   }
 
@@ -139,34 +140,57 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
   async importMovideskTicket(record: MovideskKnowledgeRecord, actorEmail: string): Promise<{ recordId: string; chunkCount: number }> {
     const { base, secretKey } = this.configuration();
     const endpoint = new URL("/rest/v1/rpc/upsert_movidesk_knowledge_record", base);
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        apikey: secretKey,
-        Authorization: `Bearer ${secretKey}`,
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        "Content-Profile": "beta",
-      },
-      body: JSON.stringify({
-        p_external_id: record.external_id,
-        p_title: record.title,
-        p_status: record.status,
-        p_source_created_at: record.source_created_at,
-        p_source_updated_at: record.source_updated_at,
-        p_content_hash: record.content_hash,
-        p_attributes: record.attributes,
-        p_chunks: record.chunks,
-        p_actor_email: actorEmail,
-      }),
-      signal: AbortSignal.timeout(15_000),
-    });
-    if (!response.ok) throw new Error(`Supabase import failed with HTTP ${response.status}.`);
-    const payload: unknown = await response.json();
+    let response: Response;
+    try {
+      response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          apikey: secretKey,
+          Authorization: `Bearer ${secretKey}`,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          "Content-Profile": "beta",
+        },
+        body: JSON.stringify({
+          p_external_id: record.external_id,
+          p_title: record.title,
+          p_status: record.status,
+          p_source_created_at: record.source_created_at,
+          p_source_updated_at: record.source_updated_at,
+          p_content_hash: record.content_hash,
+          p_attributes: record.attributes,
+          p_chunks: record.chunks,
+          p_actor_email: actorEmail,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (error) {
+      if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) throw new KnowledgeImportError("supabase_timeout");
+      throw new KnowledgeImportError("supabase_network_error");
+    }
+    if (!response.ok) {
+      let errorPayload: Record<string, unknown> = {};
+      try {
+        const body: unknown = await response.json();
+        if (body && typeof body === "object" && !Array.isArray(body)) errorPayload = body as Record<string, unknown>;
+      } catch { /* Do not expose or retain a raw provider response. */ }
+      const code = typeof errorPayload.code === "string" ? errorPayload.code : "";
+      const message = typeof errorPayload.message === "string" ? errorPayload.message.toLowerCase() : "";
+      if (response.status === 404 || code === "PGRST202" || code === "PGRST204" || code === "42883") throw new KnowledgeImportError("supabase_rpc_unavailable");
+      if (response.status === 401 || response.status === 403 || code === "42501") throw new KnowledgeImportError("supabase_permission_denied");
+      if (response.status === 429) throw new KnowledgeImportError("supabase_rate_limited");
+      if (response.status >= 500) throw new KnowledgeImportError("supabase_unavailable");
+      if (code === "22023" && message.includes("movidesk source system is missing or ambiguous")) throw new KnowledgeImportError("supabase_source_not_configured");
+      if (response.status >= 400) throw new KnowledgeImportError("supabase_payload_rejected");
+      throw new KnowledgeImportError("unexpected");
+    }
+    let payload: unknown;
+    try { payload = await response.json(); }
+    catch { throw new KnowledgeImportError("supabase_invalid_response"); }
     const row = payload && typeof payload === "object" && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
     const recordId = safeText(row.record_id);
     const chunkCount = Number(row.chunk_count);
-    if (!recordId || !Number.isInteger(chunkCount) || chunkCount < 1 || chunkCount > 50) throw new Error("Supabase returned an unexpected import response.");
+    if (!recordId || !Number.isInteger(chunkCount) || chunkCount < 1 || chunkCount > 50) throw new KnowledgeImportError("supabase_invalid_response");
     return { recordId, chunkCount };
   }
 }

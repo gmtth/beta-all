@@ -1,5 +1,6 @@
 # Dossiê do projeto MCP Movidesk
 
+
 > **Modo de leitura para LLM:** leia primeiro “Resumo canônico atual”, depois “Regras de autoridade”, “Arquitetura”, “Ferramentas e contratos”, “Fases”, “Estado de entrega” e “Pendências”. Consulte a linha do tempo, ledger de commits e histórico retroativo apenas para rastreabilidade. Em caso de conflito, prevalece a ordem de autoridade definida abaixo.
 
 ## Cartão de contexto rápido
@@ -1810,3 +1811,13 @@ Na branch `feat/admin-telemetry-insights`, a API administrativa agrega os evento
 Não houve migration nem mudança na coleta de eventos. A identidade é usada apenas para a agregação de erros por conta permitida no painel master; sucessos, argumentos, resultados e mensagens brutas continuam fora dessa métrica. P50/P95 usam nearest-rank sobre as durações já registradas e mostram quantas execuções compõem a amostra.
 
 **Verificação local:** `git diff --check`, `npm run build` e `node scripts/validate-semantic-catalog.mjs` passaram. O primeiro build dentro do sandbox falhou ao resolver arquivos locais de `node_modules` (`EPERM`); a execução autorizada fora do sandbox passou. Suítes automatizadas e consulta das novas agregações contra D1 não foram executadas. As alterações estão somente na branch local; não houve commit, push, PR, merge ou publicação.
+
+## Protocolo do chamado na busca indexada — correção local (2026-10-22)
+
+O usuário confirmou que a importação do chamado `20260702000000016` terminou com 14 trechos e que buscas pelo conteúdo recuperam o registro como `external_id = 5835`. A PR #17 foi integrada em `main` e publicada, expondo `protocol` em `movidesk_get_ticket`; uma consulta live confirmou `5835` → `20260702000000016`. A reimportação posterior ainda deixou `source_record.attributes.protocol` nulo, mostrando que o runtime publicado do importador ainda não persistia esse metadado.
+
+Na branch `codex/knowledge-protocol-metadata`, a ingestão agora copia o campo `protocol` do payload Movidesk para `attributes.protocol`, mantendo o ID interno como `external_id`. A ferramenta e o leitor PostgREST foram ampliados para devolver o protocolo; a migration `20261022120000_add_movidesk_protocol_search.sql` acrescenta busca exata pelo protocolo e índice de expressão. A correção está local e ainda não foi aplicada no Supabase, publicada, commitada ou enviada.
+
+**Validação atual:** a alteração local passa 27 testes focados e o build. A suíte geral `npm test` falha em um teste de página inicial preexistente (`tests/rendered-html.test.mjs` espera o texto antigo “Conecte o ChatGPT às ferramentas da sua equipe”); os outros nove testes da suíte passaram. ESLint específico reporta um `no-explicit-any` preexistente em `worker/knowledge-tools.ts:46`. A migration ainda não foi aplicada; `supabase db push --dry-run` não conseguiu resolver o project ref porque esta worktree limpa não está linkada.
+
+**Próximas etapas:** publicar primeiro a atualização do runtime que persiste `attributes.protocol` mantendo compatibilidade com a RPC antiga; aplicar a migration para a busca exata; reimportar explicitamente o chamado piloto e confirmar o metadado e a busca. Não afirmar validação ponta a ponta antes dessas verificações.

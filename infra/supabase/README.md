@@ -15,6 +15,7 @@ Para o estado, decisões, evidências e ordem de prontidão, consulte [`DOSSIER.
 - O usuário confirmou que a chamada `knowledge_list_sources` via MCP/Sites retornou Movidesk, ClickUp e Documentos administrativos.
 - A migration `20261022100000_add_knowledge_search.sql` criou `beta.search_knowledge()`, RPC somente leitura com limite de 10 resultados e filtro para registros não excluídos classificados como `internal` ou `shareable`. Só `service_role` pode executá-la; o MCP valida OAuth `knowledge:read`.
 - A migration `20261022110000_rank_one_chunk_per_record.sql` limita cada resposta ao melhor trecho de cada registro, para que vários trechos de um chamado não ocultem outros casos. Foi aplicada remotamente em 2026-10-22.
+- A migration local `20261022120000_add_movidesk_protocol_search.sql` persiste o protocolo do Movidesk em `source_record.attributes.protocol` e adiciona busca exata/retorno desse identificador. Ela ainda não foi aplicada ao projeto remoto nem publicada junto do runtime MCP.
 - A busca usa `tsvector`/GIN e termos prefixados em OR para tolerar consultas em linguagem natural. Ainda não é busca semântica; não há coluna de embedding, modelo escolhido ou geração de vetores.
 
 ## Migrações reproduzíveis

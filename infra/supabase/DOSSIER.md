@@ -95,6 +95,12 @@ A nova rota master-only `/admin/database` exibe seletor das quatro tabelas aprov
 - A migration `20261020150000_admin_knowledge_overview.sql` cria uma RPC de leitura agregada, limitada a dez importações recentes e sem conteúdo de chamados/trechos. Execução concedida apenas a `service_role`; rollback remove somente a função.
 - **Estado registrado à época:** painel/runtime publicados como Site versão 75 em 2026-10-20. Naquele registro a migration `20261020150000_admin_knowledge_overview.sql` estava pendente. Ela foi aplicada em 2026-10-22 junto com a busca; a conexão e os indicadores do painel ainda não foram revalidados end-to-end após o deploy.
 
+## Protocolo do chamado na busca indexada — correção local (2026-10-22)
+
+O usuário confirmou o sucesso da importação do protocolo `20260702000000016` em 14 trechos. A consulta lexical pelo conteúdo encontrou o caso, porém a busca exata pelo protocolo retornou zero resultados. O usuário atualizou e publicou `movidesk_get_ticket` para devolver o campo `protocol`; uma consulta live confirmou `external_id = 5835` → `protocol = 20260702000000016`. Depois de nova reimportação, uma consulta SQL em 2026-10-22 06:18 UTC mostrou `attributes.protocol` ainda nulo e 14 trechos. A persistência do protocolo no importador e a busca exata continuam por publicar/aplicar.
+
+A migration local `20261022120000_add_movidesk_protocol_search.sql` preserva `external_id` como ID interno canônico, permite localizar o registro pelo protocolo guardado em `attributes.protocol`, devolve esse protocolo nos resultados e cria índice de expressão para lookup exato. O rollback restaura o contrato anterior e remove o índice. A migration ainda não foi aplicada remotamente. A CLI `supabase db push --dry-run` não pôde prosseguir nesta worktree porque ela não está linkada ao projeto Supabase; não houve alteração remota.
+
 ## Fontes internas
 
 - [`README.md`](./README.md) — resumo e orientação operacional.

@@ -59,7 +59,7 @@ test("knowledge_list_sources hides backend errors", async () => {
 test("knowledge_search returns bounded lexical evidence to authorized callers", async () => {
   let received: { query: string; limit: number } | undefined;
   const evidence = {
-    recordId: "42", externalId: "5835", recordType: "ticket", title: "Falha na máquina",
+    recordId: "42", externalId: "5835", protocol: "20260702000000016", recordType: "ticket", title: "Falha na máquina",
     sourceName: "Movidesk", sourceCreatedAt: "2026-07-02T00:00:00.000Z", sectionTitle: "Interação 2",
     excerpt: "O equipamento voltou após reiniciar.", relevance: 0.42,
   };
@@ -214,6 +214,7 @@ test("knowledge import resolves a requested Movidesk protocol and stores the can
   }, "20260702000000016");
 
   assert.equal(record.external_id, "5835");
+  assert.equal(record.attributes.protocol, "20260702000000016");
   assert.equal(record.title, "Máquina sem conexão");
 });
 

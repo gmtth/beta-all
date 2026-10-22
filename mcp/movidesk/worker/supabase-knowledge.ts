@@ -222,6 +222,7 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
       if (!isObject(value)) throw new Error("Knowledge search returned an invalid response.");
       const recordId = safeText(value.record_id);
       const externalId = safeText(value.external_id);
+      const protocol = value.protocol === null || value.protocol === undefined ? null : safeText(value.protocol);
       const recordType = safeText(value.record_type);
       const title = safeSearchText(value.title, 500);
       const sourceName = safeText(value.source_name);
@@ -229,11 +230,11 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
       const excerpt = safeSearchText(value.excerpt, 1600);
       const relevance = typeof value.relevance === "number" && Number.isFinite(value.relevance) ? value.relevance : null;
       const sourceCreatedAt = value.source_created_at === null ? null : safeIsoDate(value.source_created_at);
-      if (!recordId || !externalId || !recordType || !title || !sourceName || !sectionTitle || !excerpt || relevance === null
+      if (!recordId || !externalId || (value.protocol !== null && value.protocol !== undefined && (!protocol || !/^\d{1,30}$/.test(protocol))) || !recordType || !title || !sourceName || !sectionTitle || !excerpt || relevance === null
           || (value.source_created_at !== null && sourceCreatedAt === null)) {
         throw new Error("Knowledge search returned an invalid response.");
       }
-      results.push({ recordId, externalId, recordType, title, sourceName, sourceCreatedAt, sectionTitle, excerpt, relevance });
+      results.push({ recordId, externalId, protocol, recordType, title, sourceName, sourceCreatedAt, sectionTitle, excerpt, relevance });
     }
     return results;
   }

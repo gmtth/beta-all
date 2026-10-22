@@ -73,10 +73,41 @@ const dateValue = (value: unknown) => {
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 };
 
+function ticketCandidates(value: unknown): Record<string, unknown>[] {
+  const candidates = Array.isArray(value) ? value : value && typeof value === "object" && Array.isArray((value as { results?: unknown }).results)
+    ? (value as { results: unknown[] }).results : [value];
+  return candidates.map(objectOf).filter((ticket) => Object.keys(ticket).length > 0);
+}
+
+/** Movidesk accepts both its internal ticket ID and its protocol as identifiers. */
+export function movideskTicketMatchesIdentifier(value: unknown, identifier: string): boolean {
+  return ticketCandidates(value).some((ticket) =>
+    ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(ticket[key]) === identifier),
+  );
+}
+
+export async function resolveMovideskTicketIdentifier(
+  identifier: string,
+  lookup: (kind: "id" | "protocol", value: string) => Promise<unknown | null>,
+): Promise<unknown> {
+  const byInternalId = await lookup("id", identifier);
+  if (byInternalId && movideskTicketMatchesIdentifier(byInternalId, identifier)) return byInternalId;
+
+  const byProtocol = await lookup("protocol", identifier);
+  if (!byProtocol) {
+    if (byInternalId) throw new KnowledgeImportError("ticket_mismatch");
+    throw new KnowledgeImportError("ticket_not_found");
+  }
+  if (!movideskTicketMatchesIdentifier(byProtocol, identifier)) throw new KnowledgeImportError("ticket_mismatch");
+  return byProtocol;
+}
+
 export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expectedTicketId: string): Promise<MovideskKnowledgeRecord> {
-  const ticket = Array.isArray(ticketValue) ? objectOf(ticketValue[0]) : objectOf(ticketValue);
+  const ticket = ticketCandidates(ticketValue).find((candidate) =>
+    ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(candidate[key]) === expectedTicketId),
+  ) ?? {};
   const actualId = scalarText(firstValue(ticket, ["id", "ticketId", "ticket_id"]));
-  if (!actualId || actualId !== expectedTicketId) throw new KnowledgeImportError("ticket_mismatch");
+  if (!actualId || !movideskTicketMatchesIdentifier(ticket, expectedTicketId)) throw new KnowledgeImportError("ticket_mismatch");
 
   const title = cleanKnowledgeText(firstValue(ticket, ["subject", "assunto", "title", "titulo"]))?.slice(0, 500);
   if (!title) throw new KnowledgeImportError("ticket_missing_title");

@@ -57,7 +57,7 @@ export function registerKnowledgeTools(server: any, reader: KnowledgeStore, opti
     "knowledge_import_movidesk_ticket",
     {
       title: "Adicionar chamado do Movidesk à base compartilhada",
-      description: "Importa um chamado do Movidesk para a base interna compartilhada, preservando o ID de origem e indexando descrição e interações. Use somente quando o analista pedir explicitamente para adicionar/importar o chamado à base; não use durante uma consulta ou diagnóstico comum. Requer movidesk:read e knowledge:write. A importação é idempotente e pode atualizar um registro já existente.",
+      description: "Importa um chamado do Movidesk para a base interna compartilhada, aceitando o ID interno ou o protocolo numérico e preservando o ID interno canônico como identificador de origem. Indexa descrição e interações. Use somente quando o analista pedir explicitamente para adicionar/importar o chamado à base; não use durante uma consulta ou diagnóstico comum. Requer movidesk:read e knowledge:write. A importação é idempotente e pode atualizar um registro já existente.",
       inputSchema: { ticket_id: importSchema.shape.ticket_id },
       outputSchema: { imported: z.boolean(), ticket_id: z.string(), chunks: z.number() },
       securitySchemes: [{ type: "oauth2" as const, scopes: [OAUTH_SCOPE, KNOWLEDGE_WRITE_SCOPE] }],

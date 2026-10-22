@@ -4,6 +4,7 @@ import { registerKnowledgeTools, type KnowledgeStore } from "../worker/knowledge
 import type { OAuthPrincipalAuthorization } from "../app/oauth/_lib";
 import { McpAuthorizationFailure } from "../worker/oauth-auth-challenge";
 import { KnowledgeImportError } from "../worker/knowledge-import-errors";
+import { buildMovideskKnowledgeRecord, resolveMovideskTicketIdentifier } from "../worker/knowledge-ingest";
 
 type RegisteredTool = { config: any; handler: (args: unknown) => Promise<any> };
 
@@ -136,4 +137,51 @@ test("knowledge_import_movidesk_ticket does not persist a ticket whose returned 
   const result = await tools.get("knowledge_import_movidesk_ticket")!.handler({ ticket_id: "20260702000000016" });
   assert.equal(result.isError, true);
   assert.equal(persisted, false);
+});
+
+test("knowledge import resolves a requested Movidesk protocol and stores the canonical internal ID", async () => {
+  const record = await buildMovideskKnowledgeRecord({
+    id: 5835,
+    protocol: "20260702000000016",
+    subject: "Máquina sem conexão",
+    description: "Equipamento não comunica com o sistema.",
+  }, "20260702000000016");
+
+  assert.equal(record.external_id, "5835");
+  assert.equal(record.title, "Máquina sem conexão");
+});
+
+test("Movidesk ticket lookup falls back from internal ID to an exact protocol match", async () => {
+  const lookups: Array<[string, string]> = [];
+  const ticket = await resolveMovideskTicketIdentifier("20260702000000016", async (kind, value) => {
+    lookups.push([kind, value]);
+    return kind === "id" ? { id: 5835, protocol: "different" } : { id: 5835, protocol: value };
+  });
+
+  assert.deepEqual(lookups, [["id", "20260702000000016"], ["protocol", "20260702000000016"]]);
+  assert.deepEqual(ticket, { id: 5835, protocol: "20260702000000016" });
+});
+
+test("knowledge_import_movidesk_ticket stores by canonical ID when called with a protocol", async () => {
+  let persistedExternalId = "";
+  const reader: KnowledgeStore = {
+    listSources: async () => [],
+    importMovideskTicket: async (record) => { persistedExternalId = record.external_id; return { recordId: "42", chunkCount: record.chunks.length }; },
+  };
+  const ticket = { id: 5835, protocol: "20260702000000016", subject: "Máquina sem conexão", description: "Equipamento não comunica com o sistema." };
+  const tools = setup(reader, async () => authorized, async () => authorized, async () => ticket);
+  const result = await tools.get("knowledge_import_movidesk_ticket")!.handler({ ticket_id: "20260702000000016" });
+
+  assert.equal(result.structuredContent.imported, true);
+  assert.equal(persistedExternalId, "5835");
+});
+
+test("knowledge import selects the matching ticket from a Movidesk result array", async () => {
+  const record = await buildMovideskKnowledgeRecord([
+    { id: 17, protocol: "other", subject: "Outro chamado", description: "Outra descrição" },
+    { id: 5835, protocol: "20260702000000016", subject: "Chamado correto", description: "Descrição correta" },
+  ], "20260702000000016");
+
+  assert.equal(record.external_id, "5835");
+  assert.equal(record.title, "Chamado correto");
 });

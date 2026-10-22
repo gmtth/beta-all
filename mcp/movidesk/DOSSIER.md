@@ -15,7 +15,7 @@ Use este bloco quando for necessário entender o projeto antes de uma ação cur
 | Qual é a fonte semântica? | YAML legível + snapshot JSON validado; grupos semânticos têm papéis separados. |
 | O que está estabilizado? | Fases 0–2, 3A, 3B e implementação de 3C, conforme o estado/evidência de cada seção. |
 | O que ainda precisa ser confirmado? | Testar reconexão OAuth em conversa real; implementar etapa 6 de logs seguros/anti-loop; corrigir helper Sites no Windows; validar `knowledge_search` por protocolo após a migration aplicada; escolher provedor/modelo para embeddings e busca semântica. |
-| Qual o próximo caminho? | A busca lexical está no runtime publicado v104; a migration `20261022120000` está aplicada e o protocolo `20260702000000016` foi confirmado no registro `5835`. Mesclar a PR #18 para alinhar o monorepo e fazer o teste live de `knowledge_search` por protocolo e por sintomas; depois decidir provedor/modelo para busca semântica. Outros itens OAuth e helper Windows permanecem no backlog. |
+| Qual o próximo caminho? | A busca lexical está no runtime publicado v104; a migration `20261022120000` está aplicada e o protocolo `20260702000000016` foi confirmado no registro `5835`. A PR #18 foi mesclada por squash no commit `48554551`; fazer o teste live de `knowledge_search` por protocolo e por sintomas e depois decidir provedor/modelo para busca semântica. Outros itens OAuth e helper Windows permanecem no backlog. |
 | O que nunca inferir? | Commit ≠ merge; merge ≠ deploy; deploy ≠ manifesto ativo; teste local ≠ produção. |
 
 ### Arquivo histórico opcional

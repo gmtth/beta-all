@@ -86,6 +86,40 @@ O usuário reforçou que espera um parceiro técnico sênior, ambicioso e rigoro
 
 O usuário esclareceu que a padronização solicitada também cobre o modo de responder: conclusão executiva primeiro, português natural e profissional, tabelas comparativas, achados explicados por expectativa/evidência/impacto, links diretos e separação explícita entre recomendação, prontidão e validação. A diretriz foi incluída no `revisor/AGENTS.md` e resumida em `Decisões vigentes`.
 
+### 2026-10-22 — reconstrução retroativa do mandato
+
+O usuário pediu que a conversa inteira fosse relida e que as instruções acumuladas fossem consolidadas retroativamente tanto neste dossier quanto no `revisor/AGENTS.md`. A reconstrução abaixo preserva sequência, intenção e evidências disponíveis; não converte histórico em estado GitHub atual.
+
+| Momento/pedido | Diretriz ou fato durável | Registro e limite |
+|---|---|---|
+| Início do mandato | Ser revisor de código implementado; verificar cada branch merged ao menos uma vez; não salvar alterações no projeto. | Regras permanentes de cobertura e modo somente leitura. Depois, o usuário autorizou exceção estreita para documentos próprios do revisor e commits diretos. |
+| Restrição de escopo | Revisar somente PRs de `gmtth/beta-all`. | Não revisar repositórios irmãos sem solicitação explícita. |
+| Revisões reiteradas | Pedidos curtos como “revise” significam continuar a rotina já estabelecida, não começar do zero nem perder cobertura anterior. | Consultar estado atual, ledger e mudanças posteriores; não inferir que a cobertura histórica é exaustiva sem inventário remoto completo. |
+| Comportamento esperado | O usuário perguntou se o código perdido poderia ser identificado lendo os dossiers de cada projeto. | Sim: dossiers e instruções ativas dos componentes, arquitetura, contratos e testes são essenciais para recuperar expectativas; cruzar com código atual e histórico para identificar remoção/regressão e também documentação desatualizada. |
+| Escopo de merges | O usuário pediu revisão de todas as PRs merged. | Cada merged revisada ao menos uma vez; manter ledger e dizer claramente quando a cobertura ainda for parcial. |
+| Qualidade e formato aprovados | O usuário elogiou análise “disso pra mais” e formato tabular. | Resposta deve ser aprofundada, mas legível; tabela comparativa, evidência direta, impacto, recomendação e limites; manter o estilo aprovado nas revisões futuras. |
+| Branches órfãs | O usuário pediu examinar branches sem PR, verificar se foram aplicadas e se podiam ser excluídas; citou `feat/site-loading-spinners` e `docs/knowledge-search-publication-status`. | Depois informou que excluiu ambas. É histórico relatado pelo usuário, não confirmação independente dos refs ou da segurança das exclusões. Não excluir branch em revisões futuras. |
+| PRs pendentes | O usuário perguntou sobre duas PRs abertas, se já estavam implementadas e se deveriam ser merged. | Snapshot de 2026-10-22: #25 e #31. O parecer foi que ambas eram documentais e recomendáveis após atualizar/reconciliar branches antigas; o retorno GitHub as marcou não mergeable. Revalidar antes de repetir ou recomendar merge. |
+| #25 | Registro da PR dizia que documenta merge da #24, sincronização/publicação Sites v108 e smoke visual autenticado. | Parecer: funcionalidade já implementada/publicada conforme evidência nela registrada; dossier precisava corrigir afirmação stale. Merge recomendado após atualização. Não foi feito merge pelo revisor. |
+| #31 | Baseline documental de 11 consultas reais e controles exatos; estado da importação longa e plano de avaliação. A #36 já referenciava artefato ainda ausente no main no parecer. | Parecer: merge recomendado após atualização e reconciliação dos dossiers; não afirmar que ranking/migration foi validado em produção sem evidência de aplicação e benchmark live. Não foi feito merge pelo revisor. |
+| Revisão merged apresentada | Cobertura relatada: #26, #28–#30 e #32–#36; #25 e #31 abertas e #27 fechada sem merge. | Achados e limitações preservados abaixo e na seção de findings. São resultados apresentados na conversa, não prova de que os defeitos ainda existam. |
+| PR #26 | Refresh token poderia conservar scopes desativados e reintroduzi-los após reativação sem nova autorização; `insufficient_scope` poderia ser convertido em `null` e `401 invalid_token`. | Achados de risco/contrato a revalidar no código atual e em mudanças posteriores. |
+| PR #32 | Seções recolhíveis buscavam ao expandir, cancelavam ao recolher e permitiam retry. | Sem perda identificada no diff então consultado; testes automatizados e inspeção visual autenticada estavam pendentes segundo a PR. |
+| PR #34 | Remoção do resumo visual de scopes. | Perda de visibilidade operacional dos scopes realmente concedidos no token, diferente dos habilitados pelo administrador; confirmar se posterior mudança corrigiu. |
+| PR #36 | Ranking lexical da busca; resposta, filtros e busca exata ID/protocolo preservados. | O teste SQL não foi executado, migration não aplicada e benchmark das 11 consultas pendente naquele parecer. Estado atual precisa ser refeito com migrations posteriores/deploys. |
+| Evidência dos testes merged | #26 reportava 29 testes OAuth focados e 10 renderizações aprovados; #36 reportava pendências acima. | Resultados reportados nas PRs não foram execução local do revisor. Nenhum teste local foi executado na rodada merged registrada. |
+| Oficialização e diretivas técnicas | O usuário pediu pasta `revisor/`, `AGENTS.md`, dossier e identificação perante o mestre; depois definiu atuação como senior developer de amplitude excepcional. | Documentos criados, root AGENTS ligado ao papel; metáforas de 20 anos/domínio total significam padrão de qualidade, não credenciais literais. |
+| Consulta aos padrões do monorepo | O usuário pediu que os outros `AGENTS.md` e dossiers fossem consultados para elevar a qualidade dos documentos do revisor. | Foram consultados os arquivos ativos da raiz, MCP, plugin e Supabase. A estrutura do dossier foi ajustada para padrão canônico e o AGENT ampliado. |
+| Comunicação | O usuário esclareceu que a solicitação original também pedia padronizar o modo de responder, não apenas o processo técnico. | Regra registrada: conclusão executiva primeiro, português natural/próximo/profissional, tabelas, evidência, impacto, links, recomendação e separação entre merge recomendável e merge pronto. |
+
+#### Modelo de resposta aprovado pelo usuário
+
+Para PRs abertas, o modelo elogiado foi uma tabela com **PR**, **o que é**, **já está implementado?** e **recomendação**. A síntese deve explicar o que falta e eventuais impedimentos de atualização/conflito; recomendação de merge não equivale a prontidão para merge.
+
+Para PRs merged em lote, usar uma tabela com **PR**, **revisão** e **findings por comportamento**, destacar achados de runtime/documentação com links para arquivos e separar findings concretos de PRs sem regressão identificada. Encerrar com **achados de código**, **verificações** e limites (“não executei testes nesta sessão”, “migration não aplicada”, “deploy não verificado”) precisamente quando aplicável.
+
+Este modelo é uma transcrição funcional do padrão pedido, não uma exigência de repetir literalmente a resposta ou usar as mesmas PRs como estado atual.
+
 ## Achados que exigem revalidação
 
 Estes são achados do parecer histórico, não afirmações de que ainda persistem no `main` atual. Reconsultar o código e commits posteriores antes de confirmar/encerrar.

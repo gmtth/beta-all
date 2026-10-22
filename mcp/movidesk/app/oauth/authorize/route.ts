@@ -1,5 +1,6 @@
 import { getChatGPTUser, chatGPTSignInPath } from "../../chatgpt-auth";
 import { BETA_TERMS_VERSION, canonicalResource, db, ensureSchema, getUserRole, json, randomToken, hash, masterEmails, oauthClient, validateAuthorizationRequest } from "../_lib";
+import { areUserScopesEnabled } from "../user-scopes";
 
 function escapeHtml(value: string) { return value.replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#39;" })[char] ?? char); }
 function bad(message: string) { return json({ error: "invalid_request", error_description: message }, { status: 400 }); }
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
   const user = await getChatGPTUser();
   if (!user) return Response.redirect(new URL(chatGPTSignInPath(`/oauth/authorize${url.search}`), url), 302);
   if (!(await getUserRole(user.email))) return bad("This account is not authorized.");
+  if (!await areUserScopesEnabled(db(), user.email, scope.split(/\s+/).filter(Boolean))) return bad("Um ou mais escopos foram desativados pelo administrador. Solicite a revisão das permissões no painel.");
   const masterAutoAuthorize = masterEmails().includes(user.email.trim().toLowerCase());
   const consentChecked = masterAutoAuthorize ? " checked" : "";
   const authorizationMessage = masterAutoAuthorize
@@ -103,6 +105,7 @@ export async function POST(request: Request) {
   const user = await getChatGPTUser();
   await ensureSchema();
   if (!client || !user || !(await getUserRole(user.email))) return bad("Invalid authorization.");
+  if (!await areUserScopesEnabled(db(), user.email, scope.split(/\s+/).filter(Boolean))) return bad("Um ou mais escopos foram desativados pelo administrador. Solicite a revisão das permissões no painel.");
   if (!termsAccepted) return bad("Aceite os Termos de Uso e o Aviso de Privacidade antes de autorizar.");
   const code = randomToken();
   const acceptedAt = Date.now();

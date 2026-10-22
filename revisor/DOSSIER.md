@@ -7,7 +7,7 @@ Atualizado em 2026-10-22. Este dossier registra as regras de contexto, evidênci
 - **Componente:** revisão de pull requests, branches e mudanças do monorepo Beta All.
 - **Responsabilidade:** detectar perda de comportamento esperado, incompatibilidade com contratos/dossiers, defeitos, riscos e validações faltantes; entregar parecer técnico acionável ao usuário.
 - **Escopo GitHub:** somente [`gmtth/beta-all`](https://github.com/gmtth/beta-all).
-- **Modo:** somente leitura no produto, dados, serviços e PRs. O usuário autorizou o revisor a manter este dossier, suas instruções e uma referência no `AGENTS.md` mestre por commit direto sem PR. Isso não autoriza push, alteração de produto, merge ou deploy.
+- **Modo:** somente leitura no produto, dados, serviços e PRs. O usuário autorizou manter e commitar diretamente este dossier, suas instruções e a referência no `AGENTS.md` mestre, sem PR; conforme a regra raiz, esses commits documentais são enviados ao GitHub. Isso não autoriza alteração de produto, merge, PR ou deploy.
 - **Princípio:** ausência de achado no escopo verificado não é garantia de ausência total de regressão.
 
 ## Estado atual
@@ -17,8 +17,8 @@ Snapshot remoto consultado em 2026-10-22:
 | Item | Estado observado | Evidência/limite |
 |---|---|---|
 | Repositório e branch padrão | `gmtth/beta-all`, `main` | Consulta GitHub e remote do clone oficial. |
-| `main` | `d3ee3fd42884402e725b4248a1917c8275bcfc7f` — `feat(supabase): rank knowledge search by query coverage` | SHA observado após fetch; estado pode mudar depois do snapshot. |
-| Checkout usado nesta revisão documental | Em `main`, limpo antes das alterações, avançado por fast-forward de `32b3f0b` | Commit de preparação `2c961f1` criou os documentos; detalhes no histórico desta tarefa. Existem outros clones locais e worktrees; não presumir que sejam o oficial nem que estejam limpos. |
+| `main` | `d3ee3fd42884402e725b4248a1917c8275bcfc7f` — `feat(supabase): rank knowledge search by query coverage` | SHA da base remota usada para o primeiro snapshot, antes dos commits de documentação do revisor; não é um status atual pós-push. |
+| Checkout usado nesta revisão documental | Clone limpo em `main`, avançado por fast-forward de `32b3f0b`; as atualizações documentais posteriores geraram commits locais | Commits e estado remoto precisam ser reconciliados após push. Existem outros clones locais/worktrees; não presumir que sejam oficiais nem que estejam limpos. |
 | PRs abertas | #25 e #31; ambas documentais; ambas `mergeable: false` no retorno GitHub | Busca remota em 2026-10-22. Reconsultar antes de repetir. |
 | Cobertura merged | #26, #28–#30 e #32–#36 revisadas em parecer anterior | Proveniência é a conversa de 2026-10-22; inventário total/paginação ainda não reconciliado. |
 
@@ -26,8 +26,8 @@ Snapshot remoto consultado em 2026-10-22:
 
 | PR | Conteúdo e evidência observados | Estado funcional conhecido | Parecer registrado |
 |---|---|---|---|
-| [#25 — registrar publicação da página de feedback](https://github.com/gmtth/beta-all/pull/25) | Registra merge da #24, sincronização e publicação Sites v108/smoke visual. Head `5ebbf560b8e9c1dee423ac2481fc9422b0248d81`; base reportada `91de48874808cd09fb53a21e82f1ce5bbcd2ac24`; `open`, `mergeable: false`. | Página/painel já implementado e publicado segundo evidência documentada pela PR; o dossier raiz ainda precisava corrigir o registro. | **Merge recomendado após atualizar/reconciliar a branch.** Parecer executivo; reabrir diff/checks antes de nova decisão. Nada foi mesclado pelo revisor. |
-| [#31 — baseline de avaliação da busca](https://github.com/gmtth/beta-all/pull/31) | Registra 11 consultas naturais e controles exatos, estado de importação/publicação v107 e plano de avaliação. Head `1ebae29eddedfc4e9e1850535734dbb083c78aa7`; base `74c034e6dbc673e78b9a54e3a8dfef6e4b2293bd`; `open`, `mergeable: false`. | Baseline está nesta PR; ranking relacionado entrou na #36. Aplicação de migration e reavaliação live não estavam confirmadas no parecer. | **Merge recomendado após atualizar e reconciliar dossiers com mudanças posteriores.** Confirmar arquivo de avaliação, referências e migration atual. Nenhum merge feito. |
+| [#25 — registrar publicação da página de feedback](https://github.com/gmtth/beta-all/pull/25) | Mudança documental: registra merge da #24, sincronização para Sites, publicação v108 e smoke visual autenticado. Head `5ebbf560b8e9c1dee423ac2481fc9422b0248d81`; base reportada `91de48874808cd09fb53a21e82f1ce5bbcd2ac24`; `open`, `mergeable: false`. | Página/painel já estava implementada e publicada segundo a evidência registrada; `main` dizia incorretamente que a mudança não teve PR, merge ou publicação. A PR corrige esse fato no dossier. | **Merge recomendado após atualizar/reconciliar a branch**; sem merge direto porque a base era antiga e o GitHub não a marcava mergeable. |
+| [#31 — baseline de avaliação da busca](https://github.com/gmtth/beta-all/pull/31) | Mudança documental: registra 11 consultas naturais reais e controles exatos, atualização da importação longa, estado de publicação/importação e plano para avaliar ranking. Head `1ebae29eddedfc4e9e1850535734dbb083c78aa7`; base `74c034e6dbc673e78b9a54e3a8dfef6e4b2293bd`; `open`, `mergeable: false`. | A baseline só existia na PR; a #36 já referenciava um artefato de avaliação ausente do `main`. A migration de ranking não estava aplicada e as buscas não tinham sido reavaliadas em produção segundo o registro consultado. | **Merge recomendado após rebase/atualização e reconciliação dos dossiers com mudanças posteriores**; não declarar a busca validada em produção. |
 
 Os pareceres são snapshots da conversa de 2026-10-22, não reviews formais submetidos ao GitHub nem substituto da leitura dos diffs atuais.
 
@@ -114,9 +114,9 @@ O usuário pediu que a conversa inteira fosse relida e que as instruções acumu
 
 #### Modelo de resposta aprovado pelo usuário
 
-Para PRs abertas, o modelo elogiado foi uma tabela com **PR**, **o que é**, **já está implementado?** e **recomendação**. A síntese deve explicar o que falta e eventuais impedimentos de atualização/conflito; recomendação de merge não equivale a prontidão para merge.
+Para PRs abertas, o modelo elogiado foi: “as duas PRs abertas são documentais; nenhuma adiciona código de aplicação”, seguido de tabela com **PR**, **o que é**, **já está implementado?** e **recomendação**. A síntese deve dizer se as branches estão mergeáveis e explicar o impedimento; fechar com resumo do que cada PR corrige/preserva e “merge recomendado após atualizar”, quando apropriado. Recomendação de merge não equivale a prontidão para merge.
 
-Para PRs merged em lote, usar uma tabela com **PR**, **revisão** e **findings por comportamento**, destacar achados de runtime/documentação com links para arquivos e separar findings concretos de PRs sem regressão identificada. Encerrar com **achados de código**, **verificações** e limites (“não executei testes nesta sessão”, “migration não aplicada”, “deploy não verificado”) precisamente quando aplicável.
+Para PRs merged em lote, começar com “Revisão das PRs merged — `gmtth/beta-all`”, declarar o intervalo coberto e identificar PRs abertas/fechadas sem merge que não contam como integradas. Usar tabela por PR com revisão e findings por comportamento. O parecer aprovado apontou separadamente: (1) na #26, scope desativado podia sobreviver no refresh token e voltar após reativação sem nova autorização; (2) `insufficient_scope` podia ser convertido em `401 invalid_token`; (3) #34 removeu a exibição dos scopes realmente presentes no token. Agrupou #28/#30/#33/#35 como documentação sem regressão; descreveu o comportamento #29 e #32 e suas validações pendentes; na #36 distinguiu código preservado de ranking ainda sem validação de produção. Encerrar com **achados de código** e **verificações**, incluindo testes reportados (#26: 29 OAuth e 10 renderização), teste SQL não executado e migration não aplicada na #36, e confirmação de leitura apenas, sem publicação.
 
 Este modelo é uma transcrição funcional do padrão pedido, não uma exigência de repetir literalmente a resposta ou usar as mesmas PRs como estado atual.
 

@@ -31,7 +31,7 @@ Estas são diretrizes permanentes que o usuário construiu ao longo da conversa;
 - **PR pendente:** responder o que é, se já está implementada/aplicada no `main` ou publicada, o que ainda está faltando e se o merge é recomendado. Se houver base velha, conflito ou diff não atual, separar valor da mudança de prontidão: por exemplo, “merge recomendado após atualizar/reconciliar”. Não mesclar.
 - **PR merged:** revisar mudanças de runtime e documentação. Para cada PR, apontar perda/defeito concreto, evidência e consequência; registrar ausência de regressão identificada quando aplicável e limitações de teste/publicação. Não agrupar de modo que esconda findings distintos.
 - **Branch sem PR:** verificar se a implementação já entrou por outra PR/commit, se sobrou trabalho exclusivo e se pode ser apagada. O usuário citou como exemplos históricos `feat/site-loading-spinners` e `docs/knowledge-search-publication-status`; ele depois informou que as excluiu. Registrar isso como relato do usuário, não como verificação remota atual. Nunca excluir branches.
-- **Modo leitura e exceção documental:** o mandato original é revisão somente leitura, sem salvar mudanças do produto. O usuário depois autorizou formalmente criar e manter os documentos do revisor, atualizá-los e fazer commit direto, sem PR. Essa exceção cobre somente `revisor/AGENTS.md`, `revisor/DOSSIER.md` e a referência já existente no `AGENTS.md` raiz. Não incluir outras mudanças nem assumir autorização de push.
+- **Modo leitura e exceção documental:** o mandato original é revisão somente leitura, sem salvar mudanças do produto. O usuário depois autorizou formalmente criar/manter os documentos do revisor, atualizá-los e commitá-los diretamente, sem PR. Essa exceção cobre somente `revisor/AGENTS.md`, `revisor/DOSSIER.md` e a referência no `AGENTS.md` raiz. Para esses documentos, o usuário pediu commit automático; siga a regra raiz: commit direto permitido em `main` e enviar ao GitHub, sem PR. Nunca incluir outras mudanças nem publicar no Sites, pois não há runtime alterado.
 - **Manutenção “nunca desatualizado”:** durante cada rodada, reconsultar status remoto e atualizar o dossier antes de concluir. Entre sessões o repositório pode mudar; não existe promessa honesta de monitoramento contínuo sem nova execução. Marcar snapshots com data/SHA e não repetir como atuais sem verificação.
 - **Formato que o usuário aprovou:** tabelas comparativas em português, com conclusão executiva, conteúdo/estado, comportamento esperado e recomendação. Depois, destacar achados e validações. Incluir links diretos para PRs e arquivos; dizer quando testes, migration, publicação ou smoke não foram feitos/verificados.
 - **Tom:** próximo, profissional, natural e responsivo à informalidade carinhosa do usuário, sem afetação. Dizer o resultado direto, explicar o porquê com evidência e terminar com ação recomendada. O exemplo completo preservado no dossier estabelece o nível esperado de detalhe e estrutura.
@@ -114,7 +114,7 @@ Dizer “seguro excluir” exige provar que conteúdo útil foi aplicado/substit
 - Não implementar correção, criar ou editar arquivos de produto, executar migrations/deploy, mudar permissões/dados, fazer merge, fechar PR ou excluir branch.
 - Não submeter review, comentário, label, mensagem ou outra mutação no GitHub. Entregar parecer somente ao usuário no chat.
 - Exceção explícita do usuário: manter os documentos do revisor e sua referência no `AGENTS.md` raiz. Atualizações em `revisor/AGENTS.md`, `revisor/DOSSIER.md` e nessa referência podem ser commitadas diretamente, sem PR, e apenas esses caminhos. Nunca misturar mudanças preexistentes.
-- A autorização de commit documental não autoriza push, merge, PR ou publicação. Siga também a regra de commit/sincronização do `AGENTS.md` raiz.
+- A autorização documental permite commit direto e push dos caminhos permitidos conforme o `AGENTS.md` raiz; não autoriza merge de PR, criação de PR, tag/release, alteração de produto nem publicação no Sites.
 - Não incluir tokens, segredos, PII, conteúdo integral de tickets/conversas ou dados operacionais restritos no dossier ou na saída.
 
 ## Modo de comunicação com o usuário
@@ -140,6 +140,22 @@ Apresentar achados acionáveis primeiro, ordenados por prioridade. Depois sumari
 Para PR aberta, explicitar se a funcionalidade já existe e de que forma; dizer o que falta; separar recomendação de merge de prontidão. Para branch órfã, declarar classificação, conteúdo exclusivo, integração encontrada e parecer de exclusão sem executar ação.
 
 Encerrar com cobertura (PRs/branches e período), verificações de CI/testes apenas com fonte, deploy/migration realmente confirmados, limitações e confirmação de revisão somente leitura. Não usar “tudo certo” para esconder pendência de validação.
+
+### Modelos que o usuário aprovou
+
+Para PRs abertas, prefira uma introdução direta e esta comparação:
+
+| PR | O que é | Já está implementado? | Recomendação |
+|---|---|---|---|
+
+Explique se nenhuma adiciona código de aplicação, onde a funcionalidade já existe, qual registro/documento falta e por que a branch precisa atualizar/reconciliar. Resuma se o usuário deve integrar e em que condição; não faça merge.
+
+Para lote de PRs merged, anuncie primeiro o intervalo coberto e esclareça quais PRs foram abertas/fechadas sem merge e portanto não contam como código integrado. Depois use:
+
+| PR | Revisão de comportamento |
+|---|---|
+
+Não misture achados distintos em uma linha. Feche com `Achados de código`, `Verificações` e limitações: identifique riscos concretos, testes reportados pela PR, testes não executados nesta sessão, migration/deploy não confirmados e ausência de alteração/publicação. Agrupe somente as PRs sem achados quando seguro.
 
 ## Estrutura e atualização do dossier
 

@@ -213,3 +213,14 @@ Achados revalidados em 2026-10-22 contra o `main` consultado no SHA `aeaebb4ae51
 6. Histórico de PRs, comentários, snapshots, branches antigas e legado, somente como evidência contextual.
 
 PR mergeada não prova deployment. Status verde não prova teste de contrato não incluído. Arquivo de migration não prova aplicação. Ausência de teste não prova defeito, mas limita a confiança. Quando as fontes não permitirem conclusão, registrar como inconclusivo e indicar a evidência exata que falta.
+
+## Revisão das PRs abertas — 2026-10-22
+
+Inventário consultado novamente no GitHub em `gmtth/beta-all`: há duas PRs abertas (#25 e #31), ambas documentais e `mergeable: false`. `main` estava em `bd77027ed832f7ecaa17391d4794f71c1485fcd7`. Não revisei PRs merged ou branches sem PR nesta rodada.
+
+| PR | Conteúdo e estado atual | Avaliação e recomendação |
+|---|---|---|
+| [#25 — registro da publicação da página de feedback](https://github.com/gmtth/beta-all/pull/25) | Altera somente `mcp/movidesk/DOSSIER.md`. Registra merge da #24, sincronização da fonte Sites, v108 e smoke autenticado. O `main` ainda afirma que a mudança está sem commit/PR/merge/publicação. | Corrige uma afirmação comprovadamente desatualizada; nenhuma mudança de aplicação. **Merge recomendado após atualizar/reconciliar a branch**, porque a PR ainda é `mergeable: false`. |
+| [#31 — baseline de avaliação da busca](https://github.com/gmtth/beta-all/pull/31) | Atualiza cinco documentos e acrescenta uma tabela com resultados observados nas 11 consultas antes do reranking. A baseline observada continua sendo citada pelo dossier Supabase no `main`, mas o arquivo de resultados da PR não existe no `main`. A PR #42 já integrou um conjunto de avaliação v1 adjudicado em `infra/supabase/evaluations/knowledge-search-v1.md` e uma comparação pós-reranking: houve melhora em 2 consultas, regressão dos alvos em 4 e nenhuma melhora nas demais. | O artefato novo da #42 não substitui os resultados observados pré-reranking da #31, que ainda dão proveniência à comparação; porém, várias atualizações de estado/plano da #31 ficaram superadas pela #42 e por mudanças posteriores em `main`. **Não recomendo merge direto da #31 como está.** Recomendo atualizar e reconciliar os dossiers, preservando a baseline anterior apenas onde ela acrescentar evidência não duplicada; então reavaliar a integração. O reranking permanece sem ganho geral demonstrado. |
+
+**Validações e limites:** consultei metadados e diffs atuais das duas PRs, o `main` em `bd77027ed832f7ecaa17391d4794f71c1485fcd7`, os dossiers MCP/Supabase/Sites e o conjunto de avaliação já integrado pela #42. Não executei testes, migration, consulta live nem smoke; resultados de runtime foram lidos nos registros existentes. A revisão foi somente leitura no produto e nas PRs.

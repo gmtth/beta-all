@@ -28,7 +28,7 @@ Quando houver conflito, aplicar esta ordem: (1) segurança e integridade do repo
 - Qual ferramenta, arquivo e branch estão dentro do escopo?
 - Qual comportamento já foi validado e precisa ficar intacto?
 - Qual evidência reproduz o defeito e qual teste provará a correção?
-- O pedido autoriza apenas commit, ou também push, PR, merge e publicação?
+- Há uma PR aberta para a branch atual? Merge e publicação foram pedidos explicitamente?
 - O resultado será entregue como código alterado, como análise, ou como estado publicado?
 
 Se qualquer resposta não estiver disponível, não inventar. Registrar a lacuna e continuar apenas com ações seguras e reversíveis.
@@ -74,14 +74,16 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 5. Adicionar ou atualizar testes de regressão através da interface pública da ferramenta.
 6. Executar testes focados, suíte relevante, validação do catálogo e build quando aplicável.
 7. Revisar o diff para garantir que somente o escopo autorizado foi alterado.
-8. Ao pedido de commit, criar o commit e enviá-lo ao GitHub na branch de trabalho, conforme o `AGENTS.md` raiz. Isso não autoriza abrir PR, fazer merge ou publicar/deploy no Sites; cada uma dessas ações continua exigindo pedido próprio.
-9. Após merge/deploy, verificar o resultado por evidência direta e atualizar `DOSSIER.md` com estado, commit/PR, versão publicada e limitações.
+8. Ao concluir uma alteração solicitada neste componente, verificar e criar sempre um commit com apenas as mudanças relacionadas desta worktree; enviar o commit à branch remota correspondente. Não esperar um pedido separado de commit/push.
+9. Garantir que exista uma PR para a branch de trabalho: reutilizar e atualizar a PR aberta da branch ou criar uma quando não existir. Não fazer merge nem publicar/deploy no Sites sem pedido explícito.
+10. Após merge/deploy, verificar o resultado por evidência direta e atualizar `DOSSIER.md` com estado, commit/PR, versão publicada e limitações.
 
 ## Git, PR e publicação
 
 - Não incluir arquivos gerados/temporários em commits sem autorização específica. Preserve alterações locais pré-existentes; quando um componente legado for retirado do projeto, registre no `DOSSIER.md` o escopo e o estado dos dados locais preservados.
 - Não usar reset destrutivo, checkout destrutivo ou remoção recursiva para “limpar” o repositório.
-- Não abrir PR apenas por rotina quando uma mudança pequena e de baixo risco puder ser commitada diretamente em `main` e as regras do repositório permitirem. Quando houver PR, indicar escopo, testes executados e riscos residuais.
+- Para todo trabalho concluído neste componente, mantenha o commit enviado e uma PR aberta na branch da worktree, independentemente do tamanho da mudança. Se a PR já existir, atualize-a; caso contrário, abra uma. Na descrição, informe escopo, testes executados e riscos residuais.
+- Inclua no commit somente alterações da worktree atual diretamente relacionadas à tarefa. Preserve alterações de outras worktrees, tarefas ou arquivos não relacionados; nunca inclua temporários, dependências geradas, segredos ou dados operacionais. Se não for possível separar com segurança, não descarte nem misture as mudanças: registre o bloqueio e preserve o estado local.
 - Um push não significa merge; uma PR aberta não significa deploy; uma versão salva não significa deploy concluído. Só declarar cada etapa após confirmação direta.
 - O endpoint MCP publicado é `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`. A barra final faz parte da configuração. A raiz do Site é a página/OAuth, não o endpoint de ferramentas.
 - Não alterar audiência, credenciais, bindings, OAuth ou domínio como efeito colateral de uma mudança funcional.
@@ -632,8 +634,8 @@ Ao resumir o projeto, use a ordem: objetivo → arquitetura → ferramentas → 
 
 ## Regra de commit e sincronização
 
-- Quando o usuário pedir **commit**, crie o commit e envie-o ao GitHub na branch de trabalho; só mantenha commit local se o usuário pedir explicitamente para não enviar.
-- Inclua apenas alterações rastreadas e diretamente relacionadas ao pedido. Preserve alterações preexistentes não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
-- Pedido de commit não autoriza merge, PR, tag/release nem publicação no Sites. Faça cada uma dessas ações somente quando solicitada.
+- Ao concluir qualquer mudança solicitada neste componente, crie sempre um commit e envie-o à branch remota da worktree, sem esperar pedido separado de commit/push.
+- Mantenha uma PR aberta para a branch de trabalho: atualize a PR existente ou crie uma se não houver. Isso não autoriza merge, tag/release ou publicação no Sites; essas ações exigem pedido explícito.
+- Inclua apenas alterações desta worktree diretamente relacionadas à tarefa. Preserve mudanças de outras worktrees ou não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
 - Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
 - Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.

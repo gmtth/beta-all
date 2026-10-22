@@ -162,6 +162,15 @@ test("Movidesk ticket lookup falls back from internal ID to an exact protocol ma
   assert.deepEqual(ticket, { id: 5835, protocol: "20260702000000016" });
 });
 
+test("Movidesk ticket lookup rejects an identifier that resolves to different tickets by ID and protocol", async () => {
+  await assert.rejects(
+    () => resolveMovideskTicketIdentifier("5835", async (kind) => kind === "id"
+      ? { id: 5835, protocol: "other" }
+      : { id: 9012, protocol: "5835" }),
+    (error: unknown) => error instanceof KnowledgeImportError && error.diagnostic === "ticket_mismatch",
+  );
+});
+
 test("knowledge_import_movidesk_ticket stores by canonical ID when called with a protocol", async () => {
   let persistedExternalId = "";
   const reader: KnowledgeStore = {

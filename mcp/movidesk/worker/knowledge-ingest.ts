@@ -91,15 +91,25 @@ export async function resolveMovideskTicketIdentifier(
   lookup: (kind: "id" | "protocol", value: string) => Promise<unknown | null>,
 ): Promise<unknown> {
   const byInternalId = await lookup("id", identifier);
-  if (byInternalId && movideskTicketMatchesIdentifier(byInternalId, identifier)) return byInternalId;
-
   const byProtocol = await lookup("protocol", identifier);
-  if (!byProtocol) {
-    if (byInternalId) throw new KnowledgeImportError("ticket_mismatch");
-    throw new KnowledgeImportError("ticket_not_found");
+  const internalIdMatches = Boolean(byInternalId && movideskTicketMatchesIdentifier(byInternalId, identifier));
+  const protocolMatches = Boolean(byProtocol && movideskTicketMatchesIdentifier(byProtocol, identifier));
+
+  if (internalIdMatches && protocolMatches) {
+    const internalRecord = ticketCandidates(byInternalId).find((ticket) =>
+      ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(ticket[key]) === identifier),
+    );
+    const protocolRecord = ticketCandidates(byProtocol).find((ticket) =>
+      ["id", "ticketId", "ticket_id", "protocol"].some((key) => scalarText(ticket[key]) === identifier),
+    );
+    const internalId = internalRecord && scalarText(firstValue(internalRecord, ["id", "ticketId", "ticket_id"]));
+    const protocolId = protocolRecord && scalarText(firstValue(protocolRecord, ["id", "ticketId", "ticket_id"]));
+    if (internalId && protocolId && internalId !== protocolId) throw new KnowledgeImportError("ticket_mismatch");
   }
-  if (!movideskTicketMatchesIdentifier(byProtocol, identifier)) throw new KnowledgeImportError("ticket_mismatch");
-  return byProtocol;
+  if (internalIdMatches) return byInternalId;
+  if (protocolMatches) return byProtocol;
+  if (byInternalId || byProtocol) throw new KnowledgeImportError("ticket_mismatch");
+  throw new KnowledgeImportError("ticket_not_found");
 }
 
 export async function buildMovideskKnowledgeRecord(ticketValue: unknown, expectedTicketId: string): Promise<MovideskKnowledgeRecord> {

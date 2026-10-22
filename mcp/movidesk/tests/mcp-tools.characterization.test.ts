@@ -298,10 +298,10 @@ test("characterization: search_tickets preserves filters and collection envelope
 
 test("characterization: get_ticket preserves the ticket envelope", async () => {
   let receivedId = "";
-  const tools = setup({ getTicket: async (id) => { receivedId = id; return [{ id: 6280, subject: "Assunto", status: "Aguardando" }]; } });
+  const tools = setup({ getTicket: async (id) => { receivedId = id; return [{ id: 6280, protocol: "20260702000000016", subject: "Assunto", status: "Aguardando" }]; } });
   const result = await tools.get("movidesk_get_ticket")!.handler({ ticket_id: "6280" }) as { structuredContent: unknown };
   assert.equal(receivedId, "6280");
-  assert.deepEqual(result.structuredContent, { ticket: { id: 6280, subject: "Assunto", status: "Aguardando" } });
+  assert.deepEqual(result.structuredContent, { ticket: { id: 6280, protocol: "20260702000000016", subject: "Assunto", status: "Aguardando" } });
 });
 
 test("characterization: list_open_tickets always returns a results object", async () => {

@@ -1,6 +1,6 @@
 # Instruções do componente Supabase
 
-Leia este arquivo e [`DOSSIER.md`](./DOSSIER.md) antes de alterar schema, migrations, acesso, API ou a página administrativa de dados. O runtime MCP e suas rotas também obedecem a [`../../mcp/movidesk/AGENTS.md`](../../mcp/movidesk/AGENTS.md). A fonte de trabalho é o monorepo `beta-all`; snapshots em `legacy/` e `docs/migration/` são históricos.
+Leia primeiro o [`AGENTS.md` raiz](../../AGENTS.md) e o dossier raiz; depois este arquivo e [`DOSSIER.md`](./DOSSIER.md) antes de alterar schema, migrations, acesso, API ou a página administrativa de dados. O runtime MCP e suas rotas também obedecem a [`../../mcp/movidesk/AGENTS.md`](../../mcp/movidesk/AGENTS.md). A fonte de trabalho é o monorepo `beta-all`; snapshots em `legacy/` e `docs/migration/` são históricos.
 
 ## Segurança do banco
 
@@ -48,11 +48,3 @@ O navegador pode mostrar chaves estrangeiras e relações como metadados de sche
 - `/admin/database` prioriza estrutura, chaves/índices/RLS e prévias paginadas das tabelas aprovadas. Pode indicar estado transitório da consulta e intervalo de linhas da página atual, mas não deve criar cartões de KPI, gráficos ou indicadores agregados concorrentes.
 - Para facilitar diagnósticos, a página deve resumir os controles de acesso por camada: gate de sessão/papel/scopes no Site/MCP e grants/RLS no Supabase. Não misturar nem listar tabelas D1 nesta página, não duplicar a lista de usuários/tokens do painel de controle e não exibir credenciais, tokens ou expressões SQL de políticas. Explicar que o Worker usa `service_role` (que ignora RLS), então a validação master server-side é obrigatória.
 - Manter `## Próximos passos` em [`DOSSIER.md`](./DOSSIER.md) atualizado; backlog não autoriza aplicar migration remota, publicar, commitar ou alterar permissões.
-
-## Regra de commit e sincronização
-
-- Quando o usuário pedir **commit**, crie o commit e envie-o ao GitHub na branch de trabalho; só mantenha commit local se o usuário pedir explicitamente para não enviar.
-- Inclua apenas alterações rastreadas e diretamente relacionadas ao pedido. Preserve alterações preexistentes não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
-- Pedido de commit não autoriza merge, PR, tag/release nem publicação no Sites. Faça cada uma dessas ações somente quando solicitada.
-- Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
-- Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.

@@ -142,10 +142,7 @@ Antes de publicar:
 4. confirmar que a versão do manifesto corresponde à release;
 5. só então criar e enviar o commit ao GitHub conforme o `AGENTS.md` raiz; criar tag ou release apenas quando o usuário pedir esse passo.
 
-## Regra de commit e sincronização
+## Git e release
 
-- Quando o usuário pedir **commit**, crie o commit e envie-o ao GitHub na branch de trabalho; só mantenha commit local se o usuário pedir explicitamente para não enviar.
-- Inclua apenas alterações rastreadas e diretamente relacionadas ao pedido. Preserve alterações preexistentes não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
-- Pedido de commit não autoriza merge, PR, tag/release nem publicação no Sites. Faça cada uma dessas ações somente quando solicitada.
-- Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
-- Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.
+- Worktree, branch, commit, push, PR, merge e publicação seguem exclusivamente o [`AGENTS.md` raiz](../../AGENTS.md). As regras específicas abaixo tratam apenas do versionamento e empacotamento do plugin.
+- Antes de empacotar, rode as validações locais e confirme a versão do manifesto conforme esta seção. Não crie tag/release sem solicitação explícita.

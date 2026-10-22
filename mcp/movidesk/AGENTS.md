@@ -67,37 +67,23 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 
 ## Fluxo obrigatório de trabalho
 
-1. Ler `AGENTS.md`, `DOSSIER.md`, o status do Git e as instruções locais aplicáveis.
+1. Ler primeiro o [`AGENTS.md` raiz](../../AGENTS.md) e o dossier raiz; depois este `AGENTS.md`, [`DOSSIER.md`](./DOSSIER.md), o status do Git e instruções locais aplicáveis.
 2. Definir o escopo exato: arquivos permitidos, contrato preservado, risco e evidência necessária.
 3. Reproduzir ou caracterizar o comportamento antes da alteração quando houver defeito.
-4. Fazer a menor mudança coerente. Para mudanças pequenas e de baixo risco, preferir commit direto em `main` quando permitido; usar branch `codex/...` e PR para mudanças amplas, de segurança/OAuth, permissões, schema/migrações, entre componentes, ou quando uma revisão independente for necessária. Nunca contornar proteção de branch.
+4. Aplicar a escada de decisão e o fluxo exclusivo de worktree/branch definidos no AGENT raiz; implementar a menor mudança coerente e nunca trabalhar diretamente em `main`.
 5. Adicionar ou atualizar testes de regressão através da interface pública da ferramenta.
 6. Executar testes focados, suíte relevante, validação do catálogo e build quando aplicável.
 7. Revisar o diff para garantir que somente o escopo autorizado foi alterado.
-8. Ao concluir uma alteração solicitada neste componente, verificar e criar sempre um commit com apenas as mudanças relacionadas desta worktree; enviar o commit à branch remota correspondente. Não esperar um pedido separado de commit/push.
-9. Garantir que exista uma PR para a branch de trabalho: reutilizar e atualizar a PR aberta da branch ou criar uma quando não existir. Não fazer merge nem publicar/deploy no Sites sem pedido explícito.
-10. Após merge/deploy, verificar o resultado por evidência direta e atualizar `DOSSIER.md` com estado, commit/PR, versão publicada e limitações.
+8. Seguir o fluxo transversal de worktree, branch, commit, PR, merge e Sites definido no [`AGENTS.md` raiz](../../AGENTS.md); este arquivo não duplica regras Git gerais.
+9. Depois de merge/publicação, validar o estado por evidência direta e atualizar este `DOSSIER.md` com commit/PR, versão publicada e limitações.
 
-## Git, PR e publicação
 
-- Não incluir arquivos gerados/temporários em commits sem autorização específica. Preserve alterações locais pré-existentes; quando um componente legado for retirado do projeto, registre no `DOSSIER.md` o escopo e o estado dos dados locais preservados.
-- Não usar reset destrutivo, checkout destrutivo ou remoção recursiva para “limpar” o repositório.
-- Para todo trabalho concluído neste componente, mantenha o commit enviado e uma PR aberta na branch da worktree, independentemente do tamanho da mudança. Se a PR já existir, atualize-a; caso contrário, abra uma. Na descrição, informe escopo, testes executados e riscos residuais.
-- Inclua no commit somente alterações da worktree atual diretamente relacionadas à tarefa. Preserve alterações de outras worktrees, tarefas ou arquivos não relacionados; nunca inclua temporários, dependências geradas, segredos ou dados operacionais. Se não for possível separar com segurança, não descarte nem misture as mudanças: registre o bloqueio e preserve o estado local.
-- Um push não significa merge; uma PR aberta não significa deploy; uma versão salva não significa deploy concluído. Só declarar cada etapa após confirmação direta.
-- O endpoint MCP publicado é `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`; essa é a forma canônica recomendada. O Worker também aceita `/mcp` sem barra final. A raiz do Site é a página/OAuth, não o endpoint de ferramentas.
-- Não alterar audiência, credenciais, bindings, OAuth ou domínio como efeito colateral de uma mudança funcional.
+## Limites de publicação do MCP
 
-### Sincronização do monorepo para o checkout Sites
-
-- A fonte canônica é `mcp/movidesk/` no monorepo. O checkout remoto do Sites é separado do `origin` GitHub.
-- Abra o helper oficial do Sites sempre pelo wrapper `npm run sites:workflow -- --helper "<caminho-absoluto-site-workflow.mjs>" --project-id "<project_id>"`, mesmo quando estiver no monorepo. O wrapper cria um workspace temporário isolado e evita que a raiz `beta-all` seja confundida com o checkout do Site; envie o JSON com a credencial somente pelo stdin do helper. No Windows, mantenha o `archivePath` Windows original para o Node nativo e priorize `System32` no `PATH` para que o empacotador use o `tar.exe` nativo.
-- Depois que o helper retornar `checkout_path`, sincronize-o a partir da raiz `beta-all` com `npm run sites:sync -- "<checkout_path>"`. Use `--dry-run` antes quando quiser conferir a contagem de cópias e remoções.
-- Para build, push e empacotamento, use o mesmo wrapper com `source` contendo o resultado de abertura, mantendo a credencial pelo stdin. Antes de iniciar o helper, o wrapper confere `project_id`, checkout, helpers oficiais, `tar.exe` nativo, lockfile, dependências e destino gravável/novo do pacote; instala com `npm ci` somente quando os manifests mudaram ou não há instalação válida. Dependências vinculadas por junction nunca são alteradas. No Windows, o build padrão usa `cmd.exe /c "npm.cmd run build"` para evitar o quoting que fazia o helper Sites resolver `npm-prefix.js` dentro de `node_modules` do projeto. Em outros sistemas, `build-site.mjs` é incluído automaticamente. O helper só faz commit/push depois que todos os comandos passam. O pacote deve ficar fora do checkout. Preserve o checkout até salvar a versão; remova-o somente depois de confirmar a publicação e verificar que não há alterações locais a recuperar.
-- O comando valida o ID do projeto em `.openai/hosting.json`, exige um checkout Git limpo de alterações rastreadas e recusa checkout dentro da fonte canônica. O helper do Sites pode criar o clone sem remote Git configurado. Preserva `.git`, `.openai/`, arquivos ignorados e arquivos locais não rastreados; sincroniza apenas caminhos usados pelo runtime/build (`app/`, `worker/`, `config/`, `public/`, `db/`, `drizzle/`, `build/` e manifests), removendo obsoletos somente nesses caminhos.
-- Documentação, testes, históricos e cópias em `work/`/`legado/` no checkout Sites são preservados sem sincronização. Nunca copie `.env` ou credenciais.
-- Após sincronizar, rode `npm run sites:workflow` novamente e envie `archivePath` absoluto e `source` da abertura pelo stdin. O wrapper acrescenta o build correto por plataforma; o helper faz o commit/push e empacota o mesmo estado. Em seguida use as ferramentas nativas Sites para salvar e implantar a versão; o sincronizador não publica nem guarda credenciais.
-
+- Regras de worktree, branch, commit, PR, push, merge e autorização geral de publicação seguem exclusivamente o [`AGENTS.md` raiz](../../AGENTS.md).
+- A fonte canônica do runtime é `mcp/movidesk/`; o checkout de fonte Sites é separado do GitHub. Para sincronizar, empacotar e publicar o runtime, siga o procedimento único em [`docs/components/sites.md`](../../docs/components/sites.md), usando o wrapper do monorepo e preservando o checkout isolado.
+- Endpoint MCP canônico: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`; a barra final é recomendada e `/mcp` também é aceita. A raiz do Site serve página/OAuth, não as ferramentas.
+- Não alterar audiência, credenciais, bindings, OAuth ou domínio como efeito colateral de mudança funcional.
 ## Padrão obrigatório de autenticação das ferramentas MCP
 
 Toda ferramenta MCP protegida deve seguir este contrato. Uma ferramenta nova não pode ser considerada pronta se omitir qualquer parte aplicável abaixo:
@@ -152,14 +138,6 @@ node scripts/validate-semantic-catalog.mjs
 ```
 
 Relate testes não executados, falhas preexistentes e limitações de ambiente. Não repetir silenciosamente até obter um resultado verde.
-
-## Ordem obrigatória entre GitHub e Sites
-
-- Pedido de **commit** pode ser atendido apenas com commit no GitHub; não implica publicação no Sites.
-- Pedido de **merge** pode ser atendido apenas com merge no GitHub; não implica publicação no Sites.
-- Pedido de **push** significa sincronizar o estado integrado no GitHub e a publicação no Sites quando o runtime deste componente tiver mudado.
-- Antes de publicar o Sites, todos os commits e merges do conjunto precisam estar aplicados no GitHub. Publique somente a fonte que corresponda ao estado integrado; não publique alterações locais ou uma branch ainda não mesclada.
-- Se GitHub, validação ou publicação falhar, relate o estado de cada etapa e não diga que ficou tudo sincronizado enquanto GitHub e Sites divergirem.
 
 ## Catálogo completo de autotestes
 
@@ -390,13 +368,13 @@ Esta seção transforma as decisões acumuladas na conversa em regras operaciona
 
 ### Governança de código e fases
 
-8. **Escolher o fluxo Git pelo risco e pelas regras do repositório.**
-   - **Motivo:** mudanças pequenas não precisam carregar o custo de PRs de rotina, enquanto alterações de alto impacto ainda se beneficiam de isolamento e revisão.
-   - **Conseqüência:** preferir commit direto em `main` para mudanças pequenas e de baixo risco quando permitido; usar `codex/<fase>-<escopo>` e PR para mudanças amplas, sensíveis ou que precisem de revisão. Nunca contornar proteção de branch.
+8. **Branch, worktree e PR seguem a diretriz transversal atual.**
+   - **Motivo:** cada conversa precisa manter mudanças isoladas e rastreáveis.
+   - **Conseqüência:** use worktree/branch exclusiva e ciclo de PR do AGENT raiz; nunca faça commit direto em `main`.
 
-9. **Preservar histórico e separar operações locais das remotas.**
-   - **Motivo:** commits diretos em `main` não devem comprometer rastreabilidade ou segurança.
-   - **Conseqüência:** nunca usar reescrita destrutiva ou contornar proteções. Commit local não implica push, merge remoto ou publicação; cada etapa remota exige autorização explícita.
+9. **Preservar histórico e distinguir estados remotos.**
+   - **Motivo:** commit, push, PR, merge e deploy são etapas distintas.
+   - **Conseqüência:** nunca reescrever histórico nem contornar proteções; siga os gatilhos e verificações do AGENT raiz.
 
 10. **“Não alterar o que funciona” é uma restrição técnica, não apenas uma preferência.**
     - **Motivo:** o projeto foi validado incrementalmente por ferramentas e tickets reais; mudanças amplas reabrem defeitos já encerrados.
@@ -633,11 +611,3 @@ Antes de responder ou agir, a LLM deve identificar explicitamente:
 8. **próxima ação segura:** somente dentro da autorização atual.
 
 Ao resumir o projeto, use a ordem: objetivo → arquitetura → ferramentas → fases → estado publicado → pendências → histórico. Ao relatar uma entrega, não misture intenção com resultado e não use “publicado” como sinônimo de “commitado”.
-
-## Regra de commit e sincronização
-
-- Ao concluir qualquer mudança solicitada neste componente, crie sempre um commit e envie-o à branch remota da worktree, sem esperar pedido separado de commit/push.
-- Mantenha uma PR aberta para a branch de trabalho: atualize a PR existente ou crie uma se não houver. Isso não autoriza merge, tag/release ou publicação no Sites; essas ações exigem pedido explícito.
-- Inclua apenas alterações desta worktree diretamente relacionadas à tarefa. Preserve mudanças de outras worktrees ou não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
-- Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
-- Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.

@@ -201,35 +201,55 @@ beta-all/                              # único clone/repos de trabalho após a 
 
 ### Modelo de integração e fluxo de trabalho
 
-- O trabalho diário de plugin, skills, MCP, API Supabase e Sites ocorre no mesmo clone de `beta-all`, em diretórios canônicos. Revisões podem delimitar um componente por pasta, mas commits e issues pertencem ao monorepo.
+- O trabalho diário de plugin, skills, MCP, API Supabase e Sites ocorre no repositório `beta-all`, em diretórios canônicos, usando worktree e branch exclusivas por conversa. Revisões podem delimitar um componente por pasta, mas commits e issues pertencem ao monorepo.
 - Durante a importação, preservar autoria e histórico: avaliar `git subtree` ou importação com prefixo, com refs/tags/commits de origem documentados. Se a história integral conflitar ou for impraticável, guardar refs, patches ou exports verificáveis e registrar o limite; nunca descartar histórico silenciosamente.
 - Registrar matriz de compatibilidade entre plugin/skills, MCP, endpoint Sites, scopes e schema/API Supabase. Builds, testes e publicações devem apontar aos diretórios do monorepo e continuar isolados por componente.
 - Não deixar workflows, automações ou instruções de contribuição apontando aos repositórios antigos como destino de desenvolvimento. Manter seus URLs somente como proveniência/arquivo.
 - Na primeira versão, não depender de scripts. Se forem introduzidos depois, limitar a bootstrap e verificação segura; nunca esconder deploys ou mutações remotas em comandos inesperados.
 
-### Cadência de commits
+## Fluxo geral de desenvolvimento, GitHub e publicação
 
-- O usuário autoriza commits automáticos a cada três prompts do usuário que resultem em alterações rastreadas feitas pelo agente neste repositório. Prompts apenas informativos, perguntas sem alteração e atualizações de status não contam; reiniciar a contagem após cada commit.
-- Antes de cada commit, revisar o diff e o estado do Git. Incluir somente alterações relacionadas ao trabalho autorizado; nunca incluir segredos, dados operacionais, arquivos temporários/gerados ou alterações preexistentes do usuário sem relação com a tarefa.
-- Quando o usuário pedir commit, considerar autorizado criar o commit e enviá-lo ao GitHub na branch de trabalho, sem deixar o pedido apenas em um commit local. Esse envio não autoriza merge nem publicação no Sites.
-- Se o trabalho estiver incompleto, o diff não puder ser atribuído com segurança ou houver risco de registrar conteúdo sensível, adiar o commit e explicar o motivo.
+Estas regras são a fonte única para branch/worktree, codificação, commit, PR, merge e publicação no Sites. Todos os `AGENTS.md` de componente devem mandar ler este arquivo primeiro e manter aqui as regras transversais; instruções locais ficam limitadas a arquitetura, comandos, contratos e riscos próprios do componente.
 
-### Preferência por commits diretos em `main`
+### Worktree e isolamento por conversa
 
-- Para mudanças pequenas, de baixo risco e escopo claro, preferir commit direto em `main` quando a branch estiver disponível e as regras do repositório permitirem. Evitar criar PR apenas por rotina nesses casos.
-- Usar branch de trabalho e PR quando a mudança for ampla, envolver vários componentes, alterar segurança/OAuth, permissões, schema ou migrações, exigir revisão independente, ou quando o usuário pedir esse fluxo.
-- Nunca contornar proteção de branch, revisão obrigatória ou controles do repositório; não reescrever histórico nem fazer force-push.
-- Antes de escolher o fluxo, conferir branch atual, estado do working tree e regras remotas. Não trocar de branch com alterações não relacionadas ou estado que possa ser perdido; preservar o trabalho em andamento.
-- Um commit em `main` deve ser enviado ao GitHub quando o pedido do usuário for commit; merge remoto e deploy continuam ações separadas e exigem pedido próprio.
+- Cada conversa que altera este repositório trabalha em uma worktree própria e em uma branch exclusiva daquela conversa. Nunca misture commits, mudanças ou PRs de conversas/worktrees diferentes nem reutilize uma branch pertencente a outra conversa.
+- Antes de editar, confira a raiz Git, a worktree, a branch, o estado completo do working tree e a relação com `origin/main`. Se a worktree ainda não tiver uma branch exclusiva, crie automaticamente uma `codex/<escopo-curto>` antes da primeira alteração; nunca trabalhe diretamente em `main`.
+- Se a worktree estiver em `main`, detached HEAD, ou contiver mudanças preexistentes que possam ser misturadas, crie uma worktree/branch separada a partir do `origin/main` atualizado e preserve integralmente o checkout e as mudanças originais. Não faça checkout, reset, limpeza ou stash que arrisque trabalho de outra conversa.
+- Se uma branch ou worktree correspondente já existir e pertencer comprovadamente à conversa atual, continue nela; caso contrário, crie uma nova. Não force nomes existentes nem force-push.
 
-### Sincronização GitHub e publicação no Sites
+### Escada obrigatória antes de qualquer alteração
 
-- Um pedido de **commit** autoriza criar o commit e enviá-lo ao GitHub na branch de trabalho. Não publicar no Sites, abrir PR ou fazer merge sem pedido correspondente.
-- Um pedido de **merge** autoriza concluir o merge no GitHub; pode ser somente merge, sem publicar no Sites.
-- Um pedido de **push** significa deixar o projeto sincronizado: enviar ao GitHub todos os commits e merges necessários e publicar no Sites a versão correspondente, quando o escopo envolver o runtime do Sites. Antes do deploy, confirmar que a fonte publicada corresponde ao estado já enviado/mesclado no GitHub.
-- Publicar no Sites somente depois que todos os commits e merges daquele conjunto de alterações estiverem aplicados no GitHub. Nunca publicar alterações locais ou uma branch ainda não integrada como se fossem o estado sincronizado solicitado.
-- Se houver bloqueio de GitHub, teste ou publicação, não declarar a sincronização concluída: preservar o que já foi feito, informar exatamente qual lado ficou pendente e manter o Sites sem publicar uma versão que não corresponda ao estado integrado no GitHub.
+Responda nesta ordem antes de implementar; pare assim que uma resposta resolver o problema:
 
+1. **Isso precisa existir?** Se não, não implemente.
+2. **Já existe algo equivalente neste código?** Reutilize; não reescreva.
+3. **A biblioteca padrão resolve?** Prefira-a.
+4. **Há recurso nativo da plataforma?** Prefira-o.
+5. **A dependência já está instalada?** Reutilize-a; não acrescente dependência sem necessidade comprovada.
+6. **Cabe em uma linha clara?** Mantenha em uma linha, sem sacrificar leitura, teste ou segurança.
+7. **Só então**, implemente a menor solução que funcione e cumpra o contrato.
+
+Além disso, leia este `AGENTS.md`, o dossier raiz e os `AGENTS.md`/dossiers ativos dos componentes afetados; delimite arquivos e invariantes, reproduza defeitos, adicione testes de regressão, rode as verificações proporcionais e revise o diff. Preserve mudanças fora do escopo. Não enfraqueça testes nem inclua segredos, dados operacionais ou artefatos gerados.
+
+### Commit, push, PR e merge
+
+- Ao final de cada prompt do usuário que resultar em alterações rastreadas feitas pelo agente, revise o diff e faça commit do conjunto coerente e validado naquela worktree; envie-o à branch remota exclusiva da conversa. Não espere um pedido separado de commit. Perguntas/status sem alteração não geram commit.
+- Inclua somente alterações atribuíveis ao pedido e à worktree atual. Nunca inclua alterações preexistentes do usuário ou de outra conversa, arquivos temporários/gerados, dependências, segredos ou dados operacionais. Se não for possível separar com segurança, preserve tudo e informe o bloqueio.
+- Para cada branch de conversa, mantenha uma PR própria: atualize a PR aberta dessa branch ou crie uma se ainda não existir. A descrição registra escopo, testes, limitações e riscos residuais. Não inclua trabalho de outra conversa na PR.
+- Antes de integrar, atualize referências remotas sem alterar o trabalho local; confira o diff completo, marcadores de conflito, mudanças concorrentes, checks e mergeabilidade contra `origin/main`. Use comparação/merge-tree e a informação da PR. Resolva conflitos preservando ambos os lados quando compatíveis; nunca sobrescreva silenciosamente, contorne proteção, reescreva histórico ou force-push.
+- Pela diretriz do usuário, um pedido de **push** ou **merge** da mudança em andamento significa levar a branch exclusiva da conversa à `main` por sua PR, depois que os testes/smokes relevantes passarem e não houver conflito não resolvido. Não fazer commit direto em `main`. Se houver bloqueio, mantenha a branch/PR intactas e descreva o impedimento.
+- O push automático da branch ao fim do prompt é sincronização da branch e atualização/criação de PR; ele, sozinho, não equivale a um pedido explícito de merge nem de publicação. Confirme SHA remoto, PR e estado separadamente.
+- Após merge, confirme pelo GitHub que a PR foi mesclada e que o SHA entrou na `main`; rode novamente as verificações proporcionais no estado integrado quando possível. Merge não significa publicação.
+
+### Publicação do Sites
+
+- Publicação só acontece depois do merge na `main`, quando pedida pelo usuário ou abrangida por um pedido explícito de sincronização/push segundo esta diretriz. Nunca publicar uma branch local ou um estado diferente do commit integrado.
+- Para o runtime MCP, a fonte canônica é `mcp/movidesk/`; o checkout de fonte do Sites é separado do GitHub. Siga o procedimento executável e atualizado em [`docs/components/sites.md`](docs/components/sites.md) e, para detalhes do runtime, em [`mcp/movidesk/AGENTS.md`](mcp/movidesk/AGENTS.md). Não duplique esse procedimento nos demais componentes.
+- Confirme o Site/projeto exato, audiência atual, `project_id`, manifesto e versão implantada. Preserve audiência e configurações existentes. Mantenha credenciais em memória e envie-as somente pelo stdin do helper; nunca em argumentos, arquivos, logs ou mensagens.
+- Use o wrapper de publicação do monorepo e o helper oficial; revise o `--dry-run` do sincronizador e o diff no checkout isolado antes de sincronizar. Não sobrescreva `.git`, `.openai/`, arquivos locais ou dados ignorados; o sincronizador só pode mudar os caminhos permitidos. Preserve o checkout e o pacote até salvar/publicar com sucesso.
+- Rode build, testes e smoke tests apropriados antes do pacote e depois do deploy. Confirme diretamente versão, SHA-fonte, deployment terminal, URL, audiência e superfícies afetadas (raiz, OAuth e `/mcp/` conforme o caso). Atualize dossier e PR com evidência; se qualquer etapa falhar, relate o estado parcial sem declarar publicação concluída.
+- “Commitado”, “enviado”, “PR aberta”, “mesclado”, “versão salva”, “publicado” e “disponível ao cliente” são estados distintos; só afirmá-los com evidência direta.
 ### Sequência de execução antes da importação
 
 1. Verificar se as tarefas paralelas relacionadas ao MCP, Site, `AGENTS.md`, `DOSSIER.md` e documentação terminaram; confirmar que as alterações desejadas foram commitadas e enviadas aos remotes.
@@ -312,15 +332,7 @@ beta-all/                              # único clone/repos de trabalho após a 
 - Fazer alterações pequenas e rastreáveis; preservar código e decisões fora do escopo.
 - Segredos só em variáveis protegidas do servidor. Não gravar valores secretos em `AGENTS.md`, outros arquivos ou saídas de terminal.
 - Para cada mudança de integração, testar autenticação/autorização negativa e positiva, limites de consulta, mensagens de erro sanitizadas e comportamento com fonte vazia/indisponível.
-- Não fazer merge, publicação em produção, mudança de permissões ou alteração destrutiva de dados sem pedido/autoridade correspondente do usuário.
-
-## Regra de commit e sincronização
-
-- Quando o usuário pedir **commit**, crie o commit e envie-o ao GitHub na branch de trabalho; só mantenha commit local se o usuário pedir explicitamente para não enviar.
-- Inclua apenas alterações rastreadas e diretamente relacionadas ao pedido. Preserve alterações preexistentes não relacionadas; nunca inclua temporários, dependências geradas, segredos ou dados operacionais.
-- Pedido de commit não autoriza merge, PR, tag/release nem publicação no Sites. Faça cada uma dessas ações somente quando solicitada.
-- Se o usuário pedir **push**, aplique a regra de sincronização do projeto: commits/merges no GitHub primeiro e, quando o runtime do Sites tiver mudado, publique a versão correspondente depois. Não publique mudanças locais ou ainda não integradas.
-- Após o push, confirme a branch e o SHA remoto e informe claramente qualquer etapa que tenha ficado pendente.
+- Não fazer publicação em produção, mudança de permissões ou alteração destrutiva de dados sem pedido/autoridade correspondente. Para merge e publicação no Sites, seguir o fluxo geral acima e seus gatilhos explícitos.
 
 ## Revisor oficial de PRs e branches
 

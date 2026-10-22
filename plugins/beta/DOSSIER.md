@@ -1,6 +1,6 @@
 # Dossier do plugin Beta
 
-**Atualizado:** 2026-10-20
+**Atualizado:** 2026-10-22
 
 **Componente:** `plugins/beta/`
 
@@ -130,6 +130,7 @@ Não há evidência suficiente para atribuir data ou motivação a toda a evolu�
 | Dependência declarativa ClickUp | Pendente de verificação do formato/runtime | Identificar e validar a conexão ClickUp suportada; então declarar `dependencies.tools` sem inventar endpoints ou IDs. |
 | Importação MCP/Supabase em produção | Runtime publicado na versão 74; ainda pendente de uso autenticado | Reautorizar scopes no cliente MCP e confirmar a importação do ticket piloto; não inferir sucesso da configuração local. |
 | Busca diagnóstica completa | Pendente em MCP/base | Ingestão, busca híbrida, filtros de classificação, reranking, citações e avaliação permanecem etapas separadas. |
+| Implementar protocolo de feedback explícito e autodiagnóstico nas skills | Política v1 e instrução inicial foram adicionadas localmente nesta worktree; versão da skill `beta` 5 e pacote 1.0.5. Runtime MCP ainda não publicado e captura continua desligada. | Validar a instrução no conjunto de cenários de comportamento, sincronizar com a configuração publicada do MCP e concluir opt-out/correção/remoção e agrupamento revisável. Não declarar gravação se a ferramenta estiver ausente/desativada. Ver [`../../docs/architecture/feedback-and-self-diagnosis.md`](../../docs/architecture/feedback-and-self-diagnosis.md). |
 
 Ao confirmar a conclusão de um item, retire-o desta lista e registre a evidência no histórico. A implementação de OAuth e a migration/runtime atuais são acompanhadas em [`mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md#próximos-passos) e [`infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md#próximos-passos).
 

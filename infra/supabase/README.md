@@ -37,6 +37,14 @@ A migration `20261020150000_admin_knowledge_overview.sql` adiciona uma RPC somen
 
 Esta migration está preparada no repositório, mas ainda não foi aplicada ao Supabase. Até sua aplicação e publicação do runtime correspondente, o painel pode mostrar a conexão online e os indicadores de conhecimento indisponíveis.
 
+### Feedback e autodiagnóstico (migrations aplicadas)
+
+A migration `migrations/20261022140000_feedback_diagnostics_schema.sql` cria o schema separado para feedback, palavras ofensivas, clusters revisáveis, auditoria mínima e agregados mensais por analista. Inclui RLS sem grants diretos e 10 RPCs restritas para gravação idempotente, listagem paginada, resumo, revisão, correção sem guardar valor anterior, remoção individual, remoção do histórico identificado (incluindo agregados) e limpeza/rollup. Foi aplicada ao Supabase em 2026-10-22; a execução confirmou a sintaxe/DDL, mas não substitui testes funcionais das RPCs. O Worker ainda precisa validar OAuth `feedback:write` para gravar e papel master para leitura/revisão/remoção. A versão vem após `expand_recent_imports` (`20261022130000`). A captura permanece desligada.
+
+As migrations foram aplicadas com captura desligada. A criação do schema não inicia gravação de eventos; mantenha a captura desabilitada até a publicação/revisão de `/privacy` e `/terms` e a designação do contato organizacional. Veja o estado canônico em [`DOSSIER.md`](./DOSSIER.md#modelagem-local-de-feedbackautodiagnóstico-2026-10-22).
+
+A migration separada `20261022150000_schedule_feedback_retention.sql` registra no Supabase Cron uma execução horária da limpeza/rollup e remove diariamente somente o histórico dos dois jobs da Beta com mais de sete dias. `pg_cron` foi habilitado pelo usuário e confirmado por consulta somente leitura em 2026-10-22; as migrations foram aplicadas e ambos os jobs constam ativos. Ainda não há execução registrada; consultar o histórico para confirmar a primeira execução bem-sucedida. O rollback `rollback/20261022150000_unschedule_feedback_retention.sql` remove somente os dois jobs da Beta, sem desativar a extensão compartilhada.
+
 ## Segredos e configuração
 
 Configurar no ambiente do servidor apenas `SUPABASE_URL` e `SUPABASE_SECRET_KEY`, com valores guardados no gerenciador de segredos do host. Nunca colocar a chave secreta em arquivos do plugin, navegador, commits ou contexto retornado ao modelo. Uma chave compartilhada anteriormente na conversa foi considerada comprometida; usar apenas uma chave rotacionada e ativa.

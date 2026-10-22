@@ -3,8 +3,10 @@ export const MCP_CLIENT_ID = "movidesk-mcp-app";
 export const OAUTH_SCOPE = "movidesk:read";
 export const KNOWLEDGE_READ_SCOPE = "knowledge:read";
 export const KNOWLEDGE_WRITE_SCOPE = "knowledge:write";
+export const FEEDBACK_WRITE_SCOPE = "feedback:write";
+export const BETA_TERMS_VERSION = "2026-10-22-v2";
 export const OFFLINE_ACCESS_SCOPE = "offline_access";
-export const SUPPORTED_RESOURCE_SCOPES = [OAUTH_SCOPE, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE] as const;
+export const SUPPORTED_RESOURCE_SCOPES = [OAUTH_SCOPE, KNOWLEDGE_READ_SCOPE, KNOWLEDGE_WRITE_SCOPE, FEEDBACK_WRITE_SCOPE] as const;
 export const SUPPORTED_OAUTH_SCOPES = [...SUPPORTED_RESOURCE_SCOPES, OFFLINE_ACCESS_SCOPE] as const;
 export const ACCESS_TOKEN_TTL_SECONDS = 30 * 24 * 60 * 60;
 export const REFRESH_TOKEN_TTL_SECONDS = 90 * 24 * 60 * 60;
@@ -32,7 +34,7 @@ export type OAuthTokenRecord = {
   resource: string | null;
 };
 
-export type OAuthTokenFailure = "invalid_token" | "insufficient_scope";
+export type OAuthTokenFailure = "invalid_token" | "insufficient_scope" | "terms_not_accepted";
 
 export function oauthTokenFailure(
   row: OAuthTokenRecord | null,
@@ -126,6 +128,7 @@ export function permissionLabelForScopes(scope: string) {
   if (requested.has(OAUTH_SCOPE)) labels.push("Movidesk · leitura de tickets");
   if (requested.has(KNOWLEDGE_READ_SCOPE)) labels.push("Base de conhecimento · leitura");
   if (requested.has(KNOWLEDGE_WRITE_SCOPE)) labels.push("Base de conhecimento · inclusão de chamados");
+  if (requested.has(FEEDBACK_WRITE_SCOPE)) labels.push("Feedback da Beta · registro de avaliações e lacunas observadas");
   if (requested.has(OFFLINE_ACCESS_SCOPE)) labels.push("Sessão contínua · renovação automática");
   return labels.join(" + ");
 }

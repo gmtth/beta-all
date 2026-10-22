@@ -6,7 +6,7 @@ const mcpConfig = `{
   "serverUrl": "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/",
   "oauth": {
     "authorizationServer": "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site",
-    "scope": "movidesk:read knowledge:read knowledge:write",
+    "scope": "movidesk:read knowledge:read knowledge:write feedback:write",
     "pkce": "S256"
   }
 }`;
@@ -22,6 +22,7 @@ const tools = [
   { name: "movidesk_find_similar_tickets", title: "Encontrar semelhantes", detail: "Compara conteúdo e sinais estruturados com pontuação explicável.", input: "ticket_id ou keyword, filtros e paginação" },
   { name: "knowledge_list_sources", title: "Listar fontes da base", detail: "Lista as fontes de conhecimento compartilhadas disponíveis.", input: "sem parâmetros; requer knowledge:read" },
   { name: "knowledge_import_movidesk_ticket", title: "Adicionar chamado à base", detail: "Importa explicitamente um chamado para a base interna compartilhada e registra quem fez a inclusão.", input: "ticket_id; requer movidesk:read e knowledge:write" },
+  { name: "beta_record_feedback", title: "Registrar feedback ou lacuna", detail: "Registra um sinal explícito ou uma limitação observada, sem transcript nem raciocínio interno; a captura pode estar desativada no ambiente.", input: "evento estruturado; requer feedback:write e aceite vigente dos termos" },
   { name: "movidesk_detect_recurrent_issues", title: "Detectar recorrências", detail: "Agrupa problemas com evidências por campo, tendência, status, urgência, clientes, concentração e qualidade da amostra.", input: "período, filtros, mínimo de ocorrências e paginação" },
   { name: "movidesk_search_people", title: "Pesquisar pessoas", detail: "Pesquisa pessoas autorizadas usando filtros e paginação.", input: "filtros compartilhados + active" },
   { name: "movidesk_list_services", title: "Listar serviços", detail: "Lista serviços autorizados usando filtros e paginação.", input: "filtros compartilhados + active" },

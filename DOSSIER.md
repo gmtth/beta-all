@@ -1,6 +1,6 @@
 # Dossier da Beta — índice do contexto
 
-Atualizado em 2026-10-21. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
+Atualizado em 2026-10-22. Este dossier é o índice executivo; dossiers completos e instruções específicas continuam junto aos respectivos componentes e nas cópias documentais de migração.
 
 ## Objetivo do produto
 
@@ -67,6 +67,12 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - Smoke autenticado em produção como master: o painel carregou `432000000 ms` (5 dias), salvar esse valor retornou confirmação de sucesso e, após recarregar e aguardar a tela carregar, o GET exibiu novamente `432000000 ms`. O valor de produção não foi alterado. A tentativa local de `npm test` nesta sessão não iniciou porque o executável `vinext` não está instalado no checkout; não foram instaladas dependências. O PR registra testes anteriores aprovados, mas esses resultados não são uma execução nova desta sessão.
 - O endpoint `POST /api/admin/users/logout` retornou 404 na v83 (request `b719147d…`). A rota foi sincronizada ao checkout do Site e publicada na v84; commit da fonte Sites `2c6860511760c6a5b988bf3c5205536033fc65dd`, deployment `appgdep_6ad8db1b112c8191b7f74972c426f50f`. Smoke sem identidade retornou 401 `unauthorized`, confirmando que a rota existe; nenhum token foi revogado nesse smoke. O código estava no commit `1f22bff` da branch `codex/admin-access-token-expiration` e entrou em `main` pela PR #3, mesclada no commit squash `4afbec5c800788e8f96eb5ef538273962ddcb29b`. Ver pendências restantes no dossier MCP.
 
+### Política de feedback e autodiagnóstico (2026-10-22)
+
+- Passos 1–3 concluídos como definição funcional/política de produto v1. O passo 3 inclui retenção detalhada de 90 dias, agregados identificáveis por analista de até 12 meses sem ocultar grupos pequenos, rota de feedback agrupado, ranking e índice de linguagem ofensiva, revisão de `/privacy`, criação de `/terms` e concordância explícita no OAuth. Nesta worktree os passos 4–7 têm implementação local parcial: migration/RPCs, ferramenta MCP/API master-only, consentimento OAuth e painel `/admin/feedback`; apenas e-mails em `OAUTH_MASTER_EMAILS` têm checkbox pré-marcado e contagem automática de 10 segundos cancelável. Ainda sem build, validação SQL, dados reais ou publicação. Captura continua desativada. Produção depende de designar contato organizacional e validar o texto público.
+- Identidade deve vir da sessão OAuth validada; quando ausente, registrar como não identificado sem atribuição inferida. Agrupamento por IA é sugestão revisável; motivo emocional inferido não é fato. Nenhum evento altera conhecimento ou comportamento automaticamente.
+- As migrations Supabase de feedback (`20261022140000`, `20261022150000`) foram aplicadas em 2026-10-22, com RLS, grants restritos e jobs Cron ativos. A captura continua desligada e não há eventos reais; produção depende de revisão do aviso/termos e designação do contato organizacional. Execução bem-sucedida dos jobs, integração funcional e publicação ainda precisam ser confirmadas.
+
 ## Migração e rastreabilidade
 
 `docs/migration/` registra repositórios, SHAs, comparação documental, estado local não reconciliado e critérios de corte. A tabela acima encaminha para cada fonte operacional canônica. `legacy/` e `docs/migration/source-documents/` são evidência histórica, não instruções atuais. O dossier do plugin foi reconstruído retroativamente com base no snapshot importado, nas instruções e nos arquivos históricos disponíveis; não é uma transcrição integral das conversas originais.
@@ -118,5 +124,6 @@ Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 teste
 | Alta | Retomar piloto e busca da base compartilhada. | Importação piloto, busca híbrida e validação de permissões continuam pendentes; ver [`infra/supabase/DOSSIER.md`](infra/supabase/DOSSIER.md#próximos-passos) e o dossier MCP. |
 | Média | Expandir métricas MCP com erros por categoria e comparação de períodos. | Após latência por ferramenta e taxa de sucesso, incluir agregação segura de categorias e comparação entre os últimos 30 dias e os 30 dias anteriores; preservar a política de minimização de dados. |
 | Média | Confirmar disponibilidade do marketplace Beta e conexão ClickUp do plugin. | Pendências mantidas no [`plugins/beta/DOSSIER.md`](plugins/beta/DOSSIER.md#próximos-passos). |
+| Alta | Validar a integração e concluir o piloto controlado de feedback/autodiagnóstico. | Passos 1–3 definidos; passos técnicos 4–7 implementados localmente nesta worktree: migrations de schema e Cron aplicadas ao Supabase em 2026-10-22; ferramenta `beta_record_feedback`/`feedback:write`, API master-only, consentimento persistido, termos e painel `/admin/feedback`. RLS/grants e jobs ativos conferidos; ainda sem execução dos jobs, build, publicação ou piloto. Captura permanece desligada; ativação depende da revisão dos textos públicos e designação do contato organizacional. Plano: [`docs/architecture/feedback-and-self-diagnosis.md`](docs/architecture/feedback-and-self-diagnosis.md). |
 
 Este é o índice transversal do backlog. As condições de conclusão e evidências detalhadas permanecem nos dossiers canônicos dos componentes; itens resolvidos devem sair daqui e da lista do componente na mesma atualização.

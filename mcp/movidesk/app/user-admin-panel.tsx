@@ -71,6 +71,7 @@ const scopeDescriptions: Record<string, string> = {
   "movidesk:read": "Permite consultar chamados, pessoas, serviços e históricos no Movidesk.",
   "knowledge:read": "Permite consultar as fontes e informações da base de conhecimento compartilhada.",
   "knowledge:write": "Permite importar chamados para a base compartilhada quando solicitado explicitamente.",
+  "feedback:write": "Permite registrar feedback explícito e limitações observadas da Beta, conforme os Termos de Uso e o Aviso de Privacidade.",
   offline_access: "Permite renovar a sessão sem pedir autorização novamente, enquanto a autorização continuar válida.",
 };
 const toolTitle = (name: string) => toolTitles[name] ?? name;

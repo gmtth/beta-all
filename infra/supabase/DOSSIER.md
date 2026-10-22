@@ -1,6 +1,6 @@
 # Dossier do Supabase da Beta
 
-Atualizado em 2026-10-20. Este documento registra o estado conhecido e as evidências disponíveis. O `README.md` contém o resumo operacional; regras de runtime e segurança também estão em `mcp/movidesk/AGENTS.md`.
+Atualizado em 2026-10-22. Este documento registra o estado conhecido e as evidências disponíveis. O `README.md` contém o resumo operacional; regras de runtime e segurança também estão em `mcp/movidesk/AGENTS.md`.
 
 ## Resumo canônico
 
@@ -30,6 +30,7 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 - Separar registros-fonte, trechos de busca e histórico de conversas. Conversas e hipóteses não viram conhecimento confirmado automaticamente.
 - Busca final deve combinar lexical e vetorial, aceitar sintomas e contexto de máquinas sem depender de códigos de erro, reranquear evidências e devolver referências às fontes.
 - Gravação/atualização de conhecimento exige capacidade separada, validação e trilha de auditoria; `knowledge:read` não a autoriza.
+- Eventos contextuais de feedback/autodiagnóstico ficam separados da base de conhecimento e da telemetria D1. A política de produto v1 está definida: detalhes por 90 dias; agregados mensais com identidade analista por até 12 meses, sem ocultar grupos pequenos. Migration e rollback foram preparados localmente, sem aplicação remota. Produção aguarda contato organizacional e textos públicos validados. Ver [`../../docs/architecture/feedback-and-self-diagnosis.md`](../../docs/architecture/feedback-and-self-diagnosis.md).
 
 ## Prontidão por etapa
 
@@ -47,6 +48,7 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 | Ingestão em lote ClickUp/documentos | Pendente | Definir sincronização incremental, idempotência, remoções/atualizações, retries e quarentena de falhas |
 | Diagnóstico híbrido e contexto consolidado | Pendente | Implementar busca, filtros de permissão, reranking, citações e avaliação com casos representativos |
 | Histórico/telemetria e governança | Pendente | Definir papéis, minimização, retenção, correção/exclusão, backup e recuperação |
+| Schema de feedback/frustração/autodiagnóstico | Migrations aplicadas no Supabase em 2026-10-22; sem eventos | Tabelas de detalhe, termos, clusters, auditoria e agregados estão criadas com RLS e sem grants diretos; RPCs estão limitadas ao `service_role`. A migration `20261022140000` criou o schema e a `20261022150000` agendou rollup/expiração horária e limpeza diária limitada aos dois jobs da Beta. `pg_cron` está ativo e ambos os jobs constam ativos. Não há execuções registradas ainda; captura permanece desligada. Build, chamadas funcionais, execução Cron, publicação e piloto continuam pendentes. |
 | Produção | Não aprovada por este dossier | Revisar limites do plano, backup/restore, disponibilidade, segurança e monitoramento |
 
 ## Próximos passos
@@ -58,6 +60,17 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 | Média | Definir sincronização em lote para ClickUp e documentos administrativos. | Especificar atualização incremental, idempotência, remoções, retries, quarentena e auditoria antes de importar em massa. |
 | Média | Fechar política operacional de retenção, backup e recuperação. | Testar exportação e restauração e rever limites/disponibilidade do plano antes de ampliar o piloto. |
 | Média | Aplicar a migration dos indicadores agregados do painel administrativo, se ainda necessária. | Confirmar o estado remoto antes de aplicar; validar RPC e painel end-to-end sem retornar conteúdo de tickets. |
+| Alta | Validar a integração e concluir o piloto controlado de feedback/fricção/autodiagnóstico. | Nesta worktree, Worker, consentimento OAuth/termos, skill, API master-only e painel `/admin/feedback` estão implementados localmente; captura permanece desligada. Em 2026-10-22, aplicamos as migrations `20261022140000` e `20261022150000`; as onze versões locais coincidem com o histórico remoto. Confirmamos RLS nas seis tabelas, ausência de SELECT direto para `service_role`, permissão de execução da RPC de retenção e dois jobs Cron ativos, limitados à Beta. Ainda faltam execução bem-sucedida dos jobs, build/revisão visual, publicação e piloto. Só habilitar captura após aprovação do contato organizacional e dos textos públicos. |
+
+### Modelagem local de feedback/autodiagnóstico (2026-10-22)
+
+- A migration `20261022140000_feedback_diagnostics_schema.sql` cria eventos detalhados, palavras ofensivas associadas, clusters sugeridos/revisáveis, auditoria de revisão, métricas mensais por analista e contagens mensais por termo ofensivo. Inclui RPCs de gravação idempotente, listagem paginada de grupos, eventos e termos, resumo agregado e revisão de evento/cluster. Identidade autenticada permanece nas agregações para sustentar o ranking pedido; agregados não são anônimos. A versão foi numerada depois da sequência remota, que já contém `expand_recent_imports` como `20261022130000`. Foi aplicada em 2026-10-22; ainda não há eventos reais.
+- Eventos detalhados recebem expiração de 90 dias. A RPC `aggregate_and_expire_feedback_events()` transfere apenas dimensões/contagens para agregados antes de apagar contexto e termos originais, mantendo agregados dentro da janela máxima de 12 meses. A rotina também remove auditoria expirada.
+- Todas as tabelas têm RLS habilitado, sem policies ou grants diretos, inclusive para `service_role`; as dez RPCs desta migration são executáveis apenas por `service_role`. Autorização OAuth/role continua obrigatória no Worker antes de chamar leitura/revisão; só o Worker validado pode passar a identidade para a gravação.
+- O rollback `rollback/20261022140000_drop_feedback_diagnostics_schema.sql` é destrutivo e remove todos os dados desse domínio. As tabelas estão vazias na aplicação; não executar esse rollback sem autorização e backup apropriado.
+- O Worker adicionado nesta worktree chama a RPC de gravação somente após OAuth válido com `feedback:write`; a API master-only permite corrigir campos contextuais sem preservar o valor anterior, apagar um evento individual e apagar o histórico identificado completo de um analista, inclusive agregados mensais e termos ofensivos. Clusters que envolvam outros analistas são removidos e os eventos restantes ficam desagrupados. A captura MCP permanece desligada por `FEEDBACK_CAPTURE_ENABLED`.
+- Nesta worktree, o aceite versionado dos Termos de Uso é persistido no D1 do Sites junto do fluxo OAuth e exigido pelo middleware antes das ferramentas protegidas; não é armazenado no Supabase. Isso não altera a separação entre métricas operacionais D1 e eventos contextuais Supabase.
+- As RPCs de classificação/agrupamento automatizado, atribuição de evento a cluster e correção/mesclagem de clusters permanecem para os passos seguintes. A migration `20261022150000_schedule_feedback_retention.sql` criou um job horário para chamar `aggregate_and_expire_feedback_events()` e outro job para remover somente o histórico dos jobs da Beta com mais de sete dias. Ambos constam ativos em `cron.job`, mas ainda não têm execução registrada. O rollback `rollback/20261022150000_unschedule_feedback_retention.sql` remove apenas os jobs da Beta, sem desativar o módulo compartilhado. Até uma execução bem-sucedida, a remoção física/rollup não foi confirmada operacionalmente.
 
 Quando algum item for concluído, remova-o desta lista e registre a evidência em `## Prontidão por etapa` ou no histórico apropriado.
 

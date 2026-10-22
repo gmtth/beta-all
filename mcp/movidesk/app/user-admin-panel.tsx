@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { DEFAULT_ACCESS_TOKEN_LIFETIME_MS, MAX_ACCESS_TOKEN_LIFETIME_MS, MIN_ACCESS_TOKEN_LIFETIME_MS } from "./oauth/token-lifetime";
 import LoadingSpinner from "./loading-spinner";
 
-type User = { email: string; role: string; active: number; created_at: number; scopes: string[]; activeTokenCount: number; latestTokenExpiry: number | null };
+type User = { email: string; role: string; active: number; created_at: number; tokenScopes: string[]; enabledScopes: string[]; activeTokenCount: number; latestTokenExpiry: number | null };
 type ConnectionDiagnostic = "configuration_missing" | "invalid_url" | "available" | "invalid_credentials" | "schema_unavailable" | "rate_limited" | "api_error" | "request_rejected" | "timeout" | "network_error";
 type KnowledgeDiagnostic = "available" | "configuration_missing" | "rpc_not_found" | "permission_denied" | "rate_limited" | "service_error" | "request_rejected" | "timeout" | "network_error" | "invalid_response";
 type ToolMetrics = {
@@ -82,6 +82,7 @@ const scopeDescriptions: Record<string, string> = {
   "feedback:write": "Permite registrar feedback explícito e limitações observadas da Beta, conforme os Termos de Uso e o Aviso de Privacidade.",
   offline_access: "Permite renovar a sessão sem pedir autorização novamente, enquanto a autorização continuar válida.",
 };
+const editableScopes = ["movidesk:read", "knowledge:read", "knowledge:write", "feedback:write", "offline_access"];
 const toolTitle = (name: string) => toolTitles[name] ?? name;
 const shortDate = (value: string) => new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(`${value}T12:00:00Z`));
 const comparisonLabel = (current: number, previous: number) => previous === 0 ? current === 0 ? "sem registros nos dois períodos" : "novo neste período" : `${current > previous ? "+" : ""}${((current - previous) / previous * 100).toLocaleString("pt-BR", { maximumFractionDigits: 0 })}% vs período anterior`;
@@ -177,6 +178,23 @@ export default function UserAdminPanel() {
     }
   }
 
+  async function setScope(target: User, scope: string, enabled: boolean) {
+    const key = `scope:${target.email}:${scope}`;
+    setBusy(key); setToast(null);
+    try {
+      const response = await fetch("/api/admin/users", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email: target.email, scope, enabled }) });
+      const data = await response.json() as { error?: string };
+      if (!response.ok) { notify(data.error ?? "Não foi possível atualizar a permissão.", "error"); return; }
+      const reconnect = enabled && !target.tokenScopes.includes(scope);
+      notify(enabled ? reconnect ? `Permissão ativada. ${target.email} precisa reconectar para recebê-la no token.` : "Permissão ativada." : "Permissão desativada imediatamente.", "success");
+      await load();
+    } catch {
+      notify("Não foi possível atualizar a permissão. Tente novamente.", "error");
+    } finally {
+      setBusy("");
+    }
+  }
+
   async function saveTokenLifetime(event: React.FormEvent) {
     event.preventDefault(); setToast(null);
     const accessTokenLifetimeMs = Number(tokenLifetimeDraft);
@@ -217,9 +235,9 @@ export default function UserAdminPanel() {
     </div> : null}
     <section className="admin-section" aria-labelledby="team-title">
       <div className="section-title"><div><span className="panel-heading">PERMISSÕES</span><h2 id="team-title">Equipe Beta</h2></div></div>
-      <p className="section-description">O acesso é validado pelo servidor. Cada pessoa precisa autorizar sua própria conta; os escopos abaixo vêm dos tokens ativos.</p>
+      <p className="section-description">Gerencie separadamente as permissões de cada conta. Desativar um escopo bloqueia seu uso imediatamente; ativar um escopo ausente do token exige reconexão no ChatGPT.</p>
       <form onSubmit={submit} className="user-form"><div className="input-wrap"><span>+</span><input aria-label="E-mail do suporte" type="email" placeholder="analista@empresa.com" value={email} onChange={(event) => setEmail(event.target.value)} required /></div><button type="submit" disabled={addingUser}>{addingUser && <LoadingSpinner label="Liberando acesso" compact />}{addingUser ? "Liberando…" : "Liberar acesso"}</button></form>
-      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{loading && users.length === 0 ? <div className="loading-message"><LoadingSpinner label="Carregando contas autorizadas" />Carregando contas…</div> : users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.scopes.length ? item.scopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={busy === `logout:${item.email}` || busy === `remove:${item.email}`} aria-label={busy === `logout:${item.email}` ? `Deslogando ${item.email}` : `Deslogar ${item.email}`}>{busy === `logout:${item.email}` && <LoadingSpinner label={`Deslogando ${item.email}`} compact />}{"Deslogar"}</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={busy === `logout:${item.email}` || busy === `remove:${item.email}`} aria-label={busy === `remove:${item.email}` ? `Removendo ${item.email}` : `Remover ${item.email}`}>{busy === `remove:${item.email}` && <LoadingSpinner label={`Removendo ${item.email}`} compact />}{"Remover"}</button></div></div>)}{!loading && users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
+      <div className="user-list"><div className="table-heading"><div><strong>Contas autorizadas</strong><span>{users.length} {users.length === 1 ? "pessoa" : "pessoas"}</span></div><span className="table-label">PAPEL / ESCOPOS / AÇÃO</span></div><div className="user-table">{loading && users.length === 0 ? <div className="loading-message"><LoadingSpinner label="Carregando contas autorizadas" />Carregando contas…</div> : users.map((item) => <div className="user-row" key={item.email}><span className="table-avatar">{item.email.slice(0, 1).toUpperCase()}</span><div className="user-info"><strong>{item.email}</strong><span>{item.activeTokenCount} token(s) ativo(s) · expira {dateTime(item.latestTokenExpiry)}</span><span className="scope-list">{item.tokenScopes.length ? item.tokenScopes.map((scope) => <span className="scope-tooltip" key={scope} tabIndex={0} aria-label={`${scope}: ${scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}`} data-tooltip={scopeDescriptions[scope] ?? "Permissão de acesso concedida a esta conta."}>{scope}</span>) : "Sem autorização ativa"}</span><div className="user-scope-controls" aria-label={`Permissões de ${item.email}`}><strong>Permissões</strong>{editableScopes.map((scope) => { const enabled = item.enabledScopes.includes(scope); const busyKey = `scope:${item.email}:${scope}`; return <label className="scope-toggle" key={scope} title={scopeDescriptions[scope]}><input type="checkbox" checked={enabled} disabled={Boolean(busy)} aria-label={`${enabled ? "Desativar" : "Ativar"} ${scope} para ${item.email}`} onChange={(event) => void setScope(item, scope, event.target.checked)} /><span className="scope-name">{scope}</span><span className="scope-toggle-description">{scopeDescriptions[scope]}</span>{busy === busyKey ? <LoadingSpinner label={`Salvando ${scope}`} compact /> : null}</label>; })}</div></div><span className={`role-badge ${item.role === "master" ? "role-master" : "role-support"}`}>{item.role === "master" ? "MASTER" : "ANALISTA"}</span><div className="user-actions"><button className="logout-button" type="button" onClick={() => void logout(item)} disabled={Boolean(busy)} aria-label={busy === `logout:${item.email}` ? `Deslogando ${item.email}` : `Deslogar ${item.email}`}>{busy === `logout:${item.email}` && <LoadingSpinner label={`Deslogando ${item.email}`} compact />}Deslogar</button><button className="remove-button" type="button" onClick={() => void remove(item)} disabled={Boolean(busy)} aria-label={busy === `remove:${item.email}` ? `Removendo ${item.email}` : `Remover ${item.email}`}>{busy === `remove:${item.email}` && <LoadingSpinner label={`Removendo ${item.email}`} compact />}Remover</button></div></div>)}{!loading && users.length === 0 ? <div className="empty-state">Nenhuma pessoa autorizada.</div> : null}</div></div>
     </section>
     <section className="admin-section" aria-labelledby="connection-title">
       <div className="section-title"><div><span className="panel-heading">CONEXÃO E CONHECIMENTO</span><h2 id="connection-title">Supabase</h2></div><button className="refresh-button" type="button" onClick={() => void load()} disabled={loading}>{loading && <LoadingSpinner label="Atualizando painel" compact />}{loading ? "Atualizando…" : "Atualizar painel"}</button></div>

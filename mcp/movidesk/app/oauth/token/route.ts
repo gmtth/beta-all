@@ -14,6 +14,7 @@ import {
 } from "../_lib";
 import { createAuthorizationCodeGrant, rotateRefreshToken } from "../token-grants";
 import { getAccessTokenLifetimeMs } from "../token-lifetime";
+import { areUserScopesEnabled, scopesEnabledInGrant } from "../user-scopes";
 
 function validateClientCredentials(clientId: string, clientSecret: string, clientKind: "mcp" | "gpt-action") {
   const expectedSecret = clientSecretFor(clientId, process.env);
@@ -38,6 +39,13 @@ export async function POST(request: Request) {
     const refreshToken = String(form.get("refresh_token") ?? "");
     if (!refreshToken) return json({ error: "invalid_grant" }, { status: 400 });
     await ensureSchema();
+    const refreshRow = await env.DB.prepare("SELECT user_email, scope FROM oauth_refresh_tokens WHERE token_hash = ? AND revoked_at IS NULL AND consumed_at IS NULL AND expires_at > ?")
+      .bind(await hash(refreshToken), now).first<{ user_email: string; scope: string }>();
+    if (!refreshRow || !await areUserScopesEnabled(env.DB, refreshRow.user_email, [OFFLINE_ACCESS_SCOPE])) return json({ error: "invalid_grant" }, { status: 400 });
+    const requestedScope = form.has("scope") ? String(form.get("scope") ?? "") : undefined;
+    if (requestedScope !== undefined && !await areUserScopesEnabled(env.DB, refreshRow.user_email, requestedScope.split(/\s+/).filter(Boolean))) return json({ error: "invalid_grant" }, { status: 400 });
+    const effectiveScope = requestedScope ?? await scopesEnabledInGrant(env.DB, refreshRow.user_email, refreshRow.scope);
+    if (!effectiveScope) return json({ error: "invalid_grant" }, { status: 400 });
     const replacementAccessToken = randomToken();
     const replacementRefreshToken = randomToken();
     const accessTokenLifetimeMs = await getAccessTokenLifetimeMs(env.DB);
@@ -48,7 +56,7 @@ export async function POST(request: Request) {
       accessTokenHash: await hash(replacementAccessToken),
       clientId: requestedClient,
       resource,
-      requestedScope: form.has("scope") ? String(form.get("scope") ?? "") : undefined,
+      requestedScope: effectiveScope,
       now,
       accessExpiresAt,
     });
@@ -89,6 +97,7 @@ export async function POST(request: Request) {
   if (!row.user_email) return json({ error: "invalid_grant" }, { status: 400 });
   const activeUser = await env.DB.prepare("SELECT 1 AS active FROM oauth_users WHERE email = ? AND active = 1").bind(row.user_email.toLowerCase()).first<{ active: number }>();
   if (!activeUser) return json({ error: "invalid_grant" }, { status: 400 });
+  if (!await areUserScopesEnabled(env.DB, row.user_email, row.scope.split(/\s+/).filter(Boolean))) return json({ error: "invalid_grant" }, { status: 400 });
   const accessToken = randomToken();
   const familyId = client.kind === "mcp" && row.scope.split(/\s+/).includes(OFFLINE_ACCESS_SCOPE) ? randomToken() : undefined;
   const refreshToken = familyId ? randomToken() : undefined;

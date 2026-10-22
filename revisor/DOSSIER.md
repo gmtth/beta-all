@@ -7,7 +7,7 @@ Atualizado em 2026-10-22. Este dossier registra as regras de contexto, evidênci
 - **Componente:** revisão de pull requests, branches e mudanças do monorepo Beta All.
 - **Responsabilidade:** detectar perda de comportamento esperado, incompatibilidade com contratos/dossiers, defeitos, riscos e validações faltantes; entregar parecer técnico acionável ao usuário.
 - **Escopo GitHub:** somente [`gmtth/beta-all`](https://github.com/gmtth/beta-all).
-- **Modo:** somente leitura no produto, dados, serviços e PRs. O usuário autorizou manter e commitar diretamente este dossier, suas instruções e a referência no `AGENTS.md` mestre, sem PR; conforme a regra raiz, esses commits documentais são enviados ao GitHub. Isso não autoriza alteração de produto, merge, PR ou deploy.
+- **Modo:** somente leitura no produto, dados, serviços e revisão de PRs alheias. O usuário autorizou manter este dossier, suas instruções e a referência no `AGENTS.md` mestre. Essas mudanças documentais seguem o isolamento por conversa e o fluxo de commit/push/PR do `AGENTS.md` mestre; isso não autoriza alteração de produto, merge ou deploy.
 - **Princípio:** ausência de achado no escopo verificado não é garantia de ausência total de regressão.
 
 ## Estado atual
@@ -37,7 +37,7 @@ Os pareceres são snapshots de revisão, não reviews formais submetidos ao GitH
 - Revisar cada PR merged ao menos uma vez e manter cobertura cumulativa. Pedidos genéricos incluem PRs abertas e branches sem PR relevantes além da cobertura merged nova.
 - Recuperar expectativas nos dossiers/contratos atuais dos componentes. Não avaliar comportamento apenas pelo diff ou supor que o `main` atual representa todo comportamento esperado.
 - O revisor não altera produto, não comenta/submete review, não faz merge nem exclui branch. Recomendações de merge ou exclusão são pareceres, não ações.
-- Os próprios arquivos do revisor e a referência no `AGENTS.md` raiz podem ser mantidos por commits diretos autorizados, sem PR. Push e publicação são decisões separadas e seguem o `AGENTS.md` mestre.
+- Os próprios arquivos do revisor e a referência no `AGENTS.md` raiz podem ser mantidos quando autorizados, sempre em worktree/branch exclusiva e por PR conforme o `AGENTS.md` mestre. Não fazer commit direto em `main`; publicação não se aplica a mudanças apenas documentais.
 - O nível de atuação esperado é o de parceiro técnico sênior, com profundidade ampla e rigor em problemas complexos. A expressão “20 anos/todas as linguagens” é metáfora de qualidade, não credencial factual.
 - A comunicação com o usuário deve ser em português natural, próxima e profissional; apresentar primeiro a conclusão, depois evidência e recomendação; preferir tabelas comparativas e links diretos. Em revisões, separar a decisão executiva, cada PR, achados, validações e limites sem esconder que testes/deploys foram apenas reportados ou não foram feitos nesta sessão.
 - Sempre distinguir código merged, migration aplicada, Sites implantado, teste local e smoke autenticado. Uma dessas etapas não comprova as demais.
@@ -56,6 +56,8 @@ Os pareceres são snapshots de revisão, não reviews formais submetidos ao GitH
 | Histórico de migração | [`../docs/migration/`](../docs/migration/) e `legacy/` somente quando necessário | Proveniência, origem, lacunas e diferenças históricas; não usar como regra vigente automaticamente. |
 
 ## Histórico de revisões
+
+Em 2026-10-22, a regra transversal foi atualizada para exigir worktree/branch exclusiva, push para a branch e PR própria por conversa. Isso substitui a autorização operacional anterior de commitar documentos do revisor diretamente em `main` sem PR; as entradas abaixo preservam o histórico do que ocorreu à época.
 
 ### 2026-10-22 — rodada anterior de PRs merged
 

@@ -2,7 +2,7 @@
 
 ## Execução dentro do monorepositório
 
-O repositório Git e o diretório de trabalho únicos são a raiz `beta-all/`; este componente está em `mcp/movidesk/`. Leia primeiro o `AGENTS.md` da raiz, este arquivo e `DOSSIER.md`. Execute os comandos relativos documentados abaixo a partir de `mcp/movidesk/`. Faça commits na raiz do monorepo e mantenha as alterações limitadas ao componente e à documentação compartilhada necessária.
+O repositório Git é `beta-all/`; cada conversa usa sua worktree/branch exclusiva definida pelo AGENT raiz. Este componente está em `mcp/movidesk/`. Leia primeiro o [`AGENTS.md`](../../AGENTS.md) e [`DOSSIER.md`](../../DOSSIER.md) da raiz, depois este `AGENTS.md` e [`DOSSIER.md`](./DOSSIER.md). Execute os comandos relativos documentados abaixo a partir de `mcp/movidesk/` e mantenha alterações limitadas ao componente e à documentação compartilhada necessária.
 
 Este arquivo é a fonte operacional obrigatória para qualquer trabalho neste repositório. Antes de analisar, editar, testar, commitar, abrir PR, mesclar ou publicar, leia este arquivo e o [`DOSSIER.md`](./DOSSIER.md).
 

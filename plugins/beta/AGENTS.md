@@ -2,7 +2,7 @@
 
 ## Execução dentro do monorepositório
 
-O repositório Git e o diretório de trabalho únicos são a raiz `beta-all/`; este componente está em `plugins/beta/`. Leia primeiro o `AGENTS.md` da raiz e este arquivo. Para comandos abaixo que usam caminhos relativos (`scripts/`, `.codex-plugin/`, `skills/`), execute-os com o diretório atual em `plugins/beta/`. Faça commits no repositório monorepo, respeitando o escopo da pasta.
+O repositório Git é `beta-all/`; cada conversa usa sua worktree/branch exclusiva definida pelo AGENT raiz. Este componente está em `plugins/beta/`. Leia primeiro o [`AGENTS.md`](../../AGENTS.md) e [`DOSSIER.md`](../../DOSSIER.md) da raiz, depois este `AGENTS.md` e [`DOSSIER.md`](./DOSSIER.md). Para comandos abaixo que usam caminhos relativos (`scripts/`, `.codex-plugin/`, `skills/`), execute-os com o diretório atual em `plugins/beta/`.
 
 ## Objetivo
 

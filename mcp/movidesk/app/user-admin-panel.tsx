@@ -25,6 +25,8 @@ type Overview = {
 };
 
 const dateTime = (value: number | string | null) => value === null ? "—" : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(typeof value === "number" ? new Date(value) : new Date(value));
+const RECENT_IMPORTS_PAGE_SIZE = 3;
+const MAX_RECENT_IMPORTS = 30;
 const connectionDiagnostics: Record<ConnectionDiagnostic, string> = {
   configuration_missing: "Configuração do servidor ausente",
   invalid_url: "URL do Supabase inválida",
@@ -95,6 +97,7 @@ export default function UserAdminPanel() {
   const [busy, setBusy] = useState("");
   const [loading, setLoading] = useState(true);
   const [addingUser, setAddingUser] = useState(false);
+  const [recentImportsPage, setRecentImportsPage] = useState(0);
 
   const notify = useCallback((message: string, tone: "success" | "error") => setToast({ message, tone }), []);
 
@@ -110,7 +113,10 @@ export default function UserAdminPanel() {
       const results = await Promise.allSettled([fetch("/api/admin/users", { cache: "no-store" }), fetch("/api/admin/overview", { cache: "no-store" }), fetch("/api/admin/tool-metrics", { cache: "no-store" }), fetch("/api/admin/token-lifetime", { cache: "no-store" })]);
       const [userResult, overviewResult, metricsResult, tokenLifetimeResult] = results;
       if (userResult.status === "fulfilled" && userResult.value.ok) setUsers(await userResult.value.json());
-      if (overviewResult.status === "fulfilled" && overviewResult.value.ok) setOverview(await overviewResult.value.json());
+      if (overviewResult.status === "fulfilled" && overviewResult.value.ok) {
+        setOverview(await overviewResult.value.json());
+        setRecentImportsPage(0);
+      }
       if (metricsResult.status === "fulfilled" && metricsResult.value.ok) setToolMetricsResponse(await metricsResult.value.json());
       else setToolMetricsResponse({ status: "unavailable", data: null });
       if (tokenLifetimeResult.status === "fulfilled" && tokenLifetimeResult.value.ok) {
@@ -192,6 +198,9 @@ export default function UserAdminPanel() {
   }
 
   const knowledge = overview?.knowledge.data;
+  const recentImports = knowledge?.recentImports.slice(0, MAX_RECENT_IMPORTS) ?? [];
+  const recentImportsPageCount = Math.ceil(recentImports.length / RECENT_IMPORTS_PAGE_SIZE);
+  const visibleRecentImports = recentImports.slice(recentImportsPage * RECENT_IMPORTS_PAGE_SIZE, (recentImportsPage + 1) * RECENT_IMPORTS_PAGE_SIZE);
   const toolMetrics = toolMetricsResponse?.data;
   const maxToolCalls = Math.max(1, ...(toolMetrics?.usageByTool.map((item) => item.calls) ?? []));
   const maxDailyCalls = Math.max(1, ...(toolMetrics?.callsByDay.map((item) => item.calls) ?? []));
@@ -223,7 +232,10 @@ export default function UserAdminPanel() {
         <div className="metric-grid"><div className="metric-card"><span>FONTES ATIVAS</span><strong>{knowledge.sources.filter((source) => source.active).length}</strong></div><div className="metric-card"><span>REGISTROS INDEXADOS</span><strong>{knowledge.recordCount.toLocaleString("pt-BR")}</strong></div><div className="metric-card"><span>TRECHOS INDEXADOS</span><strong>{knowledge.chunkCount.toLocaleString("pt-BR")}</strong></div></div>
         <div className="admin-data-grid">
           <section className="data-card"><h3>Fontes cadastradas</h3>{knowledge.sources.length ? knowledge.sources.map((source) => <div className="source-row" key={source.id ?? source.code}><div><strong>{source.name ?? source.code ?? "Fonte"}</strong><span>{source.active ? "Ativa" : "Inativa"}</span></div><span>{source.recordCount} registros · {source.chunkCount} trechos</span></div>) : <p className="quiet-message">Nenhuma fonte cadastrada.</p>}</section>
-          <section className="data-card"><h3>Importações recentes</h3>{knowledge.recentImports.length ? knowledge.recentImports.map((item, index) => <div className="source-row import-row" key={`${item.ticketId}-${item.createdAt}-${index}`}><div><strong>{item.title ?? `Chamado ${item.ticketId ?? ""}`}</strong><span>Movidesk {item.ticketId ? `· ${item.ticketId}` : ""} · {item.chunkCount} trechos · por {item.actorEmail ?? "analista"}</span></div><span>{dateTime(item.createdAt)}</span></div>) : <p className="quiet-message">Nenhuma importação registrada.</p>}</section>
+          <section className="data-card recent-imports-card"><h3>Importações recentes</h3>{recentImports.length ? <>
+            {visibleRecentImports.map((item, index) => <div className="source-row import-row" key={`${item.ticketId}-${item.createdAt}-${recentImportsPage}-${index}`}><div><strong>{item.title ?? `Chamado ${item.ticketId ?? ""}`}</strong><span>Movidesk {item.ticketId ? `· ${item.ticketId}` : ""} · {item.chunkCount} trechos · por {item.actorEmail ?? "analista"}</span></div><span>{dateTime(item.createdAt)}</span></div>)}
+            {recentImportsPageCount > 1 ? <nav className="recent-import-pagination" aria-label="Paginação das importações recentes"><span>Mostrando {recentImportsPage * RECENT_IMPORTS_PAGE_SIZE + 1}–{Math.min((recentImportsPage + 1) * RECENT_IMPORTS_PAGE_SIZE, recentImports.length)} de {recentImports.length} · página {recentImportsPage + 1} de {recentImportsPageCount}</span><div><button type="button" aria-label="Página anterior de importações" onClick={() => setRecentImportsPage((page) => Math.max(0, page - 1))} disabled={recentImportsPage === 0}>Anterior</button><button type="button" aria-label="Próxima página de importações" onClick={() => setRecentImportsPage((page) => Math.min(recentImportsPageCount - 1, page + 1))} disabled={recentImportsPage >= recentImportsPageCount - 1}>Próxima</button></div></nav> : <p className="recent-import-count">Últimas {recentImports.length} importações · máximo de 30</p>}
+          </> : <p className="quiet-message">Nenhuma importação registrada.</p>}</section>
         </div>
       </> : <p className={overview?.knowledge.status === "unavailable" ? "quiet-message" : "quiet-message loading-message"}>{overview?.knowledge.status === "unavailable" ? "Os indicadores ainda não estão disponíveis. Consulte o diagnóstico acima para identificar o próximo passo." : <><LoadingSpinner label="Carregando indicadores do conhecimento" />Carregando indicadores do conhecimento…</>}</p>}
     </section>

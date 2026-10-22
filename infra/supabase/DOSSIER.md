@@ -57,7 +57,7 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 | Prioridade | Item | Estado / condição para conclusão |
 |---|---|---|
 
-| Alta | Melhorar a recuperação lexical de sintomas e paráfrases após o primeiro reranking. | A migration `20261022170000` e a comparação live de 11 perguntas foram concluídas. Houve melhora em 2 casos e regressão dos alvos esperados em 4; revisar sinais e pesos ou comparar outra abordagem lexical antes de declarar ganho geral. A busca exata pelo protocolo `20260702000000016` e a consulta contextual do chamado `20260918000000203` recuperaram seus registros. |
+| Alta | Comparar uma candidata híbrida com a busca lexical usando o conjunto v1. | Conjunto direcionado de 11 perguntas criado em [`evaluations/knowledge-search-v1.md`](./evaluations/knowledge-search-v1.md), com protocolos esperados, distinção entre correspondência e abstenção e conteúdo minimizado. Falta executar e registrar Recall@5, MRR@5, falsos positivos, acerto de abstenção e latência. |
 | Alta | Definir provedor/modelo de embeddings e projetar a busca semântica/híbrida. | Decisão de provedor impacta dados operacionais enviados, segredo server-side, custo, dimensões, latência e reindexação; implementar somente depois de decisão documentada e revisão de classificação. |
 | Média | Definir sincronização em lote para ClickUp e documentos administrativos. | Especificar atualização incremental, idempotência, remoções, retries, quarentena e auditoria antes de importar em massa. |
 | Média | Fechar política operacional de retenção, backup e recuperação. | Testar exportação e restauração e rever limites/disponibilidade do plano antes de ampliar o piloto. |
@@ -106,6 +106,14 @@ A avaliação baseline de 11 perguntas naturais foi registrada na [PR #31](https
 | 11 | `20260918000000203` (conexão após verificações) | #4 → #1 | Melhora clara; o caso esperado passou para a primeira posição. |
 
 **Conclusão:** houve melhora em 2 consultas (#8 e #11), regressão dos alvos esperados em 4 (#3, #4, #7 e #10), e ausência de melhora nas demais. A busca continua lexical e ruidosa; este reranking não deve ser considerado ganho geral nem substitui a busca semântica/híbrida. A autorização Beta funcionou nesta avaliação, sem importações ou outras alterações externas.
+
+### Conjunto de avaliação v1 (2026-10-22)
+
+Após comparar as 11 consultas da baseline, foram consultados diretamente no Movidesk e resumidos chamados representativos de status offline por configuração do sistema, conexão de rede, máquina travada/falha física, retirada duplicada, falha de liberação e vencimento por quantidade. O conjunto inicial de 11 perguntas, protocolos esperados, adjudicação factual e controle de abstenção está em [`evaluations/knowledge-search-v1.md`](./evaluations/knowledge-search-v1.md). O arquivo guarda apenas perguntas, protocolos e evidência resumida; não reproduz transcrições ou dados pessoais.
+
+As consultas diretas confirmaram, entre outros, que o protocolo `20260803000000007` atribui o painel offline a uma configuração que bloqueava a leitura do estado atual; `20260918000000203` registra ajustes de switch/IP; `20260819000000195` contém causas distintas em duas máquinas (mini-PC travado/motor em curto versus falta de rede); e `20260911000000140` registra conexões de rede e energia mal encaixadas, seguidas da retomada da operação. O caso de abstenção continua sendo a pergunta #11, sem protocolo-alvo. Esses precedentes não confirmam o diagnóstico de uma máquina atual.
+
+O conjunto é direcionado e ainda pequeno; não demonstra representatividade estatística. A próxima comparação deve registrar `Recall@5`, `MRR@5`, falsos positivos, acerto de abstenção e latência, com a mesma versão e limite para busca lexical e candidata híbrida. Nenhuma migration ou alteração remota foi feita nesta etapa.
 
 Na revisão anterior, 28 testes focados e o build passaram; `git diff --check` passou. A suíte geral `npm test` teve 9 aprovações e uma falha preexistente de texto antigo na página inicial. O estado do GitHub mais recente não mostrou checks/workflows associados à PR #18.
 

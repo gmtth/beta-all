@@ -1,0 +1,35 @@
+# Avaliação de busca de conhecimento — v1
+
+- **Data:** 2026-10-22
+- **Fonte de adjudicação:** chamados consultados no Movidesk por ferramenta autorizada e conferidos pelo resumo/histórico do registro.
+- **Uso:** comparar busca lexical atual e futura busca híbrida; não usar este conjunto como conteúdo para resposta ao cliente.
+
+## Regras de avaliação
+
+- `esperado` identifica precedentes que devem aparecer entre os candidatos; não significa que resolvam o caso atual.
+- `confirmado` significa que o chamado registra explicitamente a causa/ação indicada na nota. `parcial` indica que o caso é relevante, mas não confirma todos os detalhes da pergunta. `abstenção` significa que a consulta não oferece evidência suficiente para afirmar uma causa.
+- Cada resposta deve manter protocolo e título como proveniência, separar fato de hipótese e pedir os dados atuais que faltam.
+- Consultas negativas/ambíguas são necessárias para medir falsos positivos e a capacidade de a Beta não inventar diagnóstico.
+- O arquivo não reproduz transcrições, nomes, e-mails, telefones, endereços, IPs ou anexos dos chamados.
+
+## Casos positivos e ambíguos
+
+| # | Pergunta de avaliação | Protocolos esperados | Adjudicação e o que o registro sustenta |
+|---|---|---|---|
+| 1 | O painel diz que a máquina está offline. Isso prova que o equipamento parou? | `20260803000000007` | **Confirmado:** o chamado atribui o status incorreto a uma configuração do sistema que impedia o dashboard de consultar o estado atual; após liberação, a operação normalizou. Não prova o estado de outra máquina. |
+| 2 | A máquina fica tentando atualizar o estoque e o painel não mostra o estado atual. Há precedente de falha no sistema de status? | `20260803000000013`, `20260803000000007` | **Confirmado:** o histórico associa o comportamento a uma configuração de segurança no código que bloqueava a consulta do estado pelo dashboard. |
+| 3 | Uma máquina ficou sem conexão mesmo após troca de placa de rede. O que resolveu um caso semelhante? | `20260918000000203` | **Confirmado:** o registro descreve mudança de porta no switch, liberação do novo IP e retorno da máquina ao estado online. É um precedente de rede, não confirmação da causa do caso atual. |
+| 4 | Uma máquina parou de funcionar; como diferenciar problema de rede de falha do equipamento? | `20261001000000013`, `20260819000000195` | **Confirmado/parcial:** o primeiro registra restauração após ajustes de switch/IP. O segundo registra causas distintas em máquinas diferentes: mini-PC travado e motor em curto em uma; ausência de rede na outra. A resposta precisa preservar essa distinção. |
+| 5 | Uma retirada foi registrada duas vezes após demora na confirmação. Como isso foi tratado? | `20250604000000028` | **Confirmado:** o chamado relata duplicidade associada à instabilidade de rede e uma proteção para evitar processar duas vezes a mesma retirada. |
+| 6 | A máquina indica falta de estoque, trava e falha ao liberar itens. Que causas foram encontradas numa visita? | `20260819000000195` | **Confirmado:** o relatório separa mini-PC travado e motor em curto numa máquina, e problema de rede na outra. Não fundir os dois achados numa causa única. |
+| 7 | A máquina aparece offline, mas voltou sozinha. O histórico confirma por que ela caiu? | `20261001000000013` | **Parcial:** a máquina voltou a operar e houve ajustes de rede registrados, mas o chamado não confirma que a recuperação foi espontânea nem demonstra todos os detalhes da causa inicial. |
+| 8 | A máquina não liberava o EPI e aparecia desconectada. O que a verificação encontrou? | `20260911000000140` | **Confirmado:** a equipe registrou conexões de rede e energia mal encaixadas; após conferi-las, o funcionamento e as entregas foram restabelecidos. Bloqueios de rede também foram investigados. Esse precedente não confirma a causa de outra máquina. |
+| 9 | Houve fumaça, aquecimento e falha nas portas da máquina. O que a avaliação encontrou? | `20260820000000222` | **Confirmado:** histórico de visita registra aquecimento excessivo, dano em componentes/fusíveis e operação parcial após manutenção; o caso também tinha tratativa pendente com fabricante. Não apresentar como solução integral concluída. |
+| 10 | A próxima retirada foi adiada porque o prazo era multiplicado pela quantidade entregue? | `20260702000000016` | **Confirmado:** o caso registra cinco unidades, prazo unitário de dez dias e cálculo de cinquenta dias, levando à data de 21/08/2026. É regra/cadastro descrito naquele chamado, não necessariamente regra universal. |
+| 11 | Sem protocolo, modelo da máquina, ambiente ou resultado de teste, qual componente causou o status offline? | **Nenhum protocolo obrigatório; abstenção** | **Controle negativo:** não afirmar rede, hardware ou sistema. Solicitar informações discriminantes e, só então, buscar precedentes. |
+
+## Como usar na comparação
+
+Executar cada pergunta na mesma versão da RPC, com o mesmo limite de resultados. Registrar por consulta: protocolos encontrados e posição, precedentes esperados ausentes, falsos positivos, se a resposta se absteve quando necessário, latência e se a evidência citada sustenta a conclusão. Comparar lexical e híbrida com `Recall@5`, `MRR@5`, falsos positivos e acerto de abstenção; não usar `relevance` como probabilidade de certeza.
+
+O conjunto é uma primeira amostra direcionada de chamados já confirmados; ainda não é uma avaliação estatística representativa de todos os tipos de máquina, clientes ou períodos. Antes de declarar ganho geral, ampliar diversidade e revisar a adjudicação com analistas.

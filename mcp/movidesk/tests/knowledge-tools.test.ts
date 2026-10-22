@@ -218,6 +218,29 @@ test("knowledge import resolves a requested Movidesk protocol and stores the can
   assert.equal(record.title, "Máquina sem conexão");
 });
 
+test("knowledge import preserves long ticket text across more than 50 bounded chunks", async () => {
+  const description = "detalhe técnico registrado ".repeat(10_900);
+  const record = await buildMovideskKnowledgeRecord({
+    id: 5835,
+    protocol: "20260702000000016",
+    subject: "Histórico longo",
+    description,
+  }, "20260702000000016");
+
+  assert.ok(record.chunks.length > 50);
+  assert.ok(record.chunks.length <= 250);
+  assert.ok(record.chunks.every((chunk) => chunk.content.length <= 1_500));
+  assert.equal(record.chunks.map((chunk) => chunk.content).join(" ").replace(/\s+/g, " "), description.trim().replace(/\s+/g, " "));
+});
+
+test("knowledge import rejects records beyond the expanded pilot cap", async () => {
+  const description = "x".repeat(350_001);
+  await assert.rejects(
+    () => buildMovideskKnowledgeRecord({ id: 5835, subject: "Histórico acima do limite", description }, "5835"),
+    (error: unknown) => error instanceof KnowledgeImportError && error.diagnostic === "ticket_too_large",
+  );
+});
+
 test("Movidesk ticket lookup falls back from internal ID to an exact protocol match", async () => {
   const lookups: Array<[string, string]> = [];
   const ticket = await resolveMovideskTicketIdentifier("20260702000000016", async (kind, value) => {

@@ -12,8 +12,8 @@ export type MovideskKnowledgeRecord = {
   content_hash: string;
 };
 
-const MAX_RECORD_CHARACTERS = 50_000;
-const MAX_CHUNKS = 50;
+const MAX_RECORD_CHARACTERS = 350_000;
+const MAX_CHUNKS = 250;
 const MAX_CHUNK_CHARACTERS = 1_500;
 
 const objectOf = (value: unknown): Record<string, unknown> => value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};

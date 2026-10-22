@@ -428,7 +428,7 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
           p_chunks: record.chunks,
           p_actor_email: actorEmail,
         }),
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(30_000),
       });
     } catch (error) {
       if (error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError")) throw new KnowledgeImportError("supabase_timeout");
@@ -456,7 +456,7 @@ export class SupabaseKnowledgeStore implements KnowledgeStore {
     const row = payload && typeof payload === "object" && !Array.isArray(payload) ? payload as Record<string, unknown> : {};
     const recordId = safeText(row.record_id);
     const chunkCount = Number(row.chunk_count);
-    if (!recordId || !Number.isInteger(chunkCount) || chunkCount < 1 || chunkCount > 50) throw new KnowledgeImportError("supabase_invalid_response");
+    if (!recordId || !Number.isInteger(chunkCount) || chunkCount < 1 || chunkCount > 250) throw new KnowledgeImportError("supabase_invalid_response");
     return { recordId, chunkCount };
   }
 }

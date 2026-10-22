@@ -11,7 +11,7 @@ const messages: Record<KnowledgeImportDiagnostic, string> = {
   ticket_mismatch: "O Movidesk retornou um chamado diferente do identificador solicitado. Nenhum dado foi gravado; peça revisão do conector.",
   ticket_missing_title: "O chamado foi localizado, mas não tem um assunto utilizável para indexação. Revise o registro no Movidesk antes de importar.",
   ticket_missing_content: "O chamado foi localizado, mas não contém descrição nem interações utilizáveis. Acrescente contexto ao chamado ou escolha outro registro.",
-  ticket_too_large: "O conteúdo do chamado excede o limite da importação piloto. Reduza ou divida o conteúdo antes de tentar novamente.",
+  ticket_too_large: "O chamado excede os limites máximos de conteúdo ou trechos aceitos nesta importação. Nenhuma gravação foi confirmada; peça ao administrador para avaliar os limites ou uma importação em partes.",
   supabase_configuration: "A gravação não foi iniciada porque a conexão do servidor com a base de conhecimento está sem configuração válida. Peça ao administrador para conferir a configuração Supabase do Sites.",
   supabase_rpc_unavailable: "O chamado foi preparado, mas a função de importação não está disponível na API Supabase. Confira se a migration está aplicada e se o schema beta está exposto; após mudanças recentes, atualize o cache de schema da Data API.",
   supabase_permission_denied: "O chamado foi preparado, mas a API Supabase recusou a permissão de gravação. Peça ao administrador para conferir os grants da função e a chave de serviço no servidor.",

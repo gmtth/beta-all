@@ -28,6 +28,12 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - `movidesk:read`, `knowledge:read` e `knowledge:write` são capacidades separadas. O usuário autorizou importar para a base interna apenas chamados explicitamente indicados; alterações em tickets do Movidesk e ingestão em massa continuam fora do escopo.
 - `beta-all` é o repositório de trabalho ativo. As origens relacionadas foram preservadas e arquivadas conforme o inventário; não presumir que Sites ou integrações externas já publiquem a partir do monorepo.
 
+### Sincronização de alterações no GitHub e Sites (2026-10-21)
+
+- Regra definida pelo usuário: pedido de commit pode resultar somente em commit no GitHub; pedido de merge pode resultar somente em merge no GitHub. Nenhum desses pedidos implica publicar no Sites.
+- Pedido de push significa sincronizar GitHub e Sites: primeiro aplicar no GitHub todos os commits e merges do conjunto; depois publicar a versão correspondente no Sites quando o runtime tiver mudado. Se qualquer etapa falhar, informar a divergência e não declarar a sincronização concluída.
+- Regra normativa completa em [`AGENTS.md`](AGENTS.md#sincronização-github-e-publicação-no-sites) e instruções específicas do runtime em [`mcp/movidesk/AGENTS.md`](mcp/movidesk/AGENTS.md#ordem-obrigatória-entre-github-e-sites).
+
 ### Telemetria do painel no Sites (2026-10-20)
 
 - Decisão do usuário: gráficos e métricas de uso/erros devem contabilizar chamadas das ferramentas MCP no ambiente Sites; não usar Supabase para esse fim.
@@ -35,6 +41,12 @@ Deve analisar com rigor de analista sênior e responder em linguagem funcional, 
 - Os eventos não contêm identidade, argumentos, conteúdo de retorno nem mensagens brutas de erro. A tabela é declarada em Drizzle e possui migration própria; o Worker também garante criação idempotente.
 - Estado: commit GitHub `f013830` enviado à branch `codex/knowledge-ticket-ingestion`; fonte Sites `f0e56004251435d2b3b07b8c516857c7f3a4f4de`; versão 80 implantada com sucesso em deployment `appgdep_6ad7ffa179f88191bf045ab6570e161c`. Ainda não confirmado que chamadas reais estejam aparecendo nos gráficos. Ver `mcp/movidesk/DOSSIER.md` para detalhes.
 - O commit `2d05b69` corrige o `PATH` enviado pelo wrapper Sites no Windows, incluindo Node para o empacotador Bash. O workflow completo foi concluído com esse ajuste.
+
+### Expansão da telemetria MCP (2026-10-21)
+
+- Pedido do usuário: incluir latência por ferramenta e taxa de sucesso no painel, mantendo a telemetria no D1 do Sites e sem registrar identidade, argumentos, respostas ou mensagens brutas de erro.
+- Implementação local no monorepo: acrescenta duração dos eventos, média de latência disponível e porcentagem de sucesso na lista por ferramenta. Eventos anteriores seguem válidos para a taxa de sucesso; duração não registrada permanece nula e não entra na média. Ainda não houve commit, push ou publicação.
+- Próximo passo solicitado: exibir erros por categoria e comparar o período com o período anterior. Acompanhar em [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md#próximos-passos).
 
 ### Reconexão OAuth publicada no MCP/Sites (2026-10-21)
 
@@ -103,6 +115,7 @@ Na branch `codex/oauth-reconnection-step-1`, `npm test` passou (build e 10 teste
 | Média | Corrigir a confiabilidade das verificações de tipos e lint do MCP. | `tsc --noEmit` e lint completo ainda falham; causas e condição de conclusão estão registradas no dossier MCP. Não bloqueia os testes/build OAuth que passaram. |
 | Média | Corrigir o workflow Windows de build/empacotamento do Sites. | A publicação v81 exigiu ajustes temporários no helper copiado para resolver quoting do `npm` e encontrar `tar.exe`; fazer o wrapper do monorepo concluir build, pacote e publicação sem editar a instalação do plugin. |
 | Alta | Retomar piloto e busca da base compartilhada. | Importação piloto, busca híbrida e validação de permissões continuam pendentes; ver [`infra/supabase/DOSSIER.md`](infra/supabase/DOSSIER.md#próximos-passos) e o dossier MCP. |
+| Média | Expandir métricas MCP com erros por categoria e comparação de períodos. | Após latência por ferramenta e taxa de sucesso, incluir agregação segura de categorias e comparação entre os últimos 30 dias e os 30 dias anteriores; preservar a política de minimização de dados. |
 | Média | Confirmar disponibilidade do marketplace Beta e conexão ClickUp do plugin. | Pendências mantidas no [`plugins/beta/DOSSIER.md`](plugins/beta/DOSSIER.md#próximos-passos). |
 
 Este é o índice transversal do backlog. As condições de conclusão e evidências detalhadas permanecem nos dossiers canônicos dos componentes; itens resolvidos devem sair daqui e da lista do componente na mesma atualização.

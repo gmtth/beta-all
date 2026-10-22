@@ -219,6 +219,14 @@ beta-all/                              # único clone/repos de trabalho após a 
 - Antes de escolher o fluxo, conferir branch atual, estado do working tree e regras remotas. Não trocar de branch com alterações não relacionadas ou estado que possa ser perdido; preservar o trabalho em andamento.
 - Commit direto em `main` não autoriza push, merge remoto ou deploy. Essas ações continuam separadas e dependem de pedido explícito conforme a seção de cadência de commits.
 
+### Sincronização GitHub e publicação no Sites
+
+- Um pedido de **commit** autoriza registrar as alterações no GitHub; pode ser somente commit, sem publicar no Sites.
+- Um pedido de **merge** autoriza concluir o merge no GitHub; pode ser somente merge, sem publicar no Sites.
+- Um pedido de **push** significa deixar o projeto sincronizado: enviar ao GitHub todos os commits e merges necessários e publicar no Sites a versão correspondente, quando o escopo envolver o runtime do Sites. Antes do deploy, confirmar que a fonte publicada corresponde ao estado já enviado/mesclado no GitHub.
+- Publicar no Sites somente depois que todos os commits e merges daquele conjunto de alterações estiverem aplicados no GitHub. Nunca publicar alterações locais ou uma branch ainda não integrada como se fossem o estado sincronizado solicitado.
+- Se houver bloqueio de GitHub, teste ou publicação, não declarar a sincronização concluída: preservar o que já foi feito, informar exatamente qual lado ficou pendente e manter o Sites sem publicar uma versão que não corresponda ao estado integrado no GitHub.
+
 ### Sequência de execução antes da importação
 
 1. Verificar se as tarefas paralelas relacionadas ao MCP, Site, `AGENTS.md`, `DOSSIER.md` e documentação terminaram; confirmar que as alterações desejadas foram commitadas e enviadas aos remotes.

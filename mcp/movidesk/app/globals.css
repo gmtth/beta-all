@@ -74,7 +74,8 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .telemetry-heading > strong { color: var(--hot); font-size: 22px; }
 .usage-chart { display: grid; gap: 13px; }
 .usage-bar-row { display: grid; grid-template-columns: minmax(110px, 1.2fr) minmax(50px, 2fr) auto auto; align-items: center; gap: 10px; font-size: 12px; }
-.usage-tool-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); }
+.usage-tool-name { overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.usage-tool-name small { display: block; overflow: hidden; margin-top: 4px; color: var(--muted); font-size: 9px; text-overflow: ellipsis; }
 .usage-bar-track { display: block; height: 9px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.08); }
 .usage-bar-fill { display: block; height: 100%; min-width: 2px; border-radius: inherit; background: linear-gradient(90deg, var(--accent), var(--hot)); }
 .usage-bar-row > strong { min-width: 34px; text-align: right; }
@@ -90,7 +91,7 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .recent-error-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
 .recent-error-row span, .recent-error-row time { color: var(--muted); font-size: 11px; }
 .recent-error-row time { white-space: nowrap; }
-@media (max-width: 700px) { .telemetry-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(90px, 1fr) minmax(40px, 1.3fr) auto; } .usage-bar-row small { display: none; } }
+@media (max-width: 700px) { .telemetry-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(90px, 1fr) minmax(40px, 1.3fr) auto; } .usage-error-count { display: none; } }
 
 .toast { position: fixed; z-index: 1000; top: 24px; right: 24px; display: grid; grid-template-columns: 34px minmax(0, 1fr) 30px; align-items: center; gap: 12px; width: min(430px, calc(100vw - 48px)); padding: 14px; border: 1px solid rgba(87,200,138,.32); border-radius: 14px; background: rgba(30,35,34,.94); box-shadow: 0 18px 60px rgba(0,0,0,.42); color: #f5f2f4; backdrop-filter: blur(18px); animation: toast-enter .22s ease-out; }
 .toast-error { border-color: rgba(255,130,112,.38); background: rgba(43,31,31,.96); }

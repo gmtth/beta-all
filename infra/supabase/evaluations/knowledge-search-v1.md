@@ -33,3 +33,29 @@
 Executar cada pergunta na mesma versão da RPC, com o mesmo limite de resultados. Registrar por consulta: protocolos encontrados e posição, precedentes esperados ausentes, falsos positivos, se a resposta se absteve quando necessário, latência e se a evidência citada sustenta a conclusão. Comparar lexical e híbrida com `Recall@5`, `MRR@5`, falsos positivos e acerto de abstenção; não usar `relevance` como probabilidade de certeza.
 
 O conjunto é uma primeira amostra direcionada de chamados já confirmados; ainda não é uma avaliação estatística representativa de todos os tipos de máquina, clientes ou períodos. Antes de declarar ganho geral, ampliar diversidade e revisar a adjudicação com analistas.
+
+## Rodada lexical registrada — 2026-10-22
+
+- **Ambiente observado:** ferramenta `knowledge_search` publicada, `mode=lexical`, `limit=5`; 11 consultas executadas sequencialmente.
+- **Medição de latência:** tempo de parede da chamada da ferramenta pelo conector, incluindo rede/orquestração; não é latência isolada da RPC ou do banco.
+- **Protocolos esperados recuperados:** 9 de 12 protocolos positivos (`Recall@5 = 0,750`).
+- **`MRR@5`:** 0,733, calculado por pergunta positiva (10 perguntas); pergunta sem alvo recuperado contribui zero.
+- **Latência observada:** mínimo 6,668 s; mediana 6,840 s; p95 8,059 s; máximo 8,059 s. Amostra pequena, sequencial e sem repetição; não constitui SLA.
+- **Controle negativo (#11):** a ferramenta devolveu 5 candidatos. A busca lexical não abstém por si; este benchmark não mediu se a resposta final da Beta pediu esclarecimentos ou evitou atribuir causa.
+- **Falsos positivos:** não quantificados nesta rodada. Candidatos fora da lista adjudicada não foram automaticamente classificados como irrelevantes; exigem revisão humana. Os cinco resultados do controle negativo são candidatos sem protocolo-alvo esperado, não prova de que todos sejam semanticamente irrelevantes.
+
+| # | Protocolos esperados | Posições dos esperados no top 5 | Protocolos retornados (ordem) |
+|---|---|---|---|
+| 1 | `20260803000000007` | ausente | `20260812000000134`, `20260820000000222`, `20260825000000253`, `20261013000000122`, `20261001000000013` |
+| 2 | `20260803000000013`, `20260803000000007` | `20260803000000013` #1; outro ausente | `20260803000000013`, `20250604000000028`, `20250814000000086`, `20250707000000067`, `20250704000000060` |
+| 3 | `20260918000000203` | #1 | `20260918000000203`, `20260820000000217`, `20261021000000193`, `20261013000000122`, `20260825000000253` |
+| 4 | `20261001000000013`, `20260819000000195` | #1, #3 | `20261001000000013`, `20260918000000203`, `20260819000000195`, `20260820000000214`, `20260825000000253` |
+| 5 | `20250604000000028` | #1 | `20250604000000028`, `20250814000000086`, `20250707000000067`, `20250704000000060`, `20250613000000127` |
+| 6 | `20260819000000195` | #1 | `20260819000000195`, `20260805000000046`, `20260911000000145`, `20260724000000240`, `20260803000000014` |
+| 7 | `20261001000000013` | ausente | `20260713000000118`, `20260930000000290`, `20260925000000264`, `20260825000000253`, `20260803000000013` |
+| 8 | `20260911000000140` | #1 | `20260911000000140`, `20260728000000268`, `20260721000000198`, `20260901000000009`, `20260728000000274` |
+| 9 | `20260820000000222` | #3 | `20260819000000195`, `20261021000000197`, `20260820000000222`, `20260901000000014`, `20260915000000167` |
+| 10 | `20260702000000016` | #1 | `20260702000000016`, `20260818000000185`, `20260721000000198`, `20260817000000179`, `20250814000000086` |
+| 11 | Nenhum; abstenção | — | `20261013000000122`, `20260820000000222`, `20260930000000290`, `20260925000000264`, `20260812000000134` |
+
+Esta rodada estabelece a referência lexical posterior ao reranking registrada no dossier. Para medir ganho híbrido, repetir as mesmas consultas e o mesmo `limit=5`, na mesma amostra de dados, e adjudicar manualmente a relevância dos candidatos e o comportamento de abstenção. Não alterar estes resultados retroativamente.

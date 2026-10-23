@@ -8,7 +8,7 @@ Este é o repositório único de trabalho da Beta. O plugin e suas skills, o MCP
 - `mcp/movidesk/`: servidor MCP/OAuth, runtime publicado pelo Sites e documentação operacional.
 - `infra/supabase/`: migrações reproduzíveis e instruções de configuração; nunca dados de chamados nem segredos.
 - `docs/`: arquitetura compartilhada, decisões, documentação dos componentes, operação e migração.
-- `legacy/`: snapshots e artefatos históricos cuja preservação não é coberta pelos componentes ativos.
+- O antigo `legacy/` foi removido da árvore ativa; snapshots dessa pasta continuam no histórico Git anterior ao commit `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`. Proveniência e documentos de migração estão em `docs/migration/`.
 - `AGENTS.md` e `DOSSIER.md`: instruções globais e índice de contexto do monorepo.
 
 ## Trabalhar nos componentes

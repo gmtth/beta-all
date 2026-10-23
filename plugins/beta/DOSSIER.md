@@ -12,7 +12,7 @@ O plugin reúne a família Beta ANL e Beta MOD em uma experiência com a skill `
 
 Este dossier cobre o pacote do plugin, suas skills, referências, metadados, configuração MCP, roteamento e publicação pelo marketplace GitHub. O código e estado do runtime MCP/OAuth e da integração Supabase têm dossiers próprios em [`mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md) e [`infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md).
 
-Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se no snapshot importado, manifesto, matriz de roteamento e repositórios históricos preservados em `legacy/source-archives/`. Não foi encontrada uma exportação integral das conversas históricas nem um dossier retroativo anterior. Fatos de implementação são descritos como observáveis nas fontes disponíveis; não é uma transcrição de conversas.
+Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se no snapshot importado, manifesto, matriz de roteamento e repositórios históricos preservados em `legacy/source-archives/` na árvore Git até `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`; a pasta foi removida da árvore ativa e continua recuperável pelo histórico. Não foi encontrada uma exportação integral das conversas históricas nem um dossier retroativo anterior. Fatos de implementação são descritos como observáveis nas fontes disponíveis; não é uma transcrição de conversas.
 
 ## Estado atual
 
@@ -116,7 +116,7 @@ As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de
 | Data/marco | Alteração ou evidência | Fonte e limite |
 |---|---|---|
 | Importação inicial | O plugin `gmtth/plugin-beta`, branch `main`, commit `f63afd20d346cd666c2f2b7908683be76eb16ea5`, foi consolidado em `plugins/beta/`; proveniência em `docs/migration/SOURCE_IMPORTS.tsv`. | Snapshot importado e inventários. |
-| Reconstrução do dossier | Este registro foi criado a partir do código, instruções, manifestos e arquivos históricos; não existe transcrição integral das conversas. | `legacy/source-archives/` e documentação de migração. |
+| Reconstrução do dossier | Este registro foi criado a partir do código, instruções, manifestos e arquivos históricos; não existe transcrição integral das conversas. | Histórico Git até `fd7c090bb25b7b9086de9ebea38a1680df6bddb4` e documentação de migração. |
 | 2026-10-20, nomenclatura | Identificadores técnicos de oito skills e nomes exibidos das 19 especializadas foram padronizados. Nomes anteriores estão preservados na tabela de decisões para rastreabilidade. | Pastas, `SKILL.md`, roteamento, referências, fixtures e metadados ativos. |
 | 2026-10-20, revisão de `SKILL.md` | Revisados os 20 frontmatters, os links relativos e os identificadores citados. Títulos internos foram alinhados aos nomes exibidos e, nesta revisão, corrigidos para os identificadores técnicos; invocação/exemplo do ClickUp Checklist também foi atualizado após encontrar referências antigas. | Todos os `skills/*/SKILL.md`; identificadores sem diretório de skill ativo são nomes de referências/control planes ou menções históricas. |
 | 2026-10-20, versionamento inicial | Inicializada a contagem do pacote em `1.0.0` e das 20 skills em `"1"`; futuras alterações incrementam o patch do pacote e somente as skills afetadas. | `.codex-plugin/plugin.json`, `skills/*/SKILL.md` e regra em `AGENTS.md`. |
@@ -151,6 +151,6 @@ Ao confirmar a conclusão de um item, retire-o desta lista e registre a evidênc
 2. Regras específicas deste componente em [`AGENTS.md`](./AGENTS.md).
 3. Contratos ativos em `skills/*/SKILL.md`, referências e `tests/beta-routing-cases.json`.
 4. Este dossier para estado, decisões registradas, histórico e pendências.
-5. Inventários, snapshots e materiais em `legacy/` para proveniência, não como instruções vigentes sem reconciliação.
+5. Inventários, snapshots em `docs/migration/` e árvore Git até `fd7c090bb25b7b9086de9ebea38a1680df6bddb4` para proveniência, não como instruções vigentes sem reconciliação.
 
 Para identidade e comportamento de publicação do Sites/MCP, consultar [`../../docs/components/sites.md`](../../docs/components/sites.md) e [`../../mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md). Para regras e estado do conhecimento Supabase, consultar [`../../infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md). Em conflito, preservar a evidência, identificar escopo/data e aplicar a precedência explícita; não apagar divergências silenciosamente.

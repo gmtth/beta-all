@@ -25,10 +25,10 @@ Este `AGENTS.md` é a entrada e o roteador do monorepositório: estabelece regra
 ### Autoridade e atualização
 
 - Para regras de trabalho, prevalecem este arquivo e o `AGENTS.md` ativo mais específico do componente, respeitada a precedência documentada nele. Um `DOSSIER.md` registra fatos, decisões, evidências, estado e pendências; não cria por si só uma regra normativa.
-- Os caminhos canônicos em `plugins/`, `mcp/` e `infra/` são a fonte atual. `legacy/` e `docs/migration/source-documents/` preservam proveniência e estados anteriores; seu conteúdo é evidência histórica, nunca instrução automaticamente vigente.
+- Os caminhos canônicos em `plugins/`, `mcp/` e `infra/` são a fonte atual. `docs/migration/source-documents/` preserva documentos de origem; o antigo diretório `legacy/` foi removido da árvore ativa e permanece recuperável no histórico Git até o commit `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`. Conteúdo histórico é evidência, nunca instrução automaticamente vigente.
 - Ao concluir trabalho com informação durável, atualize o dossier do componente afetado com decisão/estado, data, evidência e pendências. Atualize o dossier raiz somente se o estado compartilhado, uma decisão transversal, um marco ou uma dependência entre componentes mudou. Atualize a arquitetura compartilhada apenas quando uma decisão arquitetural mudar ou for formalizada.
 - Não propague mecanicamente a mesma cópia para todos os dossiers. Use links para a fonte canônica e resumos nos índices; registre divergências e sua proveniência em vez de as apagar silenciosamente.
-- Não reescreva snapshots, exports de conversa, arquivos em `legacy/` nem fontes de rastreabilidade para fazer parecer que sempre refletiram a decisão atual. Novas decisões entram nos documentos ativos e apontam para a evidência pertinente.
+- Não reescreva snapshots, exports de conversa em `docs/migration/source-documents/` nem fontes de rastreabilidade para fazer parecer que sempre refletiram a decisão atual. Novas decisões entram nos documentos ativos e apontam para a evidência pertinente.
 - Se documentos ativos discordarem, identifique data, escopo e evidência; aplique a precedência explícita. Se ela não resolver conflito material, registre-o como divergente e não o transforme em fato confirmado.
 
 ### Próximos passos nos dossiers
@@ -38,7 +38,7 @@ Este `AGENTS.md` é a entrada e o roteador do monorepositório: estabelece regra
 - Em tarefas futuras relacionadas, lembre ocasionalmente o usuário dos itens ainda abertos, especialmente ao planejar ou concluir trabalho do mesmo componente; evite lembretes repetitivos sem relação com a tarefa.
 - Quando um item for comprovadamente resolvido, remova-o da lista ativa e registre a evidência de conclusão no estado/histórico apropriado do dossier.
 - Próximos passos são backlog, não autorização para executá-los. Respeite o pedido e os limites de publicação, Git, acesso e dados definidos para cada tarefa.
-- `legacy/` e `docs/migration/source-documents/` são snapshots históricos. Não atualize seus dossiers como se fossem estado atual; quando uma instrução preservada precisar apontar para esta rotina, faça apenas um adendo datado e deixe claro qual dossier canônico está ativo.
+- `docs/migration/source-documents/` contém snapshots históricos. O antigo `legacy/` pode ser consultado no histórico Git anterior ao commit `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`. Não atualize snapshots nem os trate como estado atual; deixe claro qual dossier canônico está ativo.
 
 ### Padrão comum dos dossiers
 

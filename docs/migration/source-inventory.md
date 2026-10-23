@@ -2,6 +2,8 @@
 
 Data do inventário: 2026-10-20. A importação preserva os repositórios-fonte intactos. Os commits foram importados no histórico deste monorepo por `git subtree`; snapshots legados não são dependências dos componentes ativos.
 
+Atualização de 2026-10-22: o diretório `legacy/` foi removido da árvore ativa a pedido do usuário. Os destinos `legacy/...` abaixo registram onde os artefatos estavam na árvore do commit `fd7c090bb25b7b9086de9ebea38a1680df6bddb4` e continuam recuperáveis pelo histórico Git. `SOURCE_IMPORTS.tsv` permanece como manifesto histórico de proveniência.
+
 ## Componentes ativos importados
 
 | Origem | Commit importado | Destino |

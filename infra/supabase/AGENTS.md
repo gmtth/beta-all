@@ -1,6 +1,6 @@
 # Instruções do componente Supabase
 
-Leia primeiro o [`AGENTS.md` raiz](../../AGENTS.md) e o dossier raiz; depois este arquivo e [`DOSSIER.md`](./DOSSIER.md) antes de alterar schema, migrations, acesso, API ou a página administrativa de dados. O runtime MCP e suas rotas também obedecem a [`../../mcp/movidesk/AGENTS.md`](../../mcp/movidesk/AGENTS.md). A fonte de trabalho é o monorepo `beta-all`; snapshots em `legacy/` e `docs/migration/` são históricos.
+Leia primeiro o [`AGENTS.md` raiz](../../AGENTS.md) e o dossier raiz; depois este arquivo e [`DOSSIER.md`](./DOSSIER.md) antes de alterar schema, migrations, acesso, API ou a página administrativa de dados. O runtime MCP e suas rotas também obedecem a [`../../mcp/movidesk/AGENTS.md`](../../mcp/movidesk/AGENTS.md). A fonte de trabalho é o monorepo `beta-all`; snapshots em `docs/migration/` e o antigo diretório `legacy/` no histórico Git (até `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`) são históricos.
 
 ## Segurança do banco
 

@@ -1,6 +1,0 @@
-interface:
-  display_name: "Beta MOD Regras"
-  short_description: "Analisa completude de regras funcionais e rastreabilidade sem gerar a modelagem final."
-  brand_color: "#E3DB0B"
-  icon_small: "./assets/beta-mod.png"
-  icon_large: "./assets/beta-mod.png"

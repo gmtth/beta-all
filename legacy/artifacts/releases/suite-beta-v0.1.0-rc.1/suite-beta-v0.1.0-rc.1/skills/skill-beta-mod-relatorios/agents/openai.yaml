@@ -1,5 +1,0 @@
-interface:
-  display_name: "Beta MOD Relatórios"
-  short_description: "Analisa relatórios, períodos e cálculos funcionais."
-  icon_small: "./assets/beta-mod.png"
-  icon_large: "./assets/beta-mod.png"

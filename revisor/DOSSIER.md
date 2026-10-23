@@ -200,7 +200,6 @@ Achados revalidados em 2026-10-22 contra o `main` consultado no SHA `aeaebb4ae51
 |---|---|---|---|
 | Alta | Corrigir os dois defeitos de autorização identificados na #26. | Refresh token conserva `row.scope` em vez dos scopes efetivos; rota REST colapsa `insufficient_scope`. | Correção de runtime com testes de regressão e preservação dos demais grants/contratos. |
 | Alta | Restaurar visibilidade dos scopes efetivamente concedidos nos tokens. | #34 removeu sua apresentação, embora a API e o aviso de reconexão ainda dependam deles. | Painel distingue visualmente scopes do token dos scopes ativados pelo administrador e mantém acessibilidade. |
-| Alta | Reconciliar a #31 preservando apenas sua evidência ainda única. | A avaliação v1 da #42 não contém as formulações/resultados observados da baseline da #31, mas partes do dossier e os estados v107 foram superados. | Atualizar contra o `main` corrente, manter a baseline anterior útil e remover afirmações históricas contraditórias antes de recomendar integração. |
 | Alta | Validar reranking #36 em SQL e no corpus live. | Migração/teste SQL e repetição das 11 consultas continuam pendentes segundo os dossiers e a PR. | Teste SQL aprovado, migration remota comprovada e benchmark repetido com resultados comparáveis. |
 
 ## Fontes de verdade
@@ -240,3 +239,7 @@ Revalidei a PR #31 aberta (`codex/knowledge-evaluation-results`, head `1ebae29ed
 **Conclusão de revisão:** não há perda de código, runtime, migration ou dado de produção ao fechar a #31, pois ela é documental. Há perda de rastreabilidade e reprodutibilidade da baseline pré-reranking, da deduplicação dos 55 tickets e da confirmação da ingestão longa se o conteúdo não for preservado em outro local. Recomendar fechar somente depois de salvar esses itens em documentos ativos atuais; não mesclar a branch inteira sem reconciliação.
 
 **Atualização posterior neste mesmo ciclo:** a PR #25 foi mesclada por squash em `0c5cdf74e1d3c2a72d202975880a4ad82fa962f1`; essa alteração confirma o registro documental da publicação v108 e não afeta o escopo nem a conclusão da #31.
+
+## Desfecho da reconciliação da #31 — 2026-10-22
+
+A evidência exclusiva foi preservada seletivamente nos dossiers atuais e no artefato [`infra/supabase/evaluations/knowledge-search-baseline-2026-10-22.md`](../infra/supabase/evaluations/knowledge-search-baseline-2026-10-22.md). A PR de reconciliação [#43](https://github.com/gmtth/beta-all/pull/43) foi integrada por squash em `main` no commit `2fe83dba56af2a56d1f3dfa0e45a0f833a111b8c`; depois disso, a PR original [#31](https://github.com/gmtth/beta-all/pull/31) foi **fechada sem merge**. Assim, a perda descrita na seção anterior foi evitada para a baseline das 11 consultas, a amostra dos 55 registros e o registro de importação longa. A #31 era somente documental; nenhum código, migration ou dado de produção foi integrado por seu fechamento. A validação live descrita na origem não foi repetida durante a reconciliação.

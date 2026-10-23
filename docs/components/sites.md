@@ -16,9 +16,9 @@ O armazenamento de fonte usado pela publicação do Sites é separado do GitHub 
 
 ## Snapshots e origens antigas
 
-O checkout MCP local contém snapshots Git das versões do Site e um pacote `work/oauth-proxy` sem histórico Git. Os históricos das árvores `work/sites-beta-mcp-20261020*` e do antigo projeto `work/movidesk-site` foram importados em `legacy/source-archives/`. O pacote `work/oauth-proxy` e os artefatos exclusivos de preservação do antigo `source-bundle` ficam em `legacy/artifacts/site-snapshots/`, excluindo dependências e caches reproduzíveis. O build `dist/` do snapshot `oauth-20261020` permanece preservado em `dist.tar.gz`, após o checkout do marketplace no Windows falhar por nomes de arquivos gerados longos; o pacote foi verificado arquivo a arquivo contra o manifesto SHA-256 original. Consulte o README desse snapshot para restauração e hashes. O manifesto de migração registra os commits e hashes.
+O checkout MCP local continha snapshots Git das versões do Site e um pacote `work/oauth-proxy` sem histórico Git. Os históricos das árvores `work/sites-beta-mcp-20261020*` e do antigo projeto `work/movidesk-site` foram importados em `legacy/source-archives/`; o pacote `work/oauth-proxy` e os artefatos exclusivos de preservação do antigo `source-bundle` ficavam em `legacy/artifacts/site-snapshots/` até o commit `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`. A pasta `legacy/` foi removida da árvore ativa e esses itens podem ser recuperados desse commit. O build `dist/` do snapshot `oauth-20261020` foi preservado em `dist.tar.gz`, após o checkout do marketplace no Windows falhar por nomes de arquivos gerados longos; o pacote foi verificado arquivo a arquivo contra o manifesto SHA-256 original. O manifesto de migração registra os commits e hashes.
 
-A origem `work/movidesk-site` refere-se a outro projeto Sites (`appgprj_6a7e285d4458819182045de12c19a44a`), diferente do projeto `Beta MCP` atual. Seu código fica no legado; não substituir uma origem pela outra.
+A origem `work/movidesk-site` refere-se a outro projeto Sites (`appgprj_6a7e285d4458819182045de12c19a44a`), diferente do projeto `Beta MCP` atual. Seu código consta na árvore histórica em `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`; não substituir uma origem pela outra.
 
 ## Fluxo de publicação
 

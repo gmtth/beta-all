@@ -35,7 +35,9 @@ Referência: 2026-10-22. `beta-all` é a fonte de trabalho ativa; plugin, MCP/Si
 
 - **Consolidação do monorepo (2026-10-20):** fontes e histórico foram importados para os caminhos canônicos, sem submódulos ativos; a proveniência e os checksums estão no [inventário](docs/migration/source-inventory.md), e a comparação documental está na [reconciliação](docs/migration/document-reconciliation.md). Os checkouts e repositórios antigos foram preservados conforme registrado ali.
 - **Governança documental (2026-10-22):** regras atuais estão nos AGENTS; fatos, decisões e evidências ficam nos dossiers. O padrão comum está em [`AGENTS.md`](AGENTS.md#padrão-comum-dos-dossiers). Este dossier raiz é executivo/transversal; cronologias e diagnósticos de um componente ficam na fonte especializada.
-- **Limites entre componentes:** detalhes históricos de OAuth, Site, telemetria, migrations, ingestões, marketplace e revisões permanecem nos seus dossiers canônicos. Snapshots em `legacy/` e `docs/migration/source-documents/` são evidência de origem e não indicam estado atual.
+- **Limites entre componentes:** detalhes históricos de OAuth, Site, telemetria, migrations, ingestões, marketplace e revisões permanecem nos seus dossiers canônicos. `docs/migration/source-documents/` contém documentos históricos; o conteúdo do antigo `legacy/` pode ser recuperado da árvore Git no commit `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`. Nenhuma dessas fontes históricas indica estado atual.
+
+- **Remoção do diretório histórico (2026-10-22):** `legacy/` saiu da árvore ativa por solicitação do usuário. Os 959 arquivos removidos permanecem recuperáveis na história Git anterior à remoção; inventários e manifests de importação continuam registrando a proveniência.
 
 ## Próximos passos
 

@@ -53,7 +53,7 @@ Os pareceres são snapshots de revisão, não reviews formais submetidos ao GitH
 | Supabase | [`../infra/supabase/AGENTS.md`](../infra/supabase/AGENTS.md), [`../infra/supabase/DOSSIER.md`](../infra/supabase/DOSSIER.md), README e migrations | Schema, grants/RLS, limites de leitura, conteúdo permitido, idempotência, rollback e estado remoto. |
 | Arquitetura/decisões | [`../docs/architecture/`](../docs/architecture/) e ADRs pertinentes | Fluxos, limites de confiança, requisitos cross-component, decisões confirmadas/pendentes. |
 | Integração/publicação | [`../docs/components/sites.md`](../docs/components/sites.md), workflows e instruções do componente | SHA de fonte, build, pacote, deployment, endpoint, audience e smoke. |
-| Histórico de migração | [`../docs/migration/`](../docs/migration/) e `legacy/` somente quando necessário | Proveniência, origem, lacunas e diferenças históricas; não usar como regra vigente automaticamente. |
+| Histórico de migração | [`../docs/migration/`](../docs/migration/) e histórico Git até `fd7c090bb25b7b9086de9ebea38a1680df6bddb4` quando necessário | Proveniência, origem, lacunas e diferenças históricas; não usar como regra vigente automaticamente. |
 
 ## Histórico de revisões
 

@@ -41,7 +41,7 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 | RLS, grants e exposição Data API | RLS/grants confirmados pelo catálogo; hardening aplicado conforme histórico CLI compartilhado | `service_role` lê o catálogo sem DML direto; exposição Data API continua configuração separada |
 | Migração de baseline | Registrada como aplicada no histórico remoto pelo usuário | Não executou DDL no banco existente; baseline não contém dados |
 | Hardening de grants no projeto atual | Aplicado pelo usuário; listagem MCP validada depois | `knowledge_list_sources` retorna as três fontes |
-| RPC de ingestão de ticket | Implementada e migration aplicada remotamente pelo usuário em 2026-10-20 | RPC upsert transacional e tabela de auditoria; sem grants DML diretos nas tabelas. Runtime MCP versão 74 publicado; chamada autenticada ainda não testada |
+| Ingestão longa de ticket | Migration aplicada; runtime Sites v107 e importação autenticada registrados em 2026-10-22 | O protocolo `20260918000000203` foi importado como registro Movidesk `6667`, com 54 trechos. Busca por protocolo e conferência da Interação 1 e da Interação 16 foram registradas; detalhes e limites em [`baseline observada da busca`](evaluations/knowledge-search-baseline-2026-10-22.md). |
 | Credencial do runtime | Leitura atual validada via MCP; usuário confirmou rotação e atualização; valor mascarado | Evidência limitada a `knowledge_list_sources`; nunca no Git/plugin/browser |
 | Consulta de catálogo pelo MCP publicado | Passou conforme resultado informado pelo usuário | Após reconectar, `knowledge_list_sources` retornou Movidesk, ClickUp e Documentos administrativos. Isso confirma autorização e leitura via MCP/Sites/Supabase para essa chamada, não a busca de conteúdo |
 | Ingestão do chamado piloto | Confirmada em 2026-10-22 | A ferramenta publicada confirmou 14 trechos; consulta SQL do usuário encontrou `external_id = 5835`, `record_type = ticket`, título `[TESTE] CENCI - DATA PRÓXIMA ENTREGA`, `attributes.protocol = 20260702000000016` e 14 chunks. Busca lexical nos trechos confirmou vetores preenchidos e correspondências para vencimento, entrega/quantidade, Perfil-GHE e Thyssenkrupp. |
@@ -64,7 +64,6 @@ Não foram incluídos tokens ou chaves. Uma chave Supabase secreta foi colada an
 | Média | Validar a RPC dos indicadores agregados do painel administrativo, se ainda necessária. | Migration `20261020150000_admin_knowledge_overview.sql` aplicada junto com a busca; validar RPC e painel end-to-end sem retornar conteúdo de tickets. |
 | Alta | Validar a integração e concluir o piloto controlado de feedback/fricção/autodiagnóstico. | Implementação integrada pela PR #21 e publicada no Sites v106; migrations `20261022140000` e `20261022150000` aplicadas e alinhadas entre local/remoto. RLS/grants e dois jobs ativos foram conferidos. Ainda faltam execução bem-sucedida dos jobs, validação autenticada/visual e piloto. Captura segue desligada até aprovação do contato organizacional e dos textos públicos. |
 | Alta | Validar o navegador administrativo do Supabase de ponta a ponta. | A migration `20261021160000_admin_database_browser.sql` foi aplicada pelo usuário e as RPCs/catálogo/prévias foram conferidos no SQL Editor em 2026-10-22. Falta publicar a versão correspondente somente após merge e validar a página e as rotas HTTP com uma conta master. |
-| Alta | Aplicar e validar a ampliação coordenada do limite de ingestão de chamados longos. | Migration `20261022160000_expand_movidesk_ticket_ingestion.sql` aplicada em 2026-10-22 no projeto `ywqoanfqcbcdecmkguze`; o dry-run imediatamente anterior listou somente essa migration e `supabase migration list` confirmou a versão `20261022160000` em Local e Remote. Limite atualizado para até 250 trechos de até 1.500 caracteres; rollback disponível em `rollback/20261022160000_restore_movidesk_ticket_ingestion_limit.sql`. Testes focados passaram (30/30), lint dos módulos Worker passou, build MCP passou e comparação estática confirmou que a RPC só altera o teto e que o rollback restaura a função original. O caso que motivou a mudança excedeu 50.000 caracteres/50 trechos. Runtime ainda não publicado; reimportação e conferência de início/fim do histórico pendentes. |
 
 ### Modelagem local de feedback/autodiagnóstico (2026-10-22)
 
@@ -83,13 +82,13 @@ A migration `20261022120000_add_movidesk_protocol_search.sql` foi aplicada em `y
 
 ### Reranking lexical (2026-10-22)
 
-A avaliação baseline de 11 perguntas naturais foi registrada na [PR #31](https://github.com/gmtth/beta-all/pull/31): a busca exata por protocolo funciona, mas resultados ruidosos e sensibilidade a paráfrases reduzem a utilidade do top 5. A migration `20261022170000_rank_knowledge_by_query_coverage.sql` altera somente o score/ordenação: 70% cobertura de termos no trecho, 20% cobertura no título e 10% sinal de proximidade do `ts_rank_cd` normalizado. Exatos por ID interno ou protocolo continuam com score `1.0`; o campo `relevance` passa a ser um score lexical limitado a `[0,1]`, não uma probabilidade nem grau de certeza.
+A baseline pré-reranking de 11 perguntas está preservada em [`evaluations/knowledge-search-baseline-2026-10-22.md`](evaluations/knowledge-search-baseline-2026-10-22.md). Ela registra que a busca exata por protocolo funciona, mas há ruído e sensibilidade a paráfrases no top 5. A migration `20261022170000_rank_knowledge_by_query_coverage.sql` altera somente o score/ordenação: 70% cobertura de termos no trecho, 20% cobertura no título e 10% sinal de proximidade do `ts_rank_cd` normalizado. Exatos por ID interno ou protocolo continuam com score `1.0`; o campo `relevance` passa a ser um score lexical limitado a `[0,1]`, não uma probabilidade nem grau de certeza.
 
 **Estado da migration:** aplicada no projeto `ywqoanfqcbcdecmkguze` em 2026-10-22. O `dry-run` listou somente esta migration; `supabase db push` terminou sem erro e `supabase migration list` confirmou `20261022170000` em Local e Remote. Como o contrato da RPC não mudou, não foi necessária nova publicação do runtime Sites.
 
 **Verificação SQL:** `supabase db test --linked` não iniciou porque o ambiente não tem Docker/Podman. A execução do arquivo via `supabase db query --linked --file` retornou somente a linha TAP da terceira asserção, então não foi tratada como evidência suficiente de que as três asserções pgTAP passaram. Em seguida, uma consulta transacional equivalente avaliou explicitamente as três condições (`coverage_order`, score `[0,1]` e score exato `1.0`); todas retornaram `true`. Uma consulta posterior confirmou zero registros sintéticos remanescentes. O teste pgTAP completo segue pendente em ambiente com Docker/Podman.
 
-**Avaliação live pós-migration:** repetidas via Beta as mesmas 11 perguntas da baseline em [PR #31](https://github.com/gmtth/beta-all/pull/31), com `limit=5`. Compararam-se posições, não os valores de `relevance`, porque a escala mudou para `[0,1]`.
+**Avaliação live pós-migration:** repetidas via Beta as mesmas 11 perguntas registradas em [`knowledge-search-baseline-2026-10-22.md`](evaluations/knowledge-search-baseline-2026-10-22.md), com `limit=5`. Compararam-se posições, não os valores de `relevance`, porque a escala mudou para `[0,1]`.
 
 | # | Alvo relevante da baseline | Posição baseline → pós-migration | Resultado |
 |---|---|---:|---|
@@ -106,6 +105,12 @@ A avaliação baseline de 11 perguntas naturais foi registrada na [PR #31](https
 | 11 | `20260918000000203` (conexão após verificações) | #4 → #1 | Melhora clara; o caso esperado passou para a primeira posição. |
 
 **Conclusão:** houve melhora em 2 consultas (#8 e #11), regressão dos alvos esperados em 4 (#3, #4, #7 e #10), e ausência de melhora nas demais. A busca continua lexical e ruidosa; este reranking não deve ser considerado ganho geral nem substitui a busca semântica/híbrida. A autorização Beta funcionou nesta avaliação, sem importações ou outras alterações externas.
+
+### Importação longa e amostra sem reimportação (2026-10-22)
+
+O registro da PR #31 informa que a migration `20261022160000_expand_movidesk_ticket_ingestion.sql` foi aplicada, o runtime correspondente foi publicado no Sites v107 e o protocolo `20260918000000203` foi importado com 54 trechos como registro Movidesk `6667`. A busca por protocolo retornou o registro; a Interação 1 e a Interação 16 foram consultadas para conferir conteúdo no início e no fim do histórico. Essa evidência foi registrada na PR; não foi repetida nesta reconciliação. O conjunto de resultados pré-reranking e seus limites estão no arquivo [`knowledge-search-baseline-2026-10-22.md`](evaluations/knowledge-search-baseline-2026-10-22.md).
+
+A mesma PR registra que 55 protocolos de máquina consultados em duas faixas de data já estavam indexados; nenhum foi reimportado. A próxima amostra deve conter até cinco tickets novos, fechados/resolvidos e ainda não indexados, deduplicados por protocolo e autorizados individualmente. Isso é uma regra para um piloto futuro, não autorização para iniciar ingestão.
 
 ### Conjunto de avaliação v1 (2026-10-22)
 

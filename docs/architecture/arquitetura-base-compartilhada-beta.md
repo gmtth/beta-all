@@ -1,7 +1,16 @@
 # Arquitetura da base compartilhada da Beta
 
-**Status:** documento de trabalho — decisões em construção  
-**Última atualização:** 17/10/2026
+**Status:** arquitetura aprovada em evolução — estado e pendências reconciliados com os dossiers canônicos
+**Última atualização:** 24/10/2026
+
+## Estado atual
+
+- O Supabase/PostgreSQL é a base compartilhada escolhida. A busca lexical na cópia indexada e a importação explícita de chamados Movidesk estão implementadas; o runtime hospedado no Sites acessa a Data API/RPC por HTTPS e valida OAuth/escopos no backend. Ver [`infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md) e [`mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md).
+- A busca lexical e seu reranking foram avaliados com um conjunto piloto, mas ainda há consultas diagnósticas em que o caso esperado não aparece nos primeiros resultados. Busca vetorial/híbrida e avaliação comparativa seguem pendentes.
+- Ainda não há sincronização incremental em lote de Movidesk, ClickUp e documentos administrativos. O fluxo existente importa um chamado Movidesk explicitamente; não equivale à sincronização contínua das fontes.
+- Permanecem pendentes validações do diagnóstico interativo, da governança de acesso/conversas e da prontidão operacional. A captura de feedback/autodiagnóstico continua desligada; detalhes e condições de conclusão estão nos dossiers de Supabase, MCP e plugin.
+
+Este documento registra a arquitetura e o roteiro transversal. Os dossiers vinculados são a fonte para estado operacional detalhado, evidências, deployments e backlog específico de cada componente.
 
 ## Objetivo
 
@@ -22,7 +31,7 @@ Criar uma base de conhecimento externa para a Beta, compartilhada pelos quatro a
 
 ## Direção inicial de arquitetura
 
-Usar um repositório compartilhado como fonte oficial da cópia de conhecimento e uma camada de busca/indexação própria que recupere apenas os registros e trechos relevantes para cada pergunta. Para chamados e cards já finalizados, a direção escolhida é manter cópias indexadas na base compartilhada; a Beta consulta essa cópia rápida no uso cotidiano, sem depender de uma chamada ao MCP do Movidesk ou ClickUp para cada pergunta. Os sistemas originais permanecem como fonte de referência e link de rastreabilidade. A forma e frequência de atualização dessas cópias ainda precisam ser definidas.
+Usar um repositório compartilhado como fonte oficial da cópia de conhecimento e uma camada de busca/indexação própria que recupere apenas os registros e trechos relevantes para cada pergunta. Para chamados e cards já finalizados, a direção escolhida é manter cópias indexadas na base compartilhada; a Beta consulta essa cópia rápida no uso cotidiano, sem depender de uma chamada ao MCP do Movidesk ou ClickUp para cada pergunta. Os sistemas originais permanecem como fonte de referência e link de rastreabilidade. O mecanismo e a frequência de sincronização em lote ainda precisam ser definidos e implementados.
 
 Além do arquivo dos registros originais, a Beta deverá construir e manter uma camada de contexto consolidado: conhecimento reutilizável extraído dos chamados e cards, como sintomas recorrentes, causas confirmadas, soluções que funcionaram, versões afetadas e relações entre ocorrências. Esse contexto deve apontar para os registros que o sustentam, para que possa ser conferido e corrigido.
 
@@ -405,78 +414,40 @@ Cada item de contexto deve incluir referências aos registros de origem, data de
 
 ## Decisões tomadas
 
-| Tema | Decisão | Estado |
+| Tema | Decisão vigente | Estado comprovado |
 |---|---|---|
-| Usuários | Quatro analistas usarão a base | Definido |
-| Compartilhamento | Todos devem consultar a mesma fonte oficial | Definido |
-| Escala | A base será organizada em documentos por assunto e consultada por busca | Direção acordada; implementação pendente |
-| Respostas | A Beta deve indicar as fontes usadas e sinalizar falta de evidência | Princípio acordado |
-| Atualizações | Os analistas poderão pedir atualizações à Beta | Requisito definido; fluxo de gravação/aprovação pendente |
-| Conteúdos | Incluir chamados históricos do Movidesk, cards do ClickUp com erros corrigidos e processos administrativos | Definido como escopo inicial |
-| Casos similares | A Beta deve buscar ocorrências parecidas e sugerir soluções documentadas, citando os registros | Requisito definido; indexação e ranking pendentes |
-| Fonte de problemas de máquina | Priorizar os chamados do Movidesk, onde está a maior parte desse histórico; usar ClickUp como complemento | Definido pelo usuário |
-| Diagnóstico | Buscar por sintomas e contexto descritos em linguagem natural, sem exigir código de erro | Requisito definido; avaliação no piloto pendente |
-| Esclarecimento interativo | A Beta deve pedir automaticamente informações faltantes e refinar a busca durante a conversa | Requisito definido; suporte nativo da interface a confirmar |
-| Histórico das conversas | Guardar separadamente conversas, identidade autenticada do analista, assunto, evidências, lacunas e resultado da assistência | Requisito definido; esquema, retenção e acesso pendentes |
-| Comunicação da Beta | Analisar com rigor de analista sênior e responder como analista funcional, em linguagem natural, profissional e orientada à solução | Diretriz definida |
-| Proteção de informação | Respeitar classificação e autorização do interlocutor; não expor raciocínio privado, ferramentas ou detalhes internos/privilegiados sem autorização | Requisito definido; matriz de acesso e classificação pendentes |
-| Diagnóstico privilegiado | Disponibilizar a analistas autorizados resumo diagnóstico auditável, não cadeia de pensamento privada | Diretriz definida; perfis e campos autorizados pendentes |
-| Cópia histórica | Chamados e cards finalizados serão copiados para a base compartilhada e indexados para consulta veloz | Direção escolhida; sincronização pendente |
-| Contexto derivado | A Beta deverá consolidar padrões, causas e soluções a partir dos registros, sempre com referências rastreáveis | Requisito definido; validação e ciclo de atualização pendentes |
-| Consulta | Seguir arquitetura RAG com cópia canônica e recuperação híbrida lexical + semântica, com fontes citáveis | Direção recomendada; tecnologia e piloto pendentes |
-| Provedor do banco | Usar Supabase para hospedar PostgreSQL e habilitar pgvector | Escolhido; iniciar no Free para piloto e reavaliar limites antes de produção |
+| Usuários e compartilhamento | Quatro analistas consultam a mesma base compartilhada. | Definido. |
+| Fontes | Movidesk prioritário para chamados e problemas de máquinas; ClickUp complementar para erros corrigidos; documentos administrativos para procedimentos aprovados. | Escopo definido; ingestão automatizada de todas as fontes ainda pendente. |
+| Persistência e consulta | Manter cópias indexadas no Supabase/PostgreSQL e recuperar somente trechos pertinentes; a consulta cotidiana não depende de chamar os MCPs de origem. | Busca lexical na cópia e importação explícita de Movidesk implementadas. |
+| Runtime | MCP hospedado no Sites acessa o Supabase por HTTPS via Data API/RPC, com credencial somente no servidor. | Implementado; validações completas permanecem no backlog MCP/Supabase. |
+| Identidade e escopos | OAuth individual identifica o analista; `movidesk:read` e `knowledge:read` são escopos distintos, validados por ferramenta. Credencial de serviço Supabase não substitui autorização por usuário. | Implementado conforme os dossiers MCP e Supabase; validação operacional por conta continua pendente. |
+| Busca diagnóstica | Recuperar por sintomas/contexto e códigos quando existirem; direção de evolução é busca híbrida lexical + semântica, com fontes rastreáveis e abstenção quando não houver evidência. | Busca atual é lexical com reranking; piloto mostra lacunas e ruído. Embeddings/provedor e busca híbrida não foram implementados. |
+| Atualizações e rastreabilidade | Preservar IDs e links de origem; separar conhecimento de origem do contexto derivado e exigir validação humana para promover hipóteses a regras. | Requisito vigente; fluxo amplo de sincronização e atualização ainda pendente. |
+| Comunicação e segurança | Analisar rigorosamente, responder em linguagem funcional e natural, citar evidências, distinguir fatos/hipóteses e não expor raciocínio privado ou conteúdo não autorizado. | Diretriz vigente; classificação granular e testes de autorização/divulgação ainda precisam ser fechados. |
+| Histórico e feedback | Separar eventos de assistência do conhecimento de origem; minimizar dados e não persistir transcrições completas nem raciocínio privado. | Estrutura de feedback/autodiagnóstico implementada, mas captura desligada e validações/piloto pendentes. |
 
-## Decisões pendentes
+## Decisões ainda pendentes
 
-| Tema | Pergunta a resolver | Opções / observações |
+| Tema | Decisão ou validação necessária | Estado / fonte canônica |
 |---|---|---|
-| Repositório | Onde a equipe já mantém documentos e contas corporativas? | Google Drive, SharePoint ou outra plataforma. A escolha deve considerar permissões individuais e integração disponível. |
-| Sincronização das fontes | Como e com que frequência copiar atualizações do Movidesk e ClickUp? | Exportação ou APIs/conectores em rotina agendada ou incremental; consulta direta aos MCPs fica para conferência e sincronização, não para cada pergunta. Preservar links e IDs de origem. |
-| Índice | Onde ficará o índice pesquisável e qual tecnologia usar? | Definir após verificar volume, formatos, campos, APIs, permissões e ambiente de execução da Beta; indexar as cópias para busca textual e semântica. |
-| Esquema PostgreSQL | Quais tabelas e campos entrarão no primeiro schema? | Proposta documentada: usuários/papéis, fontes/registros, fragmentos, embeddings, conhecimento/evidências, conversas/turnos, eventos de recuperação, jobs e auditoria; fechar após mapear payloads e classificação dos dados. |
-| Infraestrutura | Em qual ambiente o pipeline e o serviço de busca rodarão? | Verificar ambiente já disponível, autenticação, rede, backup, observabilidade e disponibilidade. |
-| Hospedagem PostgreSQL | Qual plano/região/configuração do projeto Supabase será usado? | Provedor escolhido; iniciar no Free para piloto e confirmar suporte/limites atuais, região, pooler, backups e política de pausa. |
-| Runtime e conexão | Como o MCP Sites acessará Supabase? | Sites/Cloudflare Workers não usa conexão TCP PostgreSQL direta; adotar Data API/RPC por HTTPS com segredo server-only e autorização no Worker, ou hospedar serviço intermediário com conexão PostgreSQL. |
-| Interface de perguntas | A interface da Beta terá componente estruturado para coletar esclarecimentos? | Verificar capacidades da plataforma; manter o mesmo fluxo via conversa comum como fallback. |
-| Metas de operação | Quais limites de latência e atraso de sincronização são aceitáveis? | Medir no piloto; hipótese inicial registrada na proposta técnica, ainda não aprovada como SLA. |
-| Contexto consolidado | Qual formato guardará padrões e soluções extraídos dos chamados/cards? | Definir entidades e relações; manter evidências, estado de validação, versão e vínculo com registros de origem. |
-| Modelo de similaridade | Como medir que dois problemas são semelhantes e ranquear soluções? | Combinar filtros estruturados, texto e semântica; validar com exemplos históricos e revisão dos analistas. |
-| Qualidade histórica | Como distinguir solução confirmada de hipótese ou encerramento sem resolução? | Definir campos/estados de validação e critérios para recomendar uma solução. |
-| Permissões | A Beta poderá apenas consultar ou também gravar? | Leitura para todos; escrita direta ou fluxo com confirmação/aprovação. |
-| Perfis de público | Quais perfis poderão conversar com a Beta e quais dados cada perfil pode consultar/receber? | Definir perfis internos e externos, autenticação, classificação por fonte/campo e regras de divulgação para clientes. |
-| Identidade/autenticação | Como o backend validará individualmente a conta e o papel de cada analista? | Preferir OAuth/SSO corporativo com mapeamento de grupos; verificar o que a plataforma entrega de forma confiável. Se identidade não chegar ao backend, exigir autenticação própria antes de liberar dados internos. |
-| Reutilização do OAuth Movidesk | O projeto OAuth existente pode autenticar também cada usuário da Beta? | Código inspecionado: identidade individual disponível e escopo atual único `movidesk:read`. Preservar esse escopo para Movidesk e adicionar `knowledge:read` (e futuramente `knowledge:write`) com validação específica por ferramenta. OAuth de usuário e chave de serviço Supabase têm funções distintas. |
-| Política de autorização da Beta | Como mapear usuários autenticados aos dados e ações da Beta? | O fluxo atual já associa token do conector ao ID/e-mail ChatGPT, segundo análise fornecida; criar permissões granulares por papel/usuário e recurso. A identidade individual no Movidesk não existe no desenho atual por causa da credencial upstream compartilhada. |
-| Ciclo de vida do token | Qual validade, expiração, renovação e revogação serão suportadas? | Resolver divergência entre 30 dias no endpoint e uma hora na página de privacidade; confirmar artefato `source-bundle`, revogação imediata e tokens já emitidos após desativação. |
-| Resumo de diagnóstico | Quais evidências e detalhes funcionais podem ser exibidos a cada papel? | Definir campos por papel; não liberar cadeia de pensamento, prompts ou segredos técnicos. |
-| Classificação | Quem classifica e revisa documentos como compartilháveis, internos, restritos ou confidenciais? | Definir responsável, metadados obrigatórios, exceções e revisão periódica. |
-| Aprovação | Quais alterações podem entrar sem revisão? | Separar correções simples de conteúdo que altere política, critério ou procedimento oficial. |
-| Identidade | Como registrar qual analista pediu cada alteração? | Autenticação individual e registro de autoria; não compartilhar credenciais. |
-| Busca | Quais formatos e volume de conteúdo precisam ser suportados? | Inventariar documentos, planilhas, PDFs e outros formatos antes de escolher a solução. |
-| Indexação | Quais campos e texto serão extraídos, normalizados, mascarados e indexados de cada fonte? | Mapear os esquemas reais do Movidesk, ClickUp e processos administrativos; definir atualização incremental e tratamento de exclusões. |
-| Metadados | Quais campos serão obrigatórios? | Proposta: tema, status, responsável, revisão e vigência. |
-| Conflitos | Qual fonte prevalece quando documentos discordarem? | Definir hierarquia entre política, procedimento, FAQ, exemplo e rascunho. |
-| Conteúdo sensível | A base incluirá dados pessoais, clientes ou informações restritas? | Definir classificação, acesso e regras de retenção antes de carregar esses dados. |
-| Governança de conversas | Quem pode consultar o histórico, por quanto tempo e como corrigir/apagar registros? | Definir acesso individual versus agregado, retenção, auditoria, minimização e transparência para a equipe. |
-| Atualização da busca | Como mudanças ficam disponíveis para consulta? | Sincronização automática, agendada ou sob demanda; confirmar capacidades da integração escolhida. |
+| Busca semântica/híbrida | Escolher provedor/modelo de embeddings e fechar tratamento de dados, dimensões, custo, segredo, latência e estratégia de reindexação; comparar a candidata híbrida com a lexical usando a mesma avaliação. | Pendente; [`dossier Supabase`](../../infra/supabase/DOSSIER.md#próximos-passos). |
+| Sincronização | Definir e implementar sincronização incremental/idempotente de Movidesk, ClickUp e documentos; cobrir alterações, exclusões, retificações, retries, quarentena e auditoria. | Pendente; hoje há importação explícita de chamados Movidesk, não sincronização em lote. |
+| Metadados e qualidade | Fechar extração/normalização de campos, classificação por público, hierarquia entre fontes e critérios para solução confirmada versus hipótese/encerramento sem resolução. | Parcial; schema e busca atuais têm campos/classificações limitados. |
+| Diagnóstico interativo | Testar com casos ambíguos se a Beta pergunta o que muda o diagnóstico, usa respostas para refinar a busca e se abstém quando os resultados não sustentam uma conclusão. | Pendente; [`dossier do plugin`](../../plugins/beta/DOSSIER.md#próximos-passos) e avaliação compartilhada. |
+| Governança | Aprovar perfis e divulgação por público, acesso ao histórico, autoria de atualizações, retenção, correção/exclusão e textos de transparência; habilitar feedback só após essas validações. | Parcial; OAuth individual existe; captura de feedback permanece desligada; veja os dossiers MCP/Supabase. |
+| Operação | Validar backup e restauração, limites do plano, observabilidade, execução agendada dos jobs e fluxos autenticados ponta a ponta antes de ampliar o piloto. | Pendente em Supabase/MCP; não tratar migration aplicada ou deployment como smoke completo. |
 
 ## Próximos passos
 
-1. Levantar onde os documentos estão hoje, quais contas/plataformas os quatro analistas usam e quais APIs/conectores estão disponíveis para Movidesk e ClickUp.
-2. Inventariar volume e campos dos chamados, cards e processos; identificar dados pessoais, segredos ou conteúdo restrito.
-3. Escolher a fonte oficial e decidir entre consulta direta, sincronização/cópia indexada ou abordagem híbrida.
-4. Definir identidade, permissões e trilha de auditoria para consultas e atualizações.
-5. Definir o fluxo de atualização, incluindo autoria, confirmação e aprovação para regras oficiais e registros históricos.
-6. Fechar esquema de metadados, hierarquia de fontes e critérios de validação das soluções registradas.
-7. Selecionar a tecnologia de indexação das cópias e definir atualização incremental, remoção/retificação e observabilidade da sincronização.
-8. Mapear os payloads reais de Movidesk/ClickUp e fechar o schema PostgreSQL inicial, incluindo campos de máquina e classificação.
-9. Selecionar provedor/região/plano PostgreSQL que suporte pgvector e conexão segura a partir do host do OAuth.
-10. Definir papéis de banco, pool de conexões, migrations, armazenamento de segredos, backup/restauração e monitoramento.
-11. Definir como a Beta extrairá, armazenará, revisará e atualizará o contexto consolidado com evidências dos chamados e cards.
-12. Definir esquema, autenticação, controles de acesso, retenção e política de privacidade para o histórico separado das conversas.
-13. Definir perfis de público, classificação de fontes/campos e regras de recuperação e redação segura, incluindo respostas para clientes.
-14. Implementar e validar identidade individual, autorização no backend e conteúdo do resumo diagnóstico por papel.
-15. Pilotar com casos históricos resolvidos e não resolvidos, incluindo descrições de sintomas sem códigos, cenários ambíguos e testes de autorização/divulgação; medir se as perguntas de esclarecimento reduzem hipóteses erradas e melhoram a recuperação, além de latência p50/p95, precisão dos primeiros resultados, citações e utilidade das soluções; ajustar busca e contexto antes de ampliar a ingestão.
+Os passos abaixo são transversais. Testes, alterações de runtime, migrations e procedimentos específicos permanecem nos dossiers canônicos vinculados.
+
+1. **Medir e melhorar a recuperação diagnóstica.** Comparar busca lexical e candidata híbrida no [conjunto versionado de avaliação](../../infra/supabase/evaluations/knowledge-search-v1.md), registrando Recall@5, MRR, falsos positivos, abstenção correta, citações e latência; decidir provedor de embeddings somente após revisar dados enviados, classificação, custo e reindexação. Conclusão: avaliação repetível, decisão registrada e lacunas do top-k tratadas. Acompanhar em [`Supabase`](../../infra/supabase/DOSSIER.md#próximos-passos) e [`MCP`](../../mcp/movidesk/DOSSIER.md#próximos-passos).
+2. **Automatizar a atualização das fontes.** Projetar e validar ingestão incremental de Movidesk, ClickUp e documentos administrativos, com idempotência, alteração/exclusão, retries, auditoria e reprocessamento seguro. Conclusão: execução observável e casos de falha/retificação validados para cada fonte. Acompanhar em [`Supabase`](../../infra/supabase/DOSSIER.md#próximos-passos) e [`MCP`](../../mcp/movidesk/DOSSIER.md#próximos-passos).
+3. **Validar diagnóstico interativo e respostas.** Usar casos reais minimizados, incluindo sintomas sem código e cenários ambíguos; confirmar que perguntas relevantes refinam a busca e que cada afirmação histórica tem referência, separação entre fato/hipótese e abstenção correta. Conclusão: critérios de avaliação aprovados e resultados registrados no dossier do plugin e na avaliação do MCP.
+4. **Fechar governança e privacidade.** Validar permissões por analista/público e classificação dos trechos; aprovar autoria e revisão de atualizações, retenção/acesso a eventos e avisos; testar autorização positiva e negativa. Habilitar captura de feedback somente após as condições registradas nos dossiers MCP/Supabase. Conclusão: matriz aprovada e fluxo autenticado testado sem exposição indevida.
+5. **Concluir prontidão operacional.** Testar backup e restauração, verificar limites e política do plano Supabase, executar jobs agendados e validar busca, importação e painéis com contas autorizadas. Conclusão: evidência recente de recuperação e smokes autenticados registrada; revisar o plano antes de ampliar o piloto.
+
+O alinhamento deste documento com o estado atual foi realizado nesta revisão. Decisões operacionais futuras devem ser refletidas primeiro no dossier canônico do componente e aqui somente quando alterarem a arquitetura transversal.
 
 ## Registro de decisões futuras
 

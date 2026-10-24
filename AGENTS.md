@@ -22,6 +22,15 @@ Este `AGENTS.md` é a entrada e o roteador do monorepositório: estabelece regra
 | Arquitetura ou fluxo entre componentes | [`docs/architecture/arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md), dossier raiz e dossiers dos componentes envolvidos |
 | Consolidação, proveniência e conteúdo antigo | [`docs/migration/source-inventory.md`](docs/migration/source-inventory.md), [`docs/migration/document-reconciliation.md`](docs/migration/document-reconciliation.md) e snapshots explicitamente relevantes |
 
+### Organização de `docs/`
+
+- [`docs/architecture/`](docs/architecture/) registra requisitos, princípios, decisões e propostas de desenho que atravessam componentes. Não use esses documentos como status de implementação ou backlog; esses dados pertencem ao `DOSSIER.md` raiz ou ao dossier canônico do componente.
+- [`docs/components/`](docs/components/) contém guias e referências de operação/integração por componente, como publicação do Sites e integração MCP. Estado, histórico verificável e próximos passos continuam nos dossiers apontados por esses guias.
+- [`docs/migration/`](docs/migration/) preserva inventários, reconciliação, proveniência e snapshots dos projetos de origem. Snapshots são históricos e não substituem instruções ou estado atual.
+- [`docs/plans/`](docs/plans/) contém propostas e planos de investigação com escopo e condições próprios. Um plano não comprova implementação nem autoriza publicação ou mudanças externas; confira o dossier e obtenha a autorização exigida pelo fluxo aplicável.
+
+Ao criar ou atualizar documentação, mantenha cada fato em sua fonte canônica e use links entre categorias em vez de duplicar conteúdo ou misturar proposta, decisão, instrução e estado.
+
 ### Autoridade e atualização
 
 - Para regras de trabalho, prevalecem este arquivo e o `AGENTS.md` ativo mais específico do componente, respeitada a precedência documentada nele. Um `DOSSIER.md` registra fatos, decisões, evidências, estado e pendências; não cria por si só uma regra normativa.

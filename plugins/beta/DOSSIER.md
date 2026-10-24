@@ -4,7 +4,7 @@
 
 **Componente:** `plugins/beta/`
 
-**Manifesto:** `suite-beta`, versão `1.0.9`
+**Manifesto:** `suite-beta`, versão `1.0.10`
 
 ## Resumo e escopo
 
@@ -17,7 +17,7 @@ Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se
 ## Estado atual
 
 - O pacote contém 20 skills: a orquestradora `beta` e 19 skills especializadas ANL/MOD.
-- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.9`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
+- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.10`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
 - O Knowledge Master vigente é [`CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`](./references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md). Ele resolve duas referências quebradas com anchors explícitos; o snapshot `v001` está preservado sem alteração. O relatório correspondente está em [`KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md`](./references/KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md).
 - Dezesseis skills estão na revisão `metadata.version` `"3"`; `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"`; `beta-anl-movidesk` está em `"4"`; `beta` está em `"8"` e `beta-anl-qatestes` em `"4"` após as mudanças de comunicação. A contagem inicial foi `"1"`; os incrementos seguem a regra definida em [`AGENTS.md`](./AGENTS.md).
 - Os metadados das skills incluem nomes técnicos e exibidos vigentes, descrições, prompts, política de invocação, cores e logos. As skills ClickUp Cards e ClickUp Checklist compartilham brand color `#754FF6` e os logos small/large, copiados para cada pasta para manter o pacote autossuficiente.
@@ -141,6 +141,8 @@ O contrato entre as skills tem duas camadas. A skill `beta` é a única orquestr
 
 Antes de qualquer alteração em `SKILL.md`, `agents/openai.yaml`, assets de skill ou comportamento de roteamento diretamente ligado a uma skill, o usuário deve receber um plano exato: skills e arquivos afetados, trechos/metadados que mudarão, comportamento pretendido, impacto positivo esperado, impacto negativo ou regressões possíveis, dependências e validações/versionamento. A edição só começa após aprovação explícita desse plano. Sem aprovação, a atividade permanece em análise/proposta. Mudanças apenas neste dossier ou no AGENT podem documentar o contrato, mas não autorizam alterações implícitas nas skills.
 
+Mudanças comportamentais e de redação devem ser generalizáveis para todo o domínio e fluxo da skill. Não inserir chamados, cards, documentos operacionais, casos concretos ou exemplos nas instruções das skills, nem direcionar regras a um erro ou artefato isolado. Um caso individual pode motivar investigação, mas só pode fundamentar uma regra geral após abstração e justificativa. Necessidades específicas permanecem na conversa ou no artefato correspondente, não na skill.
+
 ## Histórico de mudanças
 
 | Data/marco | Alteração ou evidência | Fonte e limite |
@@ -160,6 +162,7 @@ Antes de qualquer alteração em `SKILL.md`, `agents/openai.yaml`, assets de ski
 | 2026-10-22, cartões de encerramento | Especificada a grade visual aprovada, os seis campos iniciais e as condições de Feedback/Ações; retirado Próximo passo; definido o significado de Ações; confiabilidade padronizada em porcentagem heurística por faixas discretas. Atualizados Beta e materiais ANL/MOD que ainda exigiam cabeçalho/resumo antigo. `beta` `"7"`, `beta-anl-qatestes` `"4"`, manifesto `1.0.7`. | Skill Beta, protocolo compartilhado, control planes, observabilidade, `AGENTS.md` e dossier. Alterações locais; sem testes ou publicação nesta etapa. |
 | 2026-10-22, cartão Skills acionadas e grade responsiva | Acrescentado cartão obrigatório “Skills acionadas” antes dos opcionais na segunda linha. Lista somente nomes exibidos de skills realmente ativadas. Grade `md`: largura total quando sozinho, metade com um cartão opcional e um terço com os dois; abaixo de `md`, empilha. `beta` passou a `"8"`; manifesto `1.0.8`. | Skill Beta, protocolo, control planes ANL/MOD, observabilidade, `AGENTS.md` e dossier. Alterações locais; sem testes ou publicação nesta etapa. |
 | 2026-10-24, contratos individuais e gate de mudança | Documentada a função e a fronteira de cada uma das 19 skills especializadas; explicitado o papel exclusivo da orquestradora. AGENT e dossier agora exigem plano concreto de mudança com efeitos positivos/negativos e aprovação explícita antes de editar fontes, metadados, assets ou roteamento direto de uma skill. Nenhum `SKILL.md` foi alterado; manifesto incrementado para `1.0.9`. | Matriz baseada nas descrições, seções de responsabilidade, objetivos e limites dos 20 `SKILL.md`; `plugins/beta/AGENTS.md` e este dossier. Versões individuais de skills mantidas. |
+| 2026-10-24, neutralidade a casos isolados | Exigido que mudanças de comportamento e redação das skills expressem regras generalizáveis; proíbe-se incluir chamados, cards, documentos, casos concretos ou exemplos nas instruções, ou codificar comportamento com base em um caso isolado. Necessidades específicas permanecem na conversa ou no artefato. Nenhum `SKILL.md` foi alterado; manifesto incrementado para `1.0.10`. | `plugins/beta/AGENTS.md` e decisão solicitada pelo usuário. Versões individuais de skills mantidas. |
 | Integração MCP | `.mcp.json` configura o endpoint documentado do Sites/MCP, mas isso não comprova conectividade ou publicação end-to-end. | `.mcp.json`, `docs/components/sites.md` e `mcp/movidesk/DOSSIER.md`. |
 | 2026-10-24, avaliação de respostas finais da Beta | Revisão manual do transcript fornecido pelo usuário para as 11 perguntas do conjunto v1: 8 respostas adequadas e 3 parciais; nenhuma atribuiu causa ao equipamento atual. A pergunta 1 não acionou a busca nem citou precedentes; a pergunta 8 usou um caso relacionado, mas deixou de citar o precedente mais direto `20260911000000140`, confirmado em uma busca de leitura na base; no controle negativo (#11), a Beta não atribuiu causa, mas não pediu os dados discriminantes e afirmou que “offline” significa que a máquina não comunica, o que excede o que o status do painel demonstra. | Transcript fornecido pelo usuário; revisão comparativa ao conjunto `infra/supabase/evaluations/knowledge-search-v1.md`; consultas de leitura confirmaram os chamados `20260806000000070` e `20260911000000140`. A rodada avalia respostas finais, não latência nem qualidade estatística do ranking. |
 

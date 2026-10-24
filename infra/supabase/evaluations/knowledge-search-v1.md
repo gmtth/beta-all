@@ -60,6 +60,8 @@ O conjunto é uma primeira amostra direcionada de chamados já confirmados; aind
 
 Esta rodada estabelece a referência lexical posterior ao reranking registrada no dossier. Para medir ganho híbrido, repetir as mesmas consultas e o mesmo `limit=5`, na mesma amostra de dados, e adjudicar manualmente a relevância dos candidatos e o comportamento de abstenção. Não alterar estes resultados retroativamente.
 
+**Nota de versionamento dos rótulos:** os resultados e métricas desta rodada de 2026-10-22 foram calculados com o rótulo então vigente para a pergunta #1, que incluía somente `20260803000000007`. Em 2026-10-24, a adjudicação foi ampliada para incluir também `20260806000000070`, outro precedente confirmado. A tabela histórica acima não foi recalculada; a repetição live e suas métricas com a adjudicação revista estão em [`knowledge-search-live-2026-10-24.md`](./knowledge-search-live-2026-10-24.md).
+
 ### Revisão preliminar dos candidatos — top 5 das 11 consultas
 
 Revisão qualitativa dos títulos e trechos retornados nesta rodada; não substitui leitura integral e adjudicação de cada chamado.

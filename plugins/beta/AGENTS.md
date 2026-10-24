@@ -22,6 +22,14 @@ Este projeto empacota a família Beta em um único plugin do Codex. A entrada pr
 
 As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pasta ativa do plugin. Seus contratos foram incorporados à `beta`; cópias de auditoria ficam fora do plugin e não são necessárias para sua execução.
 
+## Responsabilidades e fronteiras das skills
+
+- A matriz de responsabilidades e limites das 19 skills especializadas está em [`DOSSIER.md`](./DOSSIER.md#contratos-de-responsabilidade-das-skills). Consulte-a junto ao `SKILL.md` da skill afetada antes de propor mudanças.
+- `beta` é a única responsável por selecionar o modo primário, rotear, coordenar handoffs, consolidar a resposta e aplicar o protocolo transversal. Uma especialidade não deve assumir autoridade ou comportamento de outra skill.
+- O `SKILL.md` de cada módulo é a fonte normativa de seu procedimento e limites detalhados. O mapa do dossier resume o contrato para navegação e prevenção de regressões; não substitui essas instruções.
+- **Gate obrigatório antes de alterar qualquer skill:** antes de editar `SKILL.md`, `agents/openai.yaml`, assets da skill ou comportamento de roteamento diretamente ligado a ela, apresente ao usuário um plano concreto que identifique as skills/arquivos/seções/metadados afetados, o comportamento pretendido, o impacto positivo esperado, os impactos negativos possíveis e os riscos de regressão, dependências e validações/versionamento necessários. Aguarde aprovação explícita desse plano antes de editar. Sem aprovação, limite-se a diagnóstico e proposta; não faça a alteração.
+- Alterações em AGENTS/DOSSIER que apenas documentem contratos não autorizam mudanças implícitas nas skills. Qualquer escopo novo deve passar pelo gate acima.
+
 ## Invocação
 
 - `$beta` pode ser invocada implicitamente e é a entrada principal.

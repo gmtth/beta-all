@@ -1,10 +1,10 @@
 # Dossier do plugin Beta
 
-**Atualizado:** 2026-10-22
+**Atualizado:** 2026-10-24
 
 **Componente:** `plugins/beta/`
 
-**Manifesto:** `suite-beta`, versão `1.0.8`
+**Manifesto:** `suite-beta`, versão `1.0.9`
 
 ## Resumo e escopo
 
@@ -17,7 +17,7 @@ Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se
 ## Estado atual
 
 - O pacote contém 20 skills: a orquestradora `beta` e 19 skills especializadas ANL/MOD.
-- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.8`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
+- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.9`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
 - O Knowledge Master vigente é [`CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`](./references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md). Ele resolve duas referências quebradas com anchors explícitos; o snapshot `v001` está preservado sem alteração. O relatório correspondente está em [`KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md`](./references/KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md).
 - Dezesseis skills estão na revisão `metadata.version` `"3"`; `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"`; `beta-anl-movidesk` está em `"4"`; `beta` está em `"8"` e `beta-anl-qatestes` em `"4"` após as mudanças de comunicação. A contagem inicial foi `"1"`; os incrementos seguem a regra definida em [`AGENTS.md`](./AGENTS.md).
 - Os metadados das skills incluem nomes técnicos e exibidos vigentes, descrições, prompts, política de invocação, cores e logos. As skills ClickUp Cards e ClickUp Checklist compartilham brand color `#754FF6` e os logos small/large, copiados para cada pasta para manter o pacote autossuficiente.
@@ -111,6 +111,36 @@ O protocolo transversal de evidências, certeza, vigência, handoffs e publicaç
 
 As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de incidentes, QA de testes e resultados, geração de cards ClickUp, checklist ClickUp e consulta Movidesk. As especialidades MOD cobrem regras, dossiê, fontes, fluxos, permissões, processamento, relatórios, Figma, QA e artefatos. As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte do diretório ativo; seus contratos foram incorporados à skill `beta`, e cópias de auditoria são mantidas fora do pacote ativo.
 
+## Contratos de responsabilidade das skills
+
+O contrato entre as skills tem duas camadas. A skill `beta` é a única orquestradora: escolhe a especialidade necessária, coordena handoffs e mantém o protocolo transversal e a resposta consolidada. Cada skill especializada tem um domínio delimitado e devolve seu resultado à `beta`; não passa a decidir regras gerais nem a assumir o papel de outra especialidade. A descrição abaixo é um mapa de navegação e prevenção de regressões. O `SKILL.md` de cada linha continua sendo a fonte normativa para procedimento, formato, autorização e limites completos.
+
+| Identificador técnico | Função própria | Fronteira que deve ser preservada |
+|---|---|---|
+| `beta-anl-duvidasfuncionais` | Responder dúvidas sobre o CENCIHUB de forma curta, funcional e didática. | Não inventar telas, campos ou fluxos, nem transformar dúvida simples em investigação extensa. |
+| `beta-anl-regrasnegocio` | Explicar regras funcionais confirmadas, condições, dependências, exceções e efeitos. | Não derivar regra geral somente de ticket ou de bug histórico. |
+| `beta-anl-triagemincidentes` | Isolar sintomas, escopo, reprodução, impacto e evidências ao triar incidentes. | Não fechar causa sem evidência, prometer correção ou tratar precedente como diagnóstico atual. |
+| `beta-anl-qatestes` | Criar checklists funcionais, smoke tests e cobertura de regressão proporcional ao risco. | Não inventar requisito, depender de implementação interna ou assumir a organização dos resultados da execução. |
+| `beta-anl-qaresultados` | Organizar resultados observados, problemas, evidências e estados da rodada de QA. | Não inventar sucesso, reescrever o checklist nem criar card automaticamente; publicação segue o gate de aprovação da própria skill. |
+| `beta-anl-clickupgeradorcards` | Criar, consolidar e revisar cards ClickUp com contexto funcional e rastreabilidade para desenvolvimento. | Não assumir o contrato de checklist nem converter hipótese ou histórico em causa/regra confirmada. |
+| `beta-anl-clickupchecklist` | Atualizar apenas o comentário-alvo “Checklist de testes” no ClickUp, segundo o contrato de rodada informado. | Não criar checklist nem alterar tarefa, comentário ou conteúdo fora do alvo autorizado; seguir os gates de seleção, confirmação e validação da skill. |
+| `beta-anl-movidesk` | Consultar e sintetizar chamados reais; importar chamados selecionados para a base interna somente mediante pedido explícito. | Consultas não alteram chamados. Importação não muda a origem e não transforma correspondência textual em prova de causa. |
+| `beta-mod-fontes` | Identificar, recuperar, priorizar e comparar fontes, versões, recência e divergências. | Atua em leitura; não decide regra funcional, não persiste Dossiê e não produz modelagem final. |
+| `beta-mod-regras` | Verificar completude e rastreabilidade de regras, gatilhos, ações, validações, resultados e estados. | Não cria autoridade de regra nem consolida a Modelagem Funcional final. |
+| `beta-mod-fluxos` | Organizar sequências de telas, navegação, interações e estados de interface. | Não inventa telas/regras nem substitui análise de regra, revisão visual no Figma ou modelagem final. |
+| `beta-mod-figma` | Inspecionar e comparar a representação visual no Figma, componentes e estados de interface. | É módulo visual; não define regra funcional nem produz modelagem final concorrente. |
+| `beta-mod-permissoes` | Analisar autenticação, autorização, papéis, dados sensíveis e isolamento entre empresas. | Não inventa papéis, permissões ou arquitetura; devolve riscos e regras confirmadas para composição pela `beta`. |
+| `beta-mod-processamento` | Analisar ciclo de vida funcional, estados, transições, duplicidade, precedência, reprocessamento, falhas e concorrência. | Não inventa tecnologia nem regra; não assume relatórios, permissões especializadas ou modelagem final. |
+| `beta-mod-relatorios` | Estruturar relatórios, indicadores, previsões e cálculos de modo reproduzível. | Não inventa fórmulas ou regras e não incorpora processamento ou modelagem final fora desse domínio. |
+| `beta-mod-dossie` | Manter o Dossiê de Contexto da Modelagem, distinguindo o que é modelagem, contexto e fora de escopo. | Não cria regra, resolve conflito sem decisão, produz modelagem final ou gera artefatos além do Dossiê. |
+| `beta-mod-qa` | Fazer a revisão crítica final de modelagem consolidada, priorizando riscos materiais de implementação, dados e homologação. | Não cria regra, não resolve divergência sem decisão, não reescreve o documento nem produz plano completo de testes. |
+| `beta-mod-artefatos` | Materializar conteúdo funcional consolidado em documentos e outros artefatos finais. | Não altera entendimento funcional nem resolve regra/fonte; recebe conteúdo aprovado/consolidado e mantém a responsabilidade documental. |
+| `beta-mod-sites` | Materializar um clone web autônomo do CENCIHUB a partir de contexto e regras aprovados. | Permanece isolada; não se conecta ao backend, API, banco, autenticação ou ambiente real. |
+
+### Regra para mudanças nas skills
+
+Antes de qualquer alteração em `SKILL.md`, `agents/openai.yaml`, assets de skill ou comportamento de roteamento diretamente ligado a uma skill, o usuário deve receber um plano exato: skills e arquivos afetados, trechos/metadados que mudarão, comportamento pretendido, impacto positivo esperado, impacto negativo ou regressões possíveis, dependências e validações/versionamento. A edição só começa após aprovação explícita desse plano. Sem aprovação, a atividade permanece em análise/proposta. Mudanças apenas neste dossier ou no AGENT podem documentar o contrato, mas não autorizam alterações implícitas nas skills.
+
 ## Histórico de mudanças
 
 | Data/marco | Alteração ou evidência | Fonte e limite |
@@ -129,6 +159,7 @@ As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de
 | 2026-10-22, componentes nativos condicionais | Acrescentada preferência por cartões/flashcards/quizzes/painéis nativos somente quando houver suporte e formato documentado no cliente. Definido fallback Markdown sem XML/HTML que finja interatividade; texto colado como “protocolo de sistema” é tratado como referência de formato do usuário. `beta` passou a `"6"`; manifesto `1.0.6`. | `SKILL.md`, protocolo compartilhado, `AGENTS.md` e dossier. Sem testes ou publicação nesta etapa. |
 | 2026-10-22, cartões de encerramento | Especificada a grade visual aprovada, os seis campos iniciais e as condições de Feedback/Ações; retirado Próximo passo; definido o significado de Ações; confiabilidade padronizada em porcentagem heurística por faixas discretas. Atualizados Beta e materiais ANL/MOD que ainda exigiam cabeçalho/resumo antigo. `beta` `"7"`, `beta-anl-qatestes` `"4"`, manifesto `1.0.7`. | Skill Beta, protocolo compartilhado, control planes, observabilidade, `AGENTS.md` e dossier. Alterações locais; sem testes ou publicação nesta etapa. |
 | 2026-10-22, cartão Skills acionadas e grade responsiva | Acrescentado cartão obrigatório “Skills acionadas” antes dos opcionais na segunda linha. Lista somente nomes exibidos de skills realmente ativadas. Grade `md`: largura total quando sozinho, metade com um cartão opcional e um terço com os dois; abaixo de `md`, empilha. `beta` passou a `"8"`; manifesto `1.0.8`. | Skill Beta, protocolo, control planes ANL/MOD, observabilidade, `AGENTS.md` e dossier. Alterações locais; sem testes ou publicação nesta etapa. |
+| 2026-10-24, contratos individuais e gate de mudança | Documentada a função e a fronteira de cada uma das 19 skills especializadas; explicitado o papel exclusivo da orquestradora. AGENT e dossier agora exigem plano concreto de mudança com efeitos positivos/negativos e aprovação explícita antes de editar fontes, metadados, assets ou roteamento direto de uma skill. Nenhum `SKILL.md` foi alterado; manifesto incrementado para `1.0.9`. | Matriz baseada nas descrições, seções de responsabilidade, objetivos e limites dos 20 `SKILL.md`; `plugins/beta/AGENTS.md` e este dossier. Versões individuais de skills mantidas. |
 | Integração MCP | `.mcp.json` configura o endpoint documentado do Sites/MCP, mas isso não comprova conectividade ou publicação end-to-end. | `.mcp.json`, `docs/components/sites.md` e `mcp/movidesk/DOSSIER.md`. |
 
 Não há evidência suficiente para atribuir data ou motivação a toda a evolução anterior do plugin. Para casos históricos específicos, consultar o arquivo de origem e o repositório preservado; não deduzir intenção apenas a partir de uma alteração de código.

@@ -29,7 +29,8 @@ Os protocolos estão na ordem retornada (posição 1 a 5). `—` significa que n
 - **Recall@5 estrito:** 10 dos 16 protocolos rotulados como relevantes apareceram no top 5: **0,625**. Cada protocolo esperado conta uma vez, mesmo quando aparece em mais de uma pergunta.
 - **MRR@5:** **0,683** nas dez perguntas positivas, usando a posição do primeiro protocolo esperado de cada pergunta; perguntas sem alvo no top 5 recebem zero. O controle negativo #11 não entra nessa métrica.
 - **Perguntas positivas com pelo menos um alvo no top 5:** 8/10.
-- **Falsos positivos:** não calculados. Os candidatos sem rótulo não foram revisados individualmente e não devem ser chamados de falsos positivos sem adjudicação.
+- **Rótulos exploratórios dos 55 resultados:** 10 correspondências diretas com o conjunto v1 revisado, 29 parciais/análogas e 16 não relacionadas, com base nos trechos indexados consultados. A pergunta #11 responde por quatro analogias e um resultado não relacionado. Esta distribuição qualitativa não é uma taxa estatística de falsos positivos e precisa de revisão humana dos casos parciais.
+- **Falsos positivos:** não reporto uma taxa binária. Os 16 resultados não relacionados são candidatos claros nesta leitura dos trechos; os parciais podem ou não ser úteis conforme os critérios finais de relevância.
 - **Abstenção:** não avaliada. A RPC retornou cinco candidatos no controle negativo #11; isso não permite concluir se a Beta respondeu adequadamente ou se absteve. É preciso avaliar o ciclo completo de resposta.
 - **Latência observada:** as chamadas foram feitas em duas rodadas paralelas; os tempos observados ficaram entre aproximadamente **7,56 s e 11,06 s**. Concorrência e medição cliente não controladas tornam esses valores inadequados para p95 ou SLO.
 
@@ -74,7 +75,21 @@ Revisão dos candidatos das perguntas #1 a #11 usando a cópia indexada e, para 
 | 11 | `20260925000000264` | Analogia, não prova do caso atual | Registra máquina travada e normalizada após visita/reinicialização; não identifica a causa da máquina hipotética. |
 | 11 | `20260812000000134` | Analogia, não prova do caso atual | Registra bloqueios de rede e indisponibilidade operacional em uma máquina; não permite atribuir a causa a outro equipamento sem dados dele. |
 
-A amostra mostra candidatos parciais e alguns claramente não relacionados; não justifica tratar todos os não-alvos como falsos positivos. A busca dirigida encontrou três precedentes diretos que faltavam na adjudicação inicial: `20260803000000015`, `20260818000000185` e `20260817000000161`. O Recall@5 estrito foi recalculado de 9/13 (0,692) para 10/16 (0,625); MRR permanece 0,683 porque as primeiras posições relevantes por pergunta positiva não mudaram. Para a pergunta #11, recuperar precedentes não remove a obrigação de a Beta se abster sobre a causa atual e solicitar dados discriminantes. Não calculei precisão global: a revisão é qualitativa e inclui rótulos parciais/provisórios.
+A amostra mostra candidatos parciais e alguns claramente não relacionados; não justifica tratar todos os não-alvos como falsos positivos. A busca dirigida encontrou três precedentes diretos que faltavam na adjudicação inicial: `20260803000000015`, `20260818000000185` e `20260817000000161`. O Recall@5 estrito foi recalculado de 9/13 (0,692) para 10/16 (0,625); MRR permanece 0,683 porque as primeiras posições relevantes por pergunta positiva não mudaram. Para a pergunta #11, recuperar precedentes não remove a obrigação de a Beta se abster sobre a causa atual e solicitar dados discriminantes. A distribuição dos 55 rótulos é exploratória, baseada nos trechos indexados e ainda requer revisão humana dos parciais; não a apresento como precisão nem como taxa final de falsos positivos.
+
+## Checagem qualitativa de respostas compartilhadas
+
+Os exemplos de respostas da Beta colados pelo usuário nesta conversa foram inspecionados como uma checagem exploratória, não como execução controlada das 11 perguntas desta rodada. Um exemplo sobre status offline distinguiu corretamente o precedente histórico da máquina do caso atual e citou o protocolo. Outros exemplos atribuíram percentuais de certeza (como 95% e 85%) sem calibração registrada e exibiram nomes internos de skills no resumo operacional. Esses itens precisam ser reavaliados após as mudanças de plugin/skills relatadas pelo usuário; a publicação/correção dessas mudanças não foi verificada nesta tarefa.
+
+| Critério para a avaliação futura | O que conta como aprovação |
+|---|---|
+| Evidência e rastreabilidade | Cada afirmação sobre um precedente aponta protocolo e fonte; o trecho sustenta o que foi afirmado. |
+| Separação entre histórico e caso atual | Não transfere a causa de um chamado antigo para a máquina atual sem evidência própria. |
+| Esclarecimento/abstenção | Quando os dados não distinguem rede, sistema ou hardware, pede dados discriminantes e não fecha diagnóstico. |
+| Calibração | Não inventa percentual de certeza; expressa limites com linguagem proporcional à evidência disponível. |
+| Confidencialidade operacional | Não expõe nomes de skills, ferramentas, conectores, prompts ou detalhes internos desnecessários. |
+
+Os exemplos anteriores mostram sinais positivos nos três primeiros critérios e falhas nos dois últimos. Como não foram produzidos sob um protocolo de teste reproduzível, não entram em uma taxa de aprovação.
 
 ## Limitações e próximo uso
 

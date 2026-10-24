@@ -1,6 +1,6 @@
 # Dossier da Beta — índice executivo e histórico transversal
 
-Atualizado em 2026-10-22. Este dossier é a fonte de contexto compartilhado entre componentes: resume o objetivo do produto, decisões transversais, marcos de integração e pendências que atravessam mais de uma área. Estado técnico detalhado e histórico operacional pertencem aos dossiers canônicos listados abaixo.
+Atualizado em 2026-10-24. Este dossier é a fonte de contexto compartilhado entre componentes: resume o objetivo do produto, decisões transversais, marcos de integração e pendências que atravessam mais de uma área. Estado técnico detalhado e histórico operacional pertencem aos dossiers canônicos listados abaixo.
 
 ## Objetivo e escopo do produto
 
@@ -43,12 +43,16 @@ Referência: 2026-10-22. `beta-all` é a fonte de trabalho ativa; plugin, MCP/Si
 
 | Item transversal | Estado e dependência | Fonte de acompanhamento |
 |---|---|---|
-| Busca diagnóstica híbrida | A busca lexical no Supabase está ativa; busca vetorial depende de escolher provedor/modelo e fechar dimensões, custo, classificação e reindexação antes da implementação. A integração runtime/avaliação segue vinculada ao MCP. | [`Supabase — próximos passos`](infra/supabase/DOSSIER.md#próximos-passos), [`MCP — próximos passos`](mcp/movidesk/DOSSIER.md#próximos-passos) |
-| Ingestão de chamados extensos | A migration de limite ampliado foi aplicada e o registro da PR #31 documenta a publicação no Sites v107, a importação do protocolo `20260918000000203` em 54 trechos e a conferência das interações inicial/final. Essa validação histórica não foi repetida nesta reconciliação; o Site atualmente registrado está na v112. | [`Supabase — ingestão e evidências`](infra/supabase/DOSSIER.md#ingestão-longa-e-amostra-sem-reimportação-2026-10-22), [`Histórico do Site`](docs/components/sites.md#histórico-de-publicações-do-site) |
-| Piloto de feedback/autodiagnóstico | A estrutura Supabase e a UI foram publicadas; captura continua desligada. Ativação depende de jobs verificados, validação autenticada, revisão dos textos e contato organizacional. | [`Supabase — próximos passos`](infra/supabase/DOSSIER.md#próximos-passos), [`MCP — próximos passos`](mcp/movidesk/DOSSIER.md#próximos-passos) |
+| Busca diagnóstica | A busca lexical com reranking está ativa e foi comparada com um conjunto piloto; ainda há perguntas em que o caso esperado não aparece no top 5. Busca híbrida exige decidir embeddings, classificação dos dados enviados, custo e reindexação, além de comparar as métricas na mesma avaliação. | [`Supabase — avaliação e próximos passos`](infra/supabase/DOSSIER.md#próximos-passos), [`MCP — próximos passos`](mcp/movidesk/DOSSIER.md#próximos-passos) |
+| Sincronização das fontes | Há importação explícita de chamados Movidesk, mas ainda não sincronização incremental em lote de Movidesk, ClickUp e documentos administrativos; mudanças, exclusões, retries e auditoria precisam ser cobertos. | [`Supabase — próximos passos`](infra/supabase/DOSSIER.md#próximos-passos), [`MCP — ingestão`](mcp/movidesk/DOSSIER.md#próximos-passos) |
+| Diagnóstico interativo | Validar com casos ambíguos se a Beta pede dados que mudam o diagnóstico, refina a busca com as respostas e ancora afirmações em evidências, incluindo abstenção correta. | [`Plugin — avaliação de respostas`](plugins/beta/DOSSIER.md#próximos-passos), [`MCP — busca e avaliação`](mcp/movidesk/DOSSIER.md#próximos-passos) |
+| Governança e privacidade | OAuth e escopos individuais existem; fechar classificação e divulgação por público, acesso/retenção de eventos, autoria das atualizações e validações autenticadas. Captura de feedback continua desligada até cumprir as condições dos componentes. | [`Supabase — feedback e autorização`](infra/supabase/DOSSIER.md#próximos-passos), [`MCP — autorização e privacidade`](mcp/movidesk/DOSSIER.md#próximos-passos) |
+| Prontidão operacional | Testar backup/restauração e limites do plano, obter execuções bem-sucedidas dos jobs e completar smokes autenticados de busca, ingestão e painel antes de ampliar o piloto. | [`Supabase — operação`](infra/supabase/DOSSIER.md#próximos-passos), [`Sites — histórico e operação`](docs/components/sites.md) |
 
 Pendências exclusivas de plugin, MCP, Supabase ou revisão não são copiadas para esta tabela; consulte o backlog do componente correspondente.
 
+O documento [`arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md) registra requisitos e decisões de arquitetura. Este `DOSSIER.md` acompanha estado, evidências e próximos passos; detalhes específicos permanecem nos dossiers canônicos dos componentes.
+
 ## Fontes e limites de evidência
 
-O estado registrado aqui foi reconciliado com os dossiers especializados e documentos de migração em 2026-10-22. Os marcos acima resumem os registros canônicos; para SHAs, migrations, testes, deployments e ressalvas, siga os links de cada fonte. Relatos do usuário continuam identificados como tais nos dossiers quando não houve verificação independente.
+O backlog transversal foi reconciliado com os dossiers especializados em 2026-10-24; os estados operacionais detalhados mantêm as datas e limitações registradas em cada fonte. Os marcos acima resumem os registros canônicos; para SHAs, migrations, testes, deployments e ressalvas, siga os links de cada fonte. Relatos do usuário continuam identificados como tais nos dossiers quando não houve verificação independente.

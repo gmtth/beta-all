@@ -92,11 +92,7 @@ Quando houver defeito, corrigir o gerador ou a especificação correspondente e 
 
 ## Regressão por arquétipo
 
-Antes de alterar o gerador de forma estrutural, gerar pelo menos três amostras neutras:
-
-1. geral/processamento com corpo em fluxo normal;
-2. frontend com fluxo de quatro colunas em fluxo normal;
-3. relatório com fórmula, tabela de colunas e exemplo em fluxo normal.
+Antes de alterar o gerador de forma estrutural, consultar a fixture neutra `plugins/beta/tests/beta-mod-artefatos-regression-cases.json` e validar os arquétipos aplicáveis. A fixture é material de teste do repositório, não instrução normativa da skill.
 
 Comparar:
 

@@ -1,1 +1,3 @@
-This is a test
+- não editar Beta-MCP-Web.zip.
+- Beta-Skills-Web.zip pode ser atualizado com a versão mais recente do plugin, para criar o zip e atualizar esse arquivo deve ser removido ".mcp.json". Em "plugins.json" eve ser removida a linha "mcpServers": "./.mcp.json", e alterar as linhas "name": "suite-beta" para "name": "suite-beta-skills-web" e "displayName": "Beta" para "displayName": "Beta Skills Web". Nenhum outro arquivo do plugin deve ser alterado ao atualizar esse zip. Manter o nome atual do zip ao atualizar.
+- assim que possível, atualizar esse AGENTS.md para aplicar o padrão necessário e colocar referência a este arquivo em AGENTS.md na raíz do projeto, informando que a pasta "./webver" contém arquivos da versão de chatgpt web da beta. A instalação deve ser feita separadamente para funcionar corretamente.

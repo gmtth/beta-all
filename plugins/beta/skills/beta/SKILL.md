@@ -2,7 +2,7 @@
 name: beta
 description: Orquestrar as famílias Beta ANL e Beta MOD em uma única entrada, escolhendo a análise funcional ou a modelagem adequada e fazendo handoffs entre elas somente quando isso alterar ou melhorar materialmente o resultado.
 metadata:
-  version: "8"
+  version: "9"
 ---
 
 # beta

@@ -1,6 +1,6 @@
 {
   "name": "suite-beta",
-  "version": "1.0.12",
+  "version": "1.0.18",
   "description": "Orquestradora única das famílias Beta ANL e Beta MOD para análise funcional, modelagem, QA e integrações do CENCIHUB.",
   "author": {
     "name": "thngrns",

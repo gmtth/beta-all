@@ -1,6 +1,6 @@
 # Dossier da Beta — índice executivo e histórico transversal
 
-Atualizado em 2026-10-24. Este dossier é a fonte de contexto compartilhado entre componentes: resume o objetivo do produto, decisões transversais, marcos de integração e pendências que atravessam mais de uma área. Estado técnico detalhado e histórico operacional pertencem aos dossiers canônicos listados abaixo.
+Atualizado em 2026-11-17. Este dossier é a fonte de contexto compartilhado entre componentes: resume o objetivo do produto, decisões transversais, marcos de integração e pendências que atravessam mais de uma área. Estado técnico detalhado e histórico operacional pertencem aos dossiers canônicos listados abaixo.
 
 ## Objetivo e escopo do produto
 
@@ -14,6 +14,7 @@ A Beta apoia quatro analistas no diagnóstico de problemas de máquinas, erros d
 | MCP/OAuth e runtime Sites | [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md) | Ferramentas, contratos, autorização, testes e estado de publicação MCP |
 | Schema, API e migrations Supabase | [`infra/supabase/DOSSIER.md`](infra/supabase/DOSSIER.md) | Banco, acesso, migrations, busca indexada e prontidão Supabase |
 | Revisão de PRs/branches | [`revisor/DOSSIER.md`](revisor/DOSSIER.md) | Cobertura e achados do revisor |
+| Pacotes da Beta para ChatGPT na web | [`webver/DOSSIER.md`](webver/DOSSIER.md) | Pacotes web e suas dependências de instalação |
 | Arquitetura e publicação Sites | [`docs/architecture/arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md) e [`docs/components/sites.md`](docs/components/sites.md) | Relações entre componentes e procedimento de publicação |
 | Migração e proveniência | [`docs/migration/source-inventory.md`](docs/migration/source-inventory.md) e [`docs/migration/document-reconciliation.md`](docs/migration/document-reconciliation.md) | Origens, commits importados, snapshots e reconciliação documental |
 

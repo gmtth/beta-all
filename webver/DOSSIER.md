@@ -1,7 +1,7 @@
 # Dossier dos pacotes Beta para ChatGPT na web
 
-**Atualizado:** 2026-11-17  
-**Componente:** [`webver/`](./)  
+**Atualizado:** 2026-11-17
+**Componente:** [`webver/`](./)
 **Fonte canônica das skills:** [`plugins/beta/`](../plugins/beta/)
 
 ## Resumo e escopo

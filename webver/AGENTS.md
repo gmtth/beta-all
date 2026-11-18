@@ -26,6 +26,6 @@ Não atualizar o ZIP se a estrutura, o manifesto ou os campos de origem tiverem 
 
 ## Versionamento e manutenção documental
 
-- O procedimento não autoriza mudar o campo `version`; copie-o da fonte. Como o ZIP atual tem versão diferente da fonte, não o reconstrua até a divergência ser decidida e, se necessário, este procedimento for formalmente atualizado.
+- O procedimento não autoriza mudar o campo `version`; copie-o da fonte canônica em `plugins/beta/`. Se a versão antiga do ZIP divergir, substitua-a pela versão da fonte ao reconstruir.
 - Toda mudança neste componente deve manter este AGENT e [`DOSSIER.md`](./DOSSIER.md) coerentes. O dossier registra estado, evidência, histórico e próximos passos; este arquivo define regras de trabalho.
 - O pacote `Beta-MCP-Web.zip` permanece fora do procedimento de atualização acima.

@@ -84,6 +84,7 @@ def main(root: Path) -> int:
         "beta-anl-clickupgeradorcards",
         "beta-anl-clickupchecklist",
         "beta-anl-movidesk",
+        "beta-anl-movidesk-relatorios",
         "beta-mod-regras",
         "beta-mod-dossie",
         "beta-mod-fontes",

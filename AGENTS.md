@@ -19,6 +19,7 @@ Este `AGENTS.md` é a entrada e o roteador do monorepositório: estabelece regra
 | MCP, OAuth, ferramentas Movidesk ou integração de conhecimento | [`mcp/movidesk/AGENTS.md`](mcp/movidesk/AGENTS.md) e [`mcp/movidesk/DOSSIER.md`](mcp/movidesk/DOSSIER.md) |
 | Schema, migrations, chaves, API Supabase e navegador administrativo de dados | [`infra/supabase/AGENTS.md`](infra/supabase/AGENTS.md), [`infra/supabase/README.md`](infra/supabase/README.md) e [`infra/supabase/DOSSIER.md`](infra/supabase/DOSSIER.md), além das instruções do MCP quando o runtime for afetado |
 | Publicação, domínio e snapshots do Sites | [`docs/components/sites.md`](docs/components/sites.md) e instruções do MCP quando houver alteração no runtime publicado |
+| Pacotes da Beta para ChatGPT na web | [`webver/AGENTS.md`](webver/AGENTS.md) e [`webver/DOSSIER.md`](webver/DOSSIER.md) |
 | Arquitetura ou fluxo entre componentes | [`docs/architecture/arquitetura-base-compartilhada-beta.md`](docs/architecture/arquitetura-base-compartilhada-beta.md), dossier raiz e dossiers dos componentes envolvidos |
 | Consolidação, proveniência e conteúdo antigo | [`docs/migration/source-inventory.md`](docs/migration/source-inventory.md), [`docs/migration/document-reconciliation.md`](docs/migration/document-reconciliation.md) e snapshots explicitamente relevantes |
 

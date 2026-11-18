@@ -6,48 +6,50 @@
 
 ## Resumo e escopo
 
-Este componente guarda pacotes destinados à instalação separada da Beta no ChatGPT na web. A fonte das skills é o plugin canônico em `plugins/beta/`; os ZIPs web são distribuições derivadas ou integrações específicas e não substituem a fonte. As regras de atualização estão em [`AGENTS.md`](./AGENTS.md).
+Este componente mantém duas distribuições para o ChatGPT na web: `Beta-Web.zip`, com as skills e workflows Beta, e `Beta-MCP.zip`, que referencia o app MCP registrado. A fonte canônica das skills é `plugins/beta/`. As instruções de atualização e os limites estão em [`AGENTS.md`](./AGENTS.md).
 
 ## Estado atual e limites da evidência
 
-Estado confirmado localmente em 2026-11-18; o conteúdo das skills continua vindo de `plugins/beta/`:
+Inspeção dos pacotes locais em 2026-11-18:
 
-- `Beta-Skills-Web.zip` contém o manifesto `.codex-plugin/plugin.json` com `name: suite-beta-skills-web`, `interface.displayName: Beta Skills Web` e versão `1.0.12`, igual à fonte canônica. Não contém `.mcp.json`. SHA-256 atual: `23EC78F984DC1CA299FEC30E23DD3FDB6D87528144B93780A6AE0BBD892A4A48`.
-- A fonte canônica em `plugins/beta/.codex-plugin/plugin.json` mantém `name: suite-beta`, versão `1.0.12` e configuração MCP em `.mcp.json`. A variante web mantém a versão da fonte e aplica somente as transformações de empacotamento autorizadas.
-- `Beta-MCP-Web.zip` é outro pacote e tem estrutura `.app.json` + `.codex-plugin/plugin.json`, com identidade `Beta MCP Web` e referência a um app. Seu SHA-256 observado: `822EC15E7570127D959D043E6B6177F7BEA947F1281731A40B4936072B39913E`. Não foi editado nem validado em runtime.
-- Os nomes e estruturas dos pacotes indicam superfícies distintas: um distribui skills; o outro declara integração MCP/app. A inspeção dos ZIPs não comprova que qualquer pacote esteja instalado, conectando ao OAuth ou funcionando para os quatro analistas.
+- `Beta-Web.zip`: nome técnico `suite-beta-web`, nome exibido `Beta Web`, versão `1.0.12` (copiada da fonte canônica). Não contém `.mcp.json` nem `mcpServers`. SHA-256: `5AC846D6113D71388EED0E904B12E7F60B7654A5B07B6D81145176B741572FD3`.
+- `Beta-MCP.zip`: nome exibido `Beta MCP`, versão `1.0.1`; preserva o identificador técnico e o app ID já registrados no `.app.json`. SHA-256: `1E4C9E1ACD816D2FF23A8039187647C507A367C9E785B913FC463B8C4FF29072`.
+- Os pacotes foram inspecionados e os manifestos conferidos. Isso não comprova instalação, conexão OAuth nem funcionamento no ChatGPT na web.
+- O plugin/app `Beta MCP` não pode ser tecnicamente tornado “chamável somente pela Beta” por um campo nesses manifestos. Plugins instalados podem ser usados automaticamente quando relevantes e chamados diretamente por menção. OAuth e políticas do app controlam acesso e ações, mas não identificam se a chamada foi originada pela skill `beta`. Portanto, o pacote não declara nem garante esse bloqueio.
 
 ## Decisões vigentes
 
-- `plugins/beta/` é a fonte canônica das skills; `webver/` contém pacotes para instalação separada no ChatGPT na web.
-- `Beta-Skills-Web.zip` pode ser reconstruído somente pelo procedimento restrito em [`AGENTS.md`](./AGENTS.md), copiando a versão da fonte e sem alterações adicionais ao conteúdo do plugin.
-- `Beta-MCP-Web.zip` não deve ser editado ou reconstruído.
-- A presença de um pacote no Git não comprova instalação, autorização, conexão MCP/OAuth nem disponibilidade aos analistas.
+- Os nomes de arquivo e exibidos são `Beta-Web.zip` / `Beta Web` e `Beta-MCP.zip` / `Beta MCP`.
+- `Beta-Web.zip` mantém a versão da fonte e difere do plugin canônico somente pela remoção de `.mcp.json`, remoção de `mcpServers` e as duas mudanças de identidade autorizadas.
+- `Beta-MCP.zip` mantém o app ID e o identificador técnico para preservar o vínculo com o app provisionado; a revisão da alteração de nome exibido levou sua versão do pacote a `1.0.1`.
+- A restrição de invocação exclusiva pela Beta permanece um requisito não atendido por configuração de pacote. Para garanti-la será necessário um mecanismo de plataforma ou uma decisão de arquitetura/servidor; não inventar um campo de manifesto.
+- Nenhum pacote foi instalado, publicado ou conectado durante esta alteração.
 
 ## Componentes, dependências e fontes de verdade
 
 | Tema | Fonte de verdade |
 |---|---|
-| Conteúdo e versão canônica das skills | [`plugins/beta/`](../plugins/beta/) e [`plugins/beta/DOSSIER.md`](../plugins/beta/DOSSIER.md) |
-| Regras para reconstruir o ZIP de skills web | [`webver/AGENTS.md`](./AGENTS.md) |
-| Configuração e operação do runtime MCP | [`mcp/movidesk/AGENTS.md`](../mcp/movidesk/AGENTS.md), [`mcp/movidesk/DOSSIER.md`](../mcp/movidesk/DOSSIER.md) e [`docs/components/sites.md`](../docs/components/sites.md) |
-| Estado destes pacotes e lacunas | Este dossier |
+| Skills, conteúdo e versão canônica | [`plugins/beta/`](../plugins/beta/) e [`plugins/beta/DOSSIER.md`](../plugins/beta/DOSSIER.md) |
+| Regras para os pacotes Web | [`webver/AGENTS.md`](./AGENTS.md) |
+| App, OAuth e ferramentas MCP | [`mcp/movidesk/AGENTS.md`](../mcp/movidesk/AGENTS.md), [`mcp/movidesk/DOSSIER.md`](../mcp/movidesk/DOSSIER.md) e o app registrado pelo ID preservado em `Beta-MCP.zip` |
+| Estado, hashes e limites dos pacotes | Este dossier |
 
 ## Histórico verificável
 
-- **Origem do pacote Skills Web:** o histórico Git contém o merge da PR #53 (`8b671f5eb1fa5c7944c436fe750a5e66fb81ad92`, 2026-10-28), que adicionou os dois ZIPs. A instrução inicial de `webver/AGENTS.md` registrava a transformação permitida para o ZIP de skills e pedia que o diretório fosse roteado e documentado no padrão comum. O commit antecessor `e14961b` adicionou o AGENT inicial.
-- **2026-11-17 — padronização documental:** criado este dossier e reescrito o AGENT para formalizar a regra existente; `AGENTS.md` e o índice executivo raiz agora encaminham para o componente. Nenhum ZIP foi alterado nesta mudança.
-- **2026-11-18 — reconstrução de Beta-Skills-Web.zip:** por solicitação do usuário, o ZIP foi reconstruído a partir da fonte canônica `plugins/beta/`, versão `1.0.12`. A verificação dos 120 arquivos confirmou que `.mcp.json` foi removido, o campo `mcpServers` foi removido e somente `name`/`interface.displayName` receberam os valores web definidos no AGENT; o restante dos arquivos coincide byte a byte com a fonte. SHA-256 `23EC78F984DC1CA299FEC30E23DD3FDB6D87528144B93780A6AE0BBD892A4A48`.
+- **2026-10-28 — pacotes iniciais:** a PR #53 adicionou `Beta-Skills-Web.zip` e `Beta-MCP-Web.zip` (`8b671f5eb1fa5c7944c436fe750a5e66fb81ad92`). O primeiro era derivado do plugin de skills; o segundo mapeava o app MCP já registrado.
+- **2026-11-17 — padronização documental:** `webver/AGENTS.md` e este dossier foram padronizados e `webver/` foi incluído no roteamento raiz. A PR #54 registra essa etapa.
+- **2026-11-18 — renomeação dos pacotes:** por solicitação do usuário, os arquivos passaram a `Beta-Web.zip` e `Beta-MCP.zip`, com nomes exibidos `Beta Web` e `Beta MCP`. O pacote de skills mantém `1.0.12` da fonte; o pacote MCP passou de `1.0.0` a `1.0.1`. No MCP foi preservado o app ID/identificador técnico. A estrutura dos dois ZIPs e a integridade dos manifestos foram verificadas; nenhum arquivo fora de `webver/` foi alterado nesta etapa.
 
 ## Próximos passos
 
 | Item | Prioridade | Evidência/contexto | Condição de conclusão |
 |---|---|---|---|
-| Validar separadamente a instalação e a conexão dos pacotes Skills Web e MCP Web no ChatGPT na web. | Média | Inspeção dos ZIPs não comprova suporte, instalação, consentimento OAuth nem operação. | Cada pacote tem resultado observável documentado no ambiente-alvo, com limites e versão identificados. |
+| Validar a instalação e conexão de `Beta Web` e `Beta MCP` no ChatGPT na web. | Média | ZIPs inspecionados, mas não instalados ou testados no ambiente-alvo. | Cada pacote foi instalado/testado e a versão, conexão e limitações estão documentadas. |
+| Definir como cumprir a restrição “somente a Beta pode acionar o MCP”. | Alta | O pacote permite uso automático e menção direta; seus manifestos não oferecem restrição por skill chamadora. | Identificar suporte de plataforma ou aprovar desenho de controle server-side/distribuição; validar comportamento sem depender só de instruções ao modelo. |
 
 ## Fontes consultadas
 
-- [`AGENTS.md` raiz](../AGENTS.md) e [`DOSSIER.md` raiz](../DOSSIER.md).
-- [`plugins/beta/AGENTS.md`](../plugins/beta/AGENTS.md), [`plugins/beta/DOSSIER.md`](../plugins/beta/DOSSIER.md) e manifesto do plugin canônico.
-- [`mcp/movidesk/AGENTS.md`](../mcp/movidesk/AGENTS.md), [`mcp/movidesk/DOSSIER.md`](../mcp/movidesk/DOSSIER.md) e [`docs/components/sites.md`](../docs/components/sites.md).
-- `webver/Beta-Skills-Web.zip`, `webver/Beta-MCP-Web.zip`, `webver/AGENTS.md` e histórico Git das PRs #51/#53.
+- [`AGENTS.md` raiz](../AGENTS.md), [`DOSSIER.md` raiz](../DOSSIER.md), [`webver/AGENTS.md`](./AGENTS.md).
+- [`plugins/beta/AGENTS.md`](../plugins/beta/AGENTS.md), [`plugins/beta/DOSSIER.md`](../plugins/beta/DOSSIER.md) e manifesto da fonte.
+- [`mcp/movidesk/AGENTS.md`](../mcp/movidesk/AGENTS.md) e [`mcp/movidesk/DOSSIER.md`](../mcp/movidesk/DOSSIER.md).
+- [Packaging de plugins](https://developers.openai.com/plugins/build/plugins), [Skills](https://developers.openai.com/plugins/concepts/skills) e [Plugins no ChatGPT](https://help.openai.com/en/articles/20001256-plugins-in-chatgpt).

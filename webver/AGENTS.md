@@ -2,30 +2,36 @@
 
 ## Execução dentro do monorepositório
 
-Este diretório contém os arquivos de distribuição da Beta destinados ao ChatGPT na web. Leia primeiro o [`AGENTS.md`](../AGENTS.md) e [`DOSSIER.md`](../DOSSIER.md) da raiz, depois este arquivo e o [`DOSSIER.md`](./DOSSIER.md). A fonte canônica das skills continua em [`plugins/beta/`](../plugins/beta/); os pacotes daqui são artefatos separados, com instruções de instalação próprias.
+Este diretório contém os pacotes da Beta destinados ao ChatGPT na web. Leia primeiro o [`AGENTS.md`](../AGENTS.md) e [`DOSSIER.md`](../DOSSIER.md) da raiz, depois este arquivo e o [`DOSSIER.md`](./DOSSIER.md). As skills têm fonte canônica em [`plugins/beta/`](../plugins/beta/); os pacotes web são distribuições separadas e suas alterações devem ficar dentro de `webver/`.
 
 ## Escopo e limites
 
-- `Beta-Skills-Web.zip` é o pacote de skills para uso no ChatGPT na web. Deve ser atualizado a partir do plugin canônico somente conforme o procedimento abaixo.
-- `Beta-MCP-Web.zip` é um pacote distinto de integração MCP para ChatGPT na web. **Não editar nem reconstruir esse ZIP** sem uma nova decisão explícita e revisão de seu contrato.
-- A instalação dos pacotes web é separada da instalação do plugin de Codex. Não presumir que instalar um deles configure o outro, conecte OAuth ou valide o runtime.
-- Não publicar, instalar em workspace de usuários, alterar permissões ou modificar o runtime hospedado como efeito desta atualização de arquivos.
+- `Beta-Web.zip` distribui as skills Beta para ChatGPT na web.
+- `Beta-MCP.zip` contém a integração/app MCP da Beta, identificada pelo app registrado no `.app.json`.
+- A instalação web é separada da instalação do plugin de Codex; instalar um pacote não comprova conexão, autorização ou funcionamento.
+- Mudanças solicitadas para esses pacotes devem alterar somente arquivos dentro de `webver/`. Não modificar a fonte `plugins/beta/`, o runtime `mcp/movidesk/`, o Site publicado ou permissões.
+- O formato de pacote atual não oferece um campo para impedir que uma pessoa invoque diretamente o plugin/app MCP. Metadados podem descrever o uso pretendido, mas não impõem que somente a skill `beta` consiga acioná-lo. Não declarar essa restrição como tecnicamente garantida.
 
-## Procedimento autorizado para `Beta-Skills-Web.zip`
+## Atualização de `Beta-Web.zip`
 
-Ao atualizar o ZIP, use a versão mais recente de `plugins/beta/` e mantenha o nome `Beta-Skills-Web.zip`:
+Reconstrua a partir da versão mais recente de `plugins/beta/`, mantenha o nome `Beta-Web.zip` e faça uma cópia temporária isolada:
 
-1. Crie uma cópia temporária isolada do pacote canônico; não altere `plugins/beta/` para produzir a variante web.
-2. Remova da cópia `.mcp.json`.
-3. Em `.codex-plugin/plugin.json`, remova a propriedade `mcpServers` que referencia `.mcp.json` (a instrução histórica chamava esse manifesto de `plugins.json`).
-4. No mesmo manifesto da cópia, altere `name` de `suite-beta` para `suite-beta-skills-web` e `interface.displayName` de `Beta` para `Beta Skills Web`.
-5. Não altere nenhum outro arquivo do plugin na cópia. Compacte a cópia preservando a estrutura interna do pacote e substitua somente `Beta-Skills-Web.zip`.
-6. Confira o conteúdo do ZIP e o diff da cópia contra `plugins/beta/`: as únicas diferenças permitidas são a remoção de `.mcp.json`, a remoção da propriedade `mcpServers` e as duas mudanças de identidade acima. Não altere outros campos do manifesto, incluindo `version`. Registre as versões de origem e do pacote, o hash SHA-256 e a validação no dossier.
+1. Remova da cópia `.mcp.json`.
+2. Em `.codex-plugin/plugin.json`, remova `mcpServers`.
+3. Altere `name` de `suite-beta` para `suite-beta-web` e `interface.displayName` de `Beta` para `Beta Web`.
+4. Copie `version` da fonte sem incrementá-la. Não altere nenhum outro arquivo ou campo.
+5. Confira a lista de arquivos e compare os bytes com a fonte; as diferenças permitidas são somente a remoção de `.mcp.json`, a remoção de `mcpServers` e as duas mudanças de identidade.
+6. Registre a versão da fonte, SHA-256 e resultado da validação neste dossier.
 
-Não atualizar o ZIP se a estrutura, o manifesto ou os campos de origem tiverem mudado de modo que torne estas transformações ambíguas. Nesse caso, documente a divergência e proponha a revisão do procedimento antes de empacotar.
+## Atualização de `Beta-MCP.zip`
+
+- Mantenha o app ID registrado em `.app.json`, a chave de mapeamento do app e o identificador técnico `name`; eles formam a ligação com o app provisionado.
+- O nome exibido é `Beta MCP`. Ao alterar o pacote, incremente o patch SemVer no manifesto `.codex-plugin/plugin.json` em exatamente um, sem alterar o app ID ou qualquer recurso do runtime.
+- Preserve a estrutura e os demais arquivos. Registre a versão e o SHA-256 neste dossier.
+- A aplicação pode restringir as ferramentas por OAuth e políticas de acesso do app, mas o pacote não identifica se a chamada veio da skill Beta. Uma restrição exclusiva à Beta exige suporte explícito da plataforma ou controle adicional no servidor; essa mudança não está autorizada neste componente.
 
 ## Versionamento e manutenção documental
 
-- O procedimento não autoriza mudar o campo `version`; copie-o da fonte canônica em `plugins/beta/`. Se a versão antiga do ZIP divergir, substitua-a pela versão da fonte ao reconstruir.
-- Toda mudança neste componente deve manter este AGENT e [`DOSSIER.md`](./DOSSIER.md) coerentes. O dossier registra estado, evidência, histórico e próximos passos; este arquivo define regras de trabalho.
-- O pacote `Beta-MCP-Web.zip` permanece fora do procedimento de atualização acima.
+- Use os dois nomes de arquivo e nomes exibidos definidos neste documento.
+- Atualize este AGENT e [`DOSSIER.md`](./DOSSIER.md) junto com cada mudança dos pacotes.
+- Não alterar ou remover itens de `webver/` fora do escopo pedido; para renomear pacotes, atualize os links e registros deste diretório.

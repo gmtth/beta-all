@@ -72,6 +72,15 @@
     "assertions": ["usar escopo e filtros", "tratar ticket como evidência operacional"]
   },
   {
+    "id": "anl-relatorio-executivo-movidesk",
+    "prompt": "Gere o relatório executivo padrão em HTML com os chamados do Movidesk nos três últimos meses completos e no acumulado deste ano.",
+    "primary_mode": "ANL",
+    "primary_skill": "beta-anl-movidesk-relatorios",
+    "allowed_helpers": [],
+    "transitions": [],
+    "assertions": ["usar o formato HTML padronizado", "classificar somente por taxonomia confirmada", "informar paginação e limites da consulta"]
+  },
+  {
     "id": "anl-clk-checklist",
     "prompt": "Sincronize o checklist comentado desta tarefa do ClickUp com os problemas registrados depois dele.",
     "primary_mode": "ANL",

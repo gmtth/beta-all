@@ -1,0 +1,18 @@
+interface:
+  display_name: "Movidesk Relatórios"
+  short_description: "Gera relatórios executivos do Movidesk em HTML."
+  icon_small: "./assets/fundo.png"
+  icon_large: "./assets/fundo.png"
+  brand_color: "#FF2A28"
+  default_prompt: "Use $beta-anl-movidesk-relatorios para gerar o relatório executivo padrão do Movidesk."
+
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "movidesk"
+      description: "MCP Movidesk para consultar chamados autorizados"
+      transport: "streamable_http"
+      url: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/"
+
+policy:
+  allow_implicit_invocation: false

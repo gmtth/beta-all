@@ -1,29 +1,36 @@
 # Formato padrão do relatório Movidesk
 
-Este documento define o contrato estrutural único dos relatórios HTML desta skill. A revisão visual do primeiro relatório teste pode ajustar tipografia, espaçamentos e aparência dos gráficos sem mudar silenciosamente a ordem ou o significado das seções.
+A apresentação é definida em [relatorio-padrao.html](../assets/relatorio-padrao.html) e preenchida pelo [renderizador](../scripts/render_report.py). Preserve a paleta, a ordem das seções, os gráficos e os estilos de impressão.
 
-## Estrutura fixa
+1. Cabeçalho com marca Movidesk, data de corte e geração.
+2. Resumo com oito cartões: total dos três meses, total anual, variação contra os três meses anteriores, média diária, concentração de sistema e máquina nos dois períodos, chamados em atendimento ou parados no ano e variação anual.
+3. Categorias oficiais em barras e tabela, com participação nos dois períodos.
+4. Comparativo anual com períodos equivalentes, volume por ano, diferença absoluta e variação por categoria.
+5. Chamados por mês, com indicação de mês parcial quando aplicável.
+6. Ocorrências de sistema e máquina, com contagem por período e percentuais na categoria oficial associada. Um chamado pode estar em mais de uma ocorrência.
+7. Situação atual agrupada e detalhada, por período de abertura.
+8. Rodapé com fonte, cobertura e limitações.
 
-1. **Cabeçalho** — marca Movidesk, título “Relatório executivo de chamados”, data e hora de geração, data de corte e identificação do período coberto.
-2. **Resumo executivo** — cartões com total dos três últimos meses completos, total do ano até a data de corte, volume aberto/encerrado quando disponível e cobertura da consulta. Os totais de períodos sobrepostos permanecem separados.
-3. **Evolução mensal** — gráfico de barras com um total por mês, escala e rótulos legíveis, cobrindo o acumulado do ano até a data de corte. Identifique como parcial o mês vigente quando o corte ocorrer antes do último dia. Meses sem chamados devem aparecer como zero apenas quando a consulta do mês foi completa.
-4. **Distribuição por assunto gerencial** — tabela com contagem e barra horizontal proporcional para treinamento, máquina, erros de sistema, implantação, outros e não classificado. Exibir participação sobre o total daquele período e preservar as categorias mesmo quando uma delas for zero.
-5. **Situação operacional** — abertos/encerrados no período e pendências na data de corte, apenas quando os dados disponíveis permitirem distinguir esses conceitos. Métricas condicionais sem suporte não devem gerar espaço vazio ou valor inventado.
-6. **Leituras para gestão** — até três observações descritivas derivadas diretamente dos indicadores exibidos, sem hipótese causal. Se não houver variação relevante ou dados suficientes, apresentar essa condição sem fabricar achados.
-7. **Metodologia e cobertura** — origem Movidesk, campo de data, limites inclusivos, taxonomia e mapeamento usados, denominadores, páginas e registros analisados, falhas/truncamento e limitações.
+## Entrada do renderizador
 
-## Regras de consistência
+O JSON contém somente agregados. Datas de início e fim usam ISO YYYY-MM-DD.
 
-- Manter esta ordem, títulos, cartões obrigatórios e classificação em toda execução.
-- O total mensal deve reconciliar com os grupos mutuamente exclusivos (treinamento, máquina, erros de sistema, implantação, outros e não classificado). Cada ticket conta uma vez por período.
-- Percentuais são calculados sobre o total do mesmo escopo e devem indicar seu denominador; arredondamentos visuais não alteram as contagens.
-- “Acumulado do ano” é o ano-calendário vigente até a data de corte. Os meses completos mais recentes podem se sobrepor a esse acumulado e nunca devem ser somados a ele.
-- Uma consulta incompleta pode mostrar observações parciais somente com rótulo claro de cobertura; totais sem cobertura completa não são apresentados como definitivos.
-- A versão inicial pode ser aperfeiçoada com o relatório teste pedido pelo usuário. Alterações aprovadas do formato devem ser refletidas nesta referência e elevar a versão da skill conforme as regras do pacote.
+| Chave | Conteúdo |
+|---|---|
+| quarter, year, previous_year | Objetos com start, end e categories. Ordem das contagens: erros de sistema, máquina, treinamento, implantação, outros e sem categoria. |
+| quarter.statuses, year.statuses | Contagens opcionais, na ordem fechado, resolvido, em atendimento, parado, cancelado e novo. |
+| previous_quarter | Objeto com start, end e total. |
+| months | Contagens mensais de janeiro até o mês de corte, em ordem. |
+| occurrences | Cinco linhas, na ordem erro de sistema, erro de máquina, máquina inoperante, API e integração, sistema inoperante. Cada linha contém volume trimestral, volume anual, volume trimestral na categoria associada e volume anual na categoria associada. |
+| generated_label | Data e hora da geração com fuso. |
+| partial_month, month_note | Indicador booleano e nota sobre o último mês exibido. |
+| category_note, coverage_note | Notas sobre mapeamento, comparabilidade histórica, períodos consultados, paginação e limites. |
+| scenario | Opcional. Descrição do teste e da transformação aplicada. O renderizador rotula a saída como Dados de teste e não modifica volumes automaticamente. |
 
-## Identidade e saída HTML
+Use null para grupo, série ou contagem indisponível e zero apenas para contagem confirmada. Os totais por categoria incluem todos os IDs do período. Séries mensais e de situação disponíveis devem reconciliar com o total. Use a mesma classificação no acumulado anual e no comparativo.
 
-- Usar `#FF2A28` como cor de destaque e a imagem Movidesk da pasta `assets/` como marca.
-- Usar HTML semântico com CSS embutido, layout responsivo e regras de impressão. Não exigir conexão para carregar recursos externos.
-- Escapar dados dinâmicos antes de inseri-los no HTML e remover detalhes pessoais desnecessários.
-- Priorizar gráficos com rótulos e tabelas acessíveis; a leitura não pode depender somente de cor ou hover.
+## Mapeamento antes do cálculo
+
+Confirme os grupos de implantação, máquina, erros de sistema e treinamento pelos nomes e códigos da taxonomia retornada. Use Outros para categorias válidas fora desses grupos, inclusive categorias históricas genéricas, e Sem categoria para ausência de classificação. Compare o uso da taxonomia entre anos antes de interpretar variações.
+
+Use as tags de erro de sistema, erro de máquina, máquina inoperante, API e integração e sistema inoperante, quando confirmadas, para os rótulos de ocorrência. Compare com a categoria oficial de sistema ou máquina correspondente. Conte cada ID no máximo uma vez por ocorrência e preserve indisponibilidade quando o campo não for retornado.

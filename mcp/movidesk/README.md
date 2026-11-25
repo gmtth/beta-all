@@ -54,7 +54,7 @@ Mantenha a barra final em `/mcp/`. O servidor não altera tickets, status, respo
 - `SUPABASE_URL`: URL do projeto Supabase.
 - `SUPABASE_SECRET_KEY`: segredo server-side do Supabase. Nunca o exponha ao cliente, no Git ou em logs. A chave secreta pode ignorar RLS; o backend valida o scope OAuth e a conta ativa antes da consulta. Restrinja os privilégios da chave/tabela ao mínimo necessário.
 
-Essas variáveis ainda precisam ser configuradas e verificadas no ambiente Sites para habilitar a consulta.
+Verificação de produção em 2026-11-18: o inventário do Site `Beta MCP` lista `SUPABASE_URL` e `SUPABASE_SECRET_KEY`; a chave é segredo e seu valor é mascarado. Uma chamada autenticada `knowledge_list_sources` retornou as três fontes cadastradas (Movidesk, ClickUp e Documentos administrativos). Isso confirma a leitura do catálogo por essa ferramenta neste momento; não valida a busca de conteúdo nem operações de escrita. Nunca exponha nem registre o valor da chave.
 
 ## Desenvolvimento local
 

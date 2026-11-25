@@ -2,7 +2,7 @@
 name: beta
 description: Orquestrar as famílias Beta ANL e Beta MOD em uma única entrada, escolhendo a análise funcional ou a modelagem adequada e fazendo handoffs entre elas somente quando isso alterar ou melhorar materialmente o resultado.
 metadata:
-  version: "8"
+  version: "9"
 ---
 
 # beta
@@ -46,6 +46,7 @@ Use as skills especializadas conforme a intenção:
 - `beta-anl-clickupgeradorcards`: criação ou consolidação de card quando o conteúdo já estiver suficientemente definido.
 - `beta-anl-clickupchecklist`: marcar/sincronizar um checklist já existente em comentário do ClickUp com base nos problemas registrados depois dele; exige link explícito da tarefa ou comentário e atualiza somente o comentário-alvo.
 - `beta-anl-movidesk`: consulta analítica no Movidesk ou importação explícita de chamados para a base interna pelo MCP Beta MOV.
+- `beta-anl-movidesk-relatorios`: gerar o relatório executivo padrão em HTML, ou em Word quando solicitado, com dados consultados no Movidesk.
 
 Não use uma skill de QA apenas porque um erro apareceu durante um teste; se a intenção for investigar o erro, priorize `beta-anl-triagemincidentes`.
 
@@ -60,6 +61,7 @@ Quando o objetivo for atualizar um clone web isolado do CENCIHUB, use `beta-mod-
 - Triagem domina quando o objetivo for causa, impacto, recorrência ou diagnóstico, mesmo que o achado tenha surgido em QA;
 - `beta-anl-regrasnegocio` domina quando a pergunta central for qual deveria ser o comportamento;
 - `beta-anl-duvidasfuncionais` domina quando a pergunta for apenas explicativa;
+- `beta-anl-movidesk-relatorios` domina quando o resultado solicitado for o relatório executivo padrão do Movidesk em HTML ou Word; consultas e sínteses sem esse artefato permanecem em `beta-anl-movidesk`;
 - Movidesk domina somente quando recuperar, consultar ou analisar dados do Movidesk for o objetivo final; ticket usado como evidência mantém a intenção principal original.
 
 Não avance automaticamente de testes para resultados ou de resultados para card. Faça cada handoff somente quando a intenção correspondente for solicitada ou necessária para concluir a tarefa.

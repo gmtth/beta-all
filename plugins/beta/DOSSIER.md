@@ -1,10 +1,10 @@
 # Dossier do plugin Beta
 
-**Atualizado:** 2026-10-24
+**Atualizado:** 2026-11-25
 
 **Componente:** `plugins/beta/`
 
-**Manifesto:** `suite-beta`, versão `1.0.12`
+**Manifesto:** `suite-beta`, versão `1.0.15`
 
 ## Resumo e escopo
 
@@ -16,13 +16,14 @@ Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se
 
 ## Estado atual
 
-- O pacote contém 20 skills: a orquestradora `beta` e 19 skills especializadas ANL/MOD.
-- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.12`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
+- O pacote contém 21 skills: a orquestradora `beta` e 20 skills especializadas ANL/MOD.
+- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.15`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
 - O Knowledge Master vigente é [`CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`](./references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md). Ele resolve duas referências quebradas com anchors explícitos; o snapshot `v001` está preservado sem alteração. O relatório correspondente está em [`KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md`](./references/KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md).
-- Dezesseis skills estão na revisão `metadata.version` `"3"`; `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"`; `beta-anl-movidesk` está em `"4"`; `beta` está em `"8"` e `beta-anl-qatestes` em `"4"` após as mudanças de comunicação. A contagem inicial foi `"1"`; os incrementos seguem a regra definida em [`AGENTS.md`](./AGENTS.md).
+- `beta-anl-movidesk-relatorios` está na revisão `metadata.version` `"2"`; `beta-anl-movidesk` passou a `"6"` para delimitar a nova responsabilidade. `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"`; `beta` está em `"9"` e `beta-anl-qatestes` em `"4"`. As demais versões seguem os registros existentes; incrementos seguem [`AGENTS.md`](./AGENTS.md).
 - Os metadados das skills incluem nomes técnicos e exibidos vigentes, descrições, prompts, política de invocação, cores e logos. As skills ClickUp Cards e ClickUp Checklist compartilham brand color `#754FF6` e os logos small/large, copiados para cada pasta para manter o pacote autossuficiente.
 - `beta-anl-clickupchecklist` tem prompt padrão coerente com sua restrição de atualizar apenas o comentário mais recente “Checklist de testes” e com as informações necessárias da rodada.
 - A integração configurada em `.mcp.json` aponta para `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`. Consultas ao Movidesk permanecem somente leitura; a importação explicitamente solicitada de chamados para a base interna é uma escrita restrita e auditada, descrita na skill `beta-anl-movidesk`. Endpoint, publicação e migração são acompanhados pelo dossier MCP; a configuração local não prova conectividade end-to-end.
+- A skill de relatórios Movidesk usa um modelo HTML fixo, com oito indicadores, comparação de períodos equivalentes entre anos, categoria oficial, ocorrências por chamado e situação na data da consulta. Word é opcional. O modelo contém somente estrutura e os dados vêm da consulta de cada geração.
 - O marketplace GitHub **Beta** está configurado na raiz do monorepo para apontar a este pacote. A importação/sincronização no workspace e o uso pelos quatro analistas ainda precisam ser confirmados; consulte [`plugin-marketplace.md`](../../docs/components/plugin-marketplace.md).
 - A comunicação compartilhada está centralizada em `skills/beta/references/protocolo-evidencias-e-handoffs.md`: precedentes com evidência rastreável, separação entre fonte e recomendação e cartões de encerramento com campos e regras condicionais.
 - A grade aprovada usa quatro cartões principais na primeira linha e, na segunda, “Skills acionadas” primeiro e sempre; Feedback/Ações aparecem apenas quando relevantes. A largura da segunda linha divide um grid de 12 colunas igualmente entre 1, 2 ou 3 cartões (`md-12`, `md-6` ou `md-4`); abaixo de `md`, os cartões empilham. Não tem cabeçalho Beta, título “Resumo da operação”, linha superior ou cartão Próximo passo. Todo texto usa o mesmo estilo pequeno; sem renderizador documentado, a tabela Markdown portátil não promete proporções `col-md`.
@@ -48,6 +49,7 @@ A migração de nomes foi aplicada em 2026-10-20: pastas, frontmatter, roteament
 | `beta-anl-duvidas-funcionais` | `beta-anl-duvidasfuncionais` | Beta ANL — Dúvidas funcionais | Dúvidas funcionais |
 | `beta-anl-gerador-cards-clickup` | `beta-anl-clickupgeradorcards` | Beta ANL — Gerador de cards ClickUp | ClickUp Cards |
 | `beta-anl-movidesk` | `beta-anl-movidesk` | Beta ANL — Movidesk | Movidesk |
+| `beta-anl-movidesk-relatorios` | `beta-anl-movidesk-relatorios` | Movidesk Relatórios | Movidesk Relatórios |
 | `beta-anl-qa-resultados` | `beta-anl-qaresultados` | Beta ANL — QA resultados | Resultados QA |
 | `beta-anl-qa-testes` | `beta-anl-qatestes` | Beta ANL — QA testes funcionais | Testes funcionais |
 | `beta-anl-regras-negocio` | `beta-anl-regrasnegocio` | Beta ANL — Regras de negócio | Regras de negócio |
@@ -69,7 +71,7 @@ A migração de nomes foi aplicada em 2026-10-20: pastas, frontmatter, roteament
 
 - Cada skill deve preencher `display_name`, `short_description`, `icon_small`, `icon_large`, `brand_color`, `default_prompt` e `policy.allow_implicit_invocation` em `agents/openai.yaml`.
 - Manter os dois logos preenchidos com assets existentes e versionados dentro da pasta da skill. Skills ANL e MOD reutilizam os logos e cores canônicos de suas famílias, salvo exceções aprovadas.
-- Movidesk (`#FF2A28`), Sites (`#168DE4`) e as duas skills ClickUp (`#754FF6`) são exceções visuais registradas. ClickUp Cards e ClickUp Checklist têm cópias locais dos mesmos logos pequeno e grande.
+- Movidesk (`#FF2A28`), Sites (`#168DE4`) e as duas skills ClickUp (`#754FF6`) são exceções visuais registradas. As skills Movidesk e Movidesk Relatórios compartilham a identidade Movidesk; a nova skill tem cópia local do mesmo asset para manter o pacote autossuficiente. ClickUp Cards e ClickUp Checklist têm cópias locais dos mesmos logos pequeno e grande.
 - Declarar `dependencies.tools` sempre que uma skill depender de uma ferramenta/conexão externa suportada pelo formato e runtime. Não inventar dependências. A skill Movidesk declara a conexão MCP; não há uma definição verificável de servidor ClickUp no pacote atual, portanto a dependência ClickUp permanece pendente de confirmação.
 - `policy.allow_implicit_invocation` é `true` somente para `beta`; todas as especializadas usam `false`.
 - O manifesto deve respeitar limites do formato: `shortDescription` com até 30 caracteres e `defaultPrompt` com até três opções. A configuração vigente cumpre esses limites.
@@ -80,6 +82,7 @@ A migração de nomes foi aplicada em 2026-10-20: pastas, frontmatter, roteament
 | ANL em geral | `./assets/fundo.png` | `#C11D26` | Reutilizar como padrão ANL. |
 | MOD em geral | `./assets/beta-mod.png` | `#E3DB0B` | Reutilizar como padrão MOD; conferir contraste em futuras alterações. |
 | Movidesk | `./assets/fundo.png` na pasta da skill | `#FF2A28` | Exceção de produto aprovada. |
+| Movidesk Relatórios | `./assets/fundo.png` na pasta da skill, cópia do asset Movidesk | `#FF2A28` | Reutiliza a identidade Movidesk aprovada. |
 | ClickUp Cards e ClickUp Checklist | `./assets/small-logo.png` e `./assets/large-logo.png` em cada pasta | `#754FF6` | Identidade compartilhada ClickUp, mantida autossuficiente em cada skill. |
 | Sites | `./assets/beta-sit.png` | `#168DE4` | Exceção de produto aprovada. |
 
@@ -97,7 +100,7 @@ A migração de nomes foi aplicada em 2026-10-20: pastas, frontmatter, roteament
 | Caminho | Responsabilidade |
 |---|---|
 | `skills/beta/` | Entrada, control plane, roteamento e protocolo transversal |
-| `skills/beta-anl-*/` | Dúvidas funcionais, regras, triagem, QA, ClickUp e Movidesk |
+| `skills/beta-anl-*/` | Dúvidas funcionais, regras, triagem, QA, ClickUp, consultas Movidesk e relatórios executivos Movidesk |
 | `skills/beta-mod-*/` | Modelagem de regras, dossiê, fontes, fluxos, permissões, processamento, relatórios, Figma, QA, artefatos e Sites |
 | `references/` | Knowledge Master, integridade e apoio compartilhado |
 | `references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md` | Snapshot vigente, com links internos resolvidos; `v001` preservado |
@@ -109,7 +112,7 @@ A migração de nomes foi aplicada em 2026-10-20: pastas, frontmatter, roteament
 
 O protocolo transversal de evidências, certeza, vigência, handoffs e publicação está em `skills/beta/references/protocolo-evidencias-e-handoffs.md`. A skill `beta` encaminha para módulos especializados e mantém a resposta final; os contratos locais de cada módulo permanecem em seu `SKILL.md` e referências.
 
-As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de incidentes, QA de testes e resultados, geração de cards ClickUp, checklist ClickUp e consulta Movidesk. As especialidades MOD cobrem regras, dossiê, fontes, fluxos, permissões, processamento, relatórios, Figma, QA e artefatos. As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte do diretório ativo; seus contratos foram incorporados à skill `beta`, e cópias de auditoria são mantidas fora do pacote ativo.
+As especialidades ANL cobrem dúvidas funcionais, regras de negócio, triagem de incidentes, QA de testes e resultados, geração de cards ClickUp, checklist ClickUp, consulta Movidesk e relatórios executivos Movidesk. As especialidades MOD cobrem regras, dossiê, fontes, fluxos, permissões, processamento, modelagem de relatórios, Figma, QA e artefatos. As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte do diretório ativo; seus contratos foram incorporados à skill `beta`, e cópias de auditoria são mantidas fora do pacote ativo.
 
 ## Contratos de responsabilidade das skills
 
@@ -125,6 +128,7 @@ O contrato entre as skills tem duas camadas. A skill `beta` é a única orquestr
 | `beta-anl-clickupgeradorcards` | Criar, consolidar e revisar cards ClickUp com contexto funcional e rastreabilidade para desenvolvimento. | Não assumir o contrato de checklist nem converter hipótese ou histórico em causa/regra confirmada. |
 | `beta-anl-clickupchecklist` | Atualizar apenas o comentário-alvo “Checklist de testes” no ClickUp, segundo o contrato de rodada informado. | Não criar checklist nem alterar tarefa, comentário ou conteúdo fora do alvo autorizado; seguir os gates de seleção, confirmação e validação da skill. |
 | `beta-anl-movidesk` | Consultar e sintetizar chamados reais; importar chamados selecionados para a base interna somente mediante pedido explícito. | Consultas não alteram chamados. Importação não muda a origem e não transforma correspondência textual em prova de causa. |
+| `beta-anl-movidesk-relatorios` | Consultar Movidesk e gerar relatórios executivos em HTML no formato padrão; primeiro relatório compara três meses completos e acumulado anual. | Não altera tickets nem classifica por texto livre sem taxonomia confirmada; não afirma total completo quando paginação ou fonte estiverem incompletas. |
 | `beta-mod-fontes` | Identificar, recuperar, priorizar e comparar fontes, versões, recência e divergências. | Atua em leitura; não decide regra funcional, não persiste Dossiê e não produz modelagem final. |
 | `beta-mod-regras` | Verificar completude e rastreabilidade de regras, gatilhos, ações, validações, resultados e estados. | Não cria autoridade de regra nem consolida a Modelagem Funcional final. |
 | `beta-mod-fluxos` | Organizar sequências de telas, navegação, interações e estados de interface. | Não inventa telas/regras nem substitui análise de regra, revisão visual no Figma ou modelagem final. |
@@ -165,6 +169,9 @@ Mudanças comportamentais e de redação devem ser generalizáveis para todo o d
 | 2026-10-24, neutralidade a casos isolados | Exigido que mudanças de comportamento e redação das skills expressem regras generalizáveis; proíbe-se incluir chamados, cards, documentos, casos concretos ou exemplos nas instruções, ou codificar comportamento com base em um caso isolado. Necessidades específicas permanecem na conversa ou no artefato. Nenhum `SKILL.md` foi alterado; manifesto incrementado para `1.0.10`. | `plugins/beta/AGENTS.md` e decisão solicitada pelo usuário. Versões individuais de skills mantidas. |
 | 2026-10-25, diretrizes de escrita e avaliação | Acrescentadas recomendações para fronteira e descrição da skill, instruções concisas com divulgação progressiva, separação entre skill e MCP, dependências confirmadas e avaliação com critérios observáveis. A diretriz de neutralidade Beta prevalece: nenhum exemplo ou caso concreto deve ser incluído nos arquivos de instrução; testes podem usar cenários sintéticos neutros fora deles. Nenhuma skill foi alterada; manifesto incrementado para `1.0.11`. | `plugins/beta/AGENTS.md`; guia oficial [Build skills](https://developers.openai.com/plugins/build/skills), artigo [Rethinking skills and prompts for GPT-6 Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra) e [Testing Agent Skills Systematically with Evals](https://developers.openai.com/blog/eval-skills). |
 | 2026-10-25, modularização e avaliação futura | Refinada a diretriz para apresentar, conforme o caso, opções de dividir uma skill por fluxos distintos ou usar referências/scripts, avaliando custos e benefícios em vez de impor estrutura. Registradas como próximos passos a revisão estrutural das skills e a avaliação de instruções rígidas, autonomia e custo de contexto do `AGENTS.md`, condicionadas à adoção mais ampla e evidências com GPT-6 Astra. Nenhuma skill foi alterada; manifesto incrementado para `1.0.12`. | `plugins/beta/AGENTS.md`; decisão do usuário baseada no artigo oficial [Rethinking skills and prompts for GPT-6 Astra](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra). |
+| 2026-11-18, relatórios executivos Movidesk | Criada `beta-anl-movidesk-relatorios` com identidade visual Movidesk, dependência MCP declarada, roteamento próprio e contrato para HTML padronizado. A primeira versão define três meses-calendário completos e acumulado anual; a classificação depende de taxonomia confirmada e paginação completa. `beta-anl-movidesk` passou a `"5"` para delimitar relatórios executivos; a skill nova inicia em `"1"`; manifesto passou a `1.0.13`. | `skills/beta-anl-movidesk-relatorios/`, roteamento Beta, matriz/validador de cobertura, `beta-anl-movidesk/SKILL.md` e manifesto. Um relatório teste permanece como próximo passo para ajustar apresentação e validar mapeamento. |
+| 2026-11-25, primeiro relatório teste Movidesk | Consultados os períodos do acumulado anual e dos três meses completos recentes com paginação até a página seguinte vazia; registros deduplicados e saída HTML agregada gerada fora do repositório. O agrupamento provisório usa os prefixos da categoria oficial e ainda aguarda validação do usuário. Nenhum dado individual de chamado foi incluído no artefato. Manifesto passou a `1.0.14` por esta atualização documental. | Rascunho HTML fora do pacote, skill de relatórios e este dossier. Revisão do padrão visual e confirmação do mapeamento de categorias permanecem pendentes. |
+| 2026-11-25, modelo final de relatórios Movidesk | Fixada a apresentação HTML e o contrato de agregados. Acrescentados comparativo anual, ocorrências, situação e saída opcional em Word com gráficos editáveis quando pedidos. | Modelo e renderizador da skill. Rascunhos operacionais e artefatos de teste ficam fora do repositório. |
 | Integração MCP | `.mcp.json` configura o endpoint documentado do Sites/MCP, mas isso não comprova conectividade ou publicação end-to-end. | `.mcp.json`, `docs/components/sites.md` e `mcp/movidesk/DOSSIER.md`. |
 | 2026-10-24, avaliação de respostas finais da Beta | Revisão manual do transcript fornecido pelo usuário para as 11 perguntas do conjunto v1: 8 respostas adequadas e 3 parciais; nenhuma atribuiu causa ao equipamento atual. A pergunta 1 não acionou a busca nem citou precedentes; a pergunta 8 usou um caso relacionado, mas deixou de citar o precedente mais direto `20260911000000140`, confirmado em uma busca de leitura na base; no controle negativo (#11), a Beta não atribuiu causa, mas não pediu os dados discriminantes e afirmou que “offline” significa que a máquina não comunica, o que excede o que o status do painel demonstra. | Transcript fornecido pelo usuário; revisão comparativa ao conjunto `infra/supabase/evaluations/knowledge-search-v1.md`; consultas de leitura confirmaram os chamados `20260806000000070` e `20260911000000140`. A rodada avalia respostas finais, não latência nem qualidade estatística do ranking. |
 
@@ -183,6 +190,7 @@ Não há evidência suficiente para atribuir data ou motivação a toda a evolu�
 | Avaliar concisão, rigidez e autonomia das instruções diante do GPT-6 Astra | Adiado até adoção mais ampla | Quando o GPT-6 Astra estiver mais difundido no uso da Beta, revisar instruções rígidas, definição de conclusão e limites de autonomia com testes comparativos; manter os contratos atuais até haver evidência e aprovação para mudanças. |
 | Revisar custo de contexto das instruções permanentes | Pendente | Avaliar se as instruções do `AGENTS.md` direcionam para documentos contextuais sem exigir leituras amplas em tarefas pequenas; preservar os requisitos atuais até revisão documentada e aprovada. |
 | Retestar pontos parciais da avaliação de respostas | Pendente após os ajustes de plugin/skills | Reexecutar as perguntas 1, 8 e 11: confirmar busca e citação de precedentes no caso 1; seleção do precedente direto `20260911000000140` no caso 8; e abstenção que não interprete “offline” como prova de falta de comunicação, solicitando dados que diferenciem as hipóteses no caso 11. Depois, ampliar a amostra para avaliar diagnóstico interativo e cobertura além destes 11 casos. |
+| Acompanhar comparabilidade da taxonomia no relatório Movidesk | A classificação histórica pode mudar | Validar os grupos com os dados de cada consulta, explicitar divergências entre períodos e registrar novas regras somente com evidência. |
 
 Ao confirmar a conclusão de um item, retire-o desta lista e registre a evidência no histórico. A implementação de OAuth e a migration/runtime atuais são acompanhadas em [`mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md#próximos-passos) e [`infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md#próximos-passos).
 

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relatório executivo de chamados | Movidesk</title>
+<style>
+:root{--red:#ff2a28;--ink:#20242b;--muted:#667085;--line:#e7e9ed;--paper:#fff;--wash:#f6f7f9;--dark:#20242b;--green:#16794b;--font:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
+*{box-sizing:border-box}html{background:#eef0f3;color:var(--ink);font-family:var(--font)}body{margin:0;padding:32px 16px 48px}.report{max-width:1120px;margin:0 auto;background:var(--paper);box-shadow:0 12px 48px #20242b12;border-radius:18px;overflow:hidden}.topline{height:7px;background:var(--red)}header{padding:36px 44px 30px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.brand{display:flex;align-items:center;gap:16px}.brand img{height:54px;width:54px;object-fit:contain;border-radius:12px}.eyebrow{color:var(--red);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.12em;margin:0 0 9px}h1{font-size:30px;line-height:1.15;letter-spacing:-.035em;margin:0 0 9px}header p{margin:0;color:var(--muted);font-size:14px}.stamp{text-align:right;color:var(--muted);font-size:12px;line-height:1.7;min-width:150px}.stamp strong{color:var(--ink);font-weight:700}.content{padding:30px 44px 42px}.section{margin:0 0 34px}.section-head{display:flex;justify-content:space-between;align-items:end;gap:12px;margin:0 0 15px}.section h2{font-size:17px;letter-spacing:-.02em;margin:0}.section-note{font-size:11px;color:var(--muted);margin:0}.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.card{border:1px solid var(--line);background:#fff;border-radius:12px;padding:17px 18px;min-height:112px}.card .label{font-size:11px;color:var(--muted);font-weight:700;line-height:1.35}.card .value{font-size:28px;font-weight:780;letter-spacing:-.04em;margin:11px 0 5px}.card .detail{font-size:11px;color:var(--muted);line-height:1.4}.card.feature{border-color:#ffd3d2;background:#fff8f8}.card.feature .value{color:var(--red)}.split{display:grid;grid-template-columns:1.1fr .9fr;gap:18px}.panel{border:1px solid var(--line);border-radius:12px;padding:19px 20px;background:#fff}.bars{height:212px;display:flex;align-items:stretch;gap:10px;padding-top:13px}.bar-item{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px}.bar-value{font-size:10px;font-weight:700;color:#424854}.bar-track{height:150px;width:100%;max-width:42px;display:flex;align-items:flex-end;background:#f2f3f5;border-radius:7px 7px 3px 3px;overflow:hidden}.bar-fill{width:100%;height:var(--height);background:var(--red);border-radius:7px 7px 2px 2px}.bar-item.partial .bar-fill{background:#f3a1a0}.bar-label{font-size:10px;color:var(--muted)}.legend{display:flex;gap:14px;align-items:center;margin:11px 0 0;color:var(--muted);font-size:10px}.dot{width:9px;height:9px;border-radius:3px;background:var(--red);display:inline-block;margin-right:5px}.dot.partial{background:#f3a1a0}.callout{margin-top:16px;padding:13px 14px;border-radius:9px;background:#fff7f6;border-left:3px solid var(--red);font-size:12px;line-height:1.55;color:#4a3030}.callout strong{color:var(--ink)}table{border-collapse:collapse;width:100%;font-size:12px}th{text-align:left;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-weight:750;padding:0 10px 10px}th.num,td.num{text-align:right}td{border-top:1px solid var(--line);padding:10px;vertical-align:middle}td:first-child{font-weight:650}.share{color:var(--muted);font-size:10px;margin-left:4px}.mini-track{height:5px;width:82px;background:#f0f1f3;border-radius:4px;display:inline-block;vertical-align:middle;margin-right:8px;overflow:hidden}.mini-fill{display:block;height:100%;width:var(--width);background:var(--red);border-radius:4px}.status-table{max-width:690px}.observations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.observation{background:var(--wash);border-radius:10px;padding:15px 16px;font-size:12px;line-height:1.55;color:#424854}.observation strong{display:block;color:var(--ink);font-size:13px;margin-bottom:5px}.method{background:var(--wash);border-radius:12px;padding:18px 20px}.method p{margin:0 0 10px;font-size:11px;line-height:1.6;color:#515866}.method p:last-child{margin-bottom:0}.method strong{color:var(--ink)}.tag{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:99px;padding:3px 8px;font-size:10px;color:#4d5562;margin:2px 3px 2px 0}.warning{color:#7b4b12!important}.footer{border-top:1px solid var(--line);padding:16px 44px;color:#8a909a;font-size:10px;display:flex;justify-content:space-between;gap:12px}
+@media(max-width:760px){body{padding:0;background:#fff}.report{border-radius:0;box-shadow:none}header{padding:25px 22px 22px;flex-direction:column}.stamp{text-align:left}.content{padding:23px 22px 32px}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.observations{grid-template-columns:1fr}.footer{padding:15px 22px;flex-direction:column}h1{font-size:25px}.mini-track{width:54px}}
+@media print{html{background:#fff}body{padding:0}.report{max-width:none;box-shadow:none;border-radius:0}.topline{print-color-adjust:exact;-webkit-print-color-adjust:exact}header,.content{padding-left:26px;padding-right:26px}.section,.panel,.card,.observation,.method{break-inside:avoid}.bar-fill,.mini-fill,.card.feature{print-color-adjust:exact;-webkit-print-color-adjust:exact}.footer{padding-left:26px;padding-right:26px}}
+
+body{background:#f5f6f7}.content{max-width:1180px}header{align-items:center}.brand img{width:58px;height:58px;object-fit:contain}.brand h1{font-size:30px;letter-spacing:-.5px}.stamp{font-size:12px;line-height:1.65}.section{margin:22px 0}.section-head h2{font-size:19px}.card,.panel,.observation{border-color:#e4e6e8;box-shadow:0 2px 10px rgba(20,24,28,.035)}.callout{line-height:1.6}.tag{display:inline-block;margin:3px 4px 3px 0}.table-wrap{overflow-x:auto}.footnote{font-size:12px;color:#65707a;margin-top:10px}@media print{body{background:white}.section{break-inside:avoid}.panel,.card{box-shadow:none}}
+
+html{background:#eef0f3}body{background:transparent}.report .content{max-width:none}
+.section{margin:0 0 30px}.card .label,.card .detail,.section-note,.note{font-size:12px}
+.note{margin:12px 0 0;color:var(--muted);line-height:1.55}
+th{padding:8px 10px;text-transform:none;letter-spacing:0;font-size:12px}
+td{font-size:13px;font-variant-numeric:tabular-nums}table th:first-child{text-align:left}
+table th:not(:first-child),table td:not(:first-child){text-align:right}
+.chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.chart-grid figure{margin:0}.chart-grid figcaption{font-size:13px;font-weight:700;margin-bottom:12px}
+.chart-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 9px;margin:0 0 9px;font-size:12px}
+.chart-row:last-child{margin-bottom:0}.chart-row strong{font-variant-numeric:tabular-nums}
+.chart-track{grid-column:1/-1;height:6px;background:#f0f1f3;border-radius:4px;overflow:hidden}
+.chart-track span{display:block;height:100%;background:var(--red);border-radius:4px}
+.chart-grid figure:nth-child(2) .chart-track span{background:#922a29}
+.month-chart{margin:0}.month-chart .bar-value,.month-chart .bar-label{font-size:12px}
+.month-chart figcaption{font-size:12px;color:var(--muted);margin-top:10px}
+.report footer{margin:0}.stamp{white-space:normal}
+@media(max-width:760px){.chart-grid{grid-template-columns:1fr}.month-chart .bars{gap:3px}.month-chart .bar-value,.month-chart .bar-label{font-size:10px}}
+@media print{.chart-track span,.bar-fill{print-color-adjust:exact}.section,.panel{break-inside:auto}.chart-grid figure,.month-chart,tr{break-inside:avoid}}
+</style>
+</head>
+<body><main class="report">
+<div class="topline" aria-hidden="true"></div>
+<header><div class="brand"><img src="data:image/png;base64,$logo" alt="Movidesk"><div><p class="eyebrow">Movidesk · Indicadores gerenciais</p><h1>Relatório executivo de chamados</h1></div></div><div class="stamp">$stamp</div></header>
+<div class="content">
+<section class="section"><div class="section-head"><h2>Resumo executivo</h2></div><div class="cards">$cards</div></section>
+<section class="section"><div class="section-head"><h2>Chamados por categoria</h2><p class="section-note">Participação no total de cada período</p></div>$categories</section>
+<section class="section" id="comparativo-anual"><div class="section-head"><h2>Comparativo anual</h2><p class="section-note">$annual_period</p></div>$annual</section>
+<section class="section"><div class="section-head"><h2>Chamados por mês</h2><p class="section-note">$year</p></div>$monthly</section>
+<section class="section"><div class="section-head"><h2>Ocorrências de sistema e máquina</h2></div>$occurrences</section>
+<section class="section"><div class="section-head"><h2>Situação dos chamados na data da consulta</h2></div>$statuses</section>
+</div><footer class="footer">$footer</footer>
+</main></body>
+</html>

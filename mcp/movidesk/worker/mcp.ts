@@ -1,4 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { createMcpHandler, fromJsonSchema, McpServer as McpServerV2, type CallToolResult, type ToolAnnotations as ToolAnnotationsV2 } from "@modelcontextprotocol/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { GET as getTickets } from "../app/api/tickets/route";
 import { GET as getPersons } from "../app/api/persons/route";
@@ -187,4 +188,89 @@ export async function handleMcp(request: Request, context?: TelemetryContext): P
   const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined });
   await server.connect(transport);
   return transport.handleRequest(request);
+}
+
+/** Experimental, read-only MCP v2 route. Kept separate and disabled by default. */
+export async function handleMcpV2Spike(request: Request, context?: TelemetryContext, enabled = false): Promise<Response | null> {
+  const url = new URL(request.url);
+  if ((url.pathname.replace(/\/+$/, "") || "/") !== "/mcp-v2-spike") return null;
+  if (!enabled) return json({ error: "MCP v2 spike is disabled." }, { status: 404 });
+  if (request.method !== "POST") return json({ error: "Method not allowed." }, { status: 405, headers: { allow: "POST" } });
+
+  const accessToken = bearerToken(request.headers.get("authorization"));
+  const resource = canonicalResource(url.origin);
+  if (!accessToken) return missingMcpAuthorizationResponse(resource);
+
+  const handler = createMcpHandler(async ({ requestInfo }) => {
+    const requestToken = bearerToken(requestInfo?.headers.get("authorization") ?? null);
+    if (!requestToken) throw new Error("MCP authorization is required.");
+
+    // Register the current, read-only Movidesk contracts with v1 first so its
+    // existing Zod 3 schemas can be exported as JSON Schema for the v2 SDK.
+    const registry = new McpServer({ name: "movidesk-mcp", version: "1.1.0" });
+    const instrumented = instrumentToolUsage(registry, requestToken, resource, context);
+    const movideskClient = new LocalMovideskClient(url.origin);
+    registerMovideskTools(instrumented, movideskClient, requestToken);
+    instrumented.exposeSecuritySchemes();
+
+    const handlers = (registry.server as unknown as { _requestHandlers: Map<string, (request: unknown, extra: unknown) => Promise<unknown>> })._requestHandlers;
+    const listTools = handlers.get("tools/list");
+    if (!listTools) throw new Error("MCP v1 tool-list handler is unavailable.");
+    const manifest = await listTools({ method: "tools/list", params: {} }, {}) as { tools?: Array<Record<string, unknown>> };
+    const registeredTools = (registry as unknown as { _registeredTools: Record<string, { inputSchema?: { safeParseAsync(value: unknown): Promise<{ success: boolean; data?: unknown }> }; handler: (args: unknown, extra: unknown) => Promise<unknown> }> })._registeredTools;
+
+    const modernServer = new McpServerV2({ name: "movidesk-mcp", version: "1.1.0" });
+    const schemesByTool = new Map<string, ToolSecurityScheme[]>();
+    const schemasByTool = new Map<string, { inputSchema?: unknown; outputSchema?: unknown }>();
+    for (const tool of manifest.tools ?? []) {
+      const name = String(tool.name);
+      const registered = registeredTools[name];
+      if (!registered) continue;
+      const schemes = tool.securitySchemes as ToolSecurityScheme[] | undefined;
+      if (schemes) schemesByTool.set(name, schemes);
+      schemasByTool.set(name, { inputSchema: tool.inputSchema, outputSchema: tool.outputSchema });
+      const outputSchema = tool.outputSchema && typeof tool.outputSchema === "object"
+        ? fromJsonSchema(tool.outputSchema as Record<string, unknown>)
+        : undefined;
+
+      modernServer.registerTool(name, {
+        title: typeof tool.title === "string" ? tool.title : undefined,
+        description: typeof tool.description === "string" ? tool.description : undefined,
+        inputSchema: fromJsonSchema({ type: "object" }),
+        outputSchema,
+        annotations: tool.annotations as ToolAnnotationsV2 | undefined,
+        _meta: tool._meta as Record<string, unknown> | undefined,
+      }, async (args, extra) => {
+        const parsed = await registered.inputSchema?.safeParseAsync(args);
+        if (parsed && !parsed.success) return { isError: true, content: [{ type: "text", text: "Os parâmetros informados não são válidos para esta ferramenta." }] };
+        return await registered.handler(parsed?.data ?? args, extra) as CallToolResult;
+      });
+    }
+
+    // Restore the established input/output JSON Schemas and OpenAI OAuth
+    // extension at the wire boundary; SDK v2's registered input schema stays
+    // permissive so the existing Zod 3 parser can retain coercion/defaults.
+    const modernHandlers = (modernServer.server as unknown as { _requestHandlers: Map<string, (request: unknown, extra: unknown) => Promise<unknown>> })._requestHandlers;
+    const originalListTools = modernHandlers.get("tools/list");
+    if (!originalListTools) throw new Error("MCP v2 tool-list handler is unavailable.");
+    modernHandlers.set("tools/list", async (listRequest, extra) => {
+      const result = await originalListTools(listRequest, extra) as { tools?: Array<Record<string, unknown>> };
+      return {
+        ...result,
+        tools: (result.tools ?? []).map((tool) => {
+          const schemas = schemasByTool.get(String(tool.name));
+          const schemes = schemesByTool.get(String(tool.name));
+          return {
+            ...tool,
+            ...(schemas?.inputSchema ? { inputSchema: schemas.inputSchema } : {}),
+            ...(schemas?.outputSchema ? { outputSchema: schemas.outputSchema } : {}),
+            ...(schemes ? { securitySchemes: schemes } : {}),
+          };
+        }),
+      };
+    });
+    return modernServer;
+  }, { legacy: "reject" });
+
+  return handler.fetch(request);
 }

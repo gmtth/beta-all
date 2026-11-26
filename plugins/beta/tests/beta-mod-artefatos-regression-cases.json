@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "purpose": "Cenários sintéticos neutros para regressão estrutural e visual do gerador de artefatos.",
+  "cases": [
+    {
+      "id": "general-processing-flow",
+      "archetype": "general-processing",
+      "document_shape": "body-in-normal-flow"
+    },
+    {
+      "id": "frontend-four-column-flow",
+      "archetype": "frontend",
+      "document_shape": "four-column-flow-in-normal-body"
+    },
+    {
+      "id": "report-formula-and-table",
+      "archetype": "report",
+      "document_shape": "formula-and-column-table-in-normal-flow"
+    }
+  ],
+  "comparison_targets": [
+    "hierarchy",
+    "order",
+    "density",
+    "widths",
+    "line-breaks",
+    "header",
+    "footer"
+  ]
+}

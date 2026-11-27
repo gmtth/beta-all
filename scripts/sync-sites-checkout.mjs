@@ -9,6 +9,10 @@ const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, "..");
 const componentRoot = path.join(repoRoot, "mcp", "movidesk");
 const componentPrefix = "mcp/movidesk/";
+const environmentManifests = {
+  production: path.join(componentRoot, ".openai", "hosting.json"),
+  homolog: path.join(repoRoot, "mcp", "movidesk-environments", "homolog", ".openai", "hosting.json"),
+};
 const managedPrefixes = ["app/", "worker/", "config/", "public/", "db/", "drizzle/", "build/"];
 const managedRootFiles = new Set([
   ".gitignore",
@@ -30,7 +34,7 @@ function usage() {
       "Sincroniza os arquivos-fonte do MCP para um checkout aberto pelo helper oficial do Sites.",
       "",
       "Uso:",
-      "  npm run sites:sync -- <caminho-do-checkout-sites> [--dry-run]",
+      "  npm run sites:sync -- <caminho-do-checkout-sites> [--target production|homolog] [--dry-run]",
       "",
       "O comando preserva .git, .openai, arquivos ignorados e dados locais do checkout.",
       "Depois, use o helper oficial do Sites para build, push e empacotamento.",
@@ -76,7 +80,14 @@ function main() {
   }
 
   const dryRun = args.includes("--dry-run");
-  const positional = args.filter((arg) => arg !== "--dry-run");
+  const targetIndexes = args.flatMap((arg, index) => arg === "--target" ? [index] : []);
+  if (targetIndexes.length > 1 || (targetIndexes.length && !args[targetIndexes[0] + 1])) {
+    throw new Error("Informe --target uma única vez, seguido por production ou homolog.");
+  }
+  const targetName = targetIndexes.length ? args[targetIndexes[0] + 1] : "production";
+  if (!Object.hasOwn(environmentManifests, targetName)) throw new Error("O destino precisa ser production ou homolog.");
+  const targetArgs = new Set(targetIndexes.length ? [targetIndexes[0], targetIndexes[0] + 1] : []);
+  const positional = args.filter((arg, index) => arg !== "--dry-run" && !targetArgs.has(index));
   if (positional.length !== 1) {
     usage();
     process.exitCode = 2;
@@ -91,11 +102,14 @@ function main() {
     throw new Error("O checkout Sites não pode ser a pasta do componente nem conter a fonte canônica.");
   }
 
-  const sourceManifest = readJson(path.join(componentRoot, ".openai", "hosting.json"), "Manifesto canônico");
+  const sourceManifest = readJson(environmentManifests[targetName], `Manifesto do destino ${targetName}`);
   const targetManifestPath = path.join(targetRoot, ".openai", "hosting.json");
   const targetManifest = readJson(targetManifestPath, "Manifesto do checkout Sites");
-  if (!sourceManifest.project_id || sourceManifest.project_id !== targetManifest.project_id) {
-    throw new Error("O checkout Sites pertence a outro projeto; nenhum arquivo foi alterado.");
+  if (!sourceManifest.project_id || sourceManifest.project_id === readJson(environmentManifests.production, "Manifesto de produção").project_id && targetName === "homolog") {
+    throw new Error("O destino homolog precisa ter um project_id próprio, diferente de produção.");
+  }
+  if (sourceManifest.project_id !== targetManifest.project_id) {
+    throw new Error(`O checkout Sites não corresponde ao destino ${targetName}; nenhum arquivo foi alterado.`);
   }
 
   const targetGitRoot = path.resolve(git(targetRoot, ["rev-parse", "--show-toplevel"]).trim());
@@ -165,7 +179,7 @@ function main() {
   }
 
   process.stdout.write(
-    `Sincronização concluída para o projeto Sites ${sourceManifest.project_id}: ${sourcePaths.length} arquivos copiados, ${stalePaths.length} obsoletos removidos.\n`,
+    `Sincronização concluída para ${targetName} (projeto Sites ${sourceManifest.project_id}): ${sourcePaths.length} arquivos copiados, ${stalePaths.length} obsoletos removidos.\n`,
   );
 }
 

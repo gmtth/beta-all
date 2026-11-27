@@ -16,6 +16,23 @@ Em 2026-10-21, a integração Sites confirmou o projeto `Beta MCP` ativo e públ
 
 O armazenamento de fonte usado pela publicação do Sites é separado do GitHub e não veio vinculado como remote ao resultado de leitura do projeto. A versão publicada continua disponível como versão Sites para rollback. O runtime foi sincronizado do monorepo para um checkout isolado, empacotado e publicado; o commit-fonte Sites é separado do commit GitHub.
 
+## Ambientes de Produção e Homologação (2026-11-27)
+
+O runtime canônico permanece em `mcp/movidesk/`. Existem dois projetos Sites independentes para cadastrar como servidores MCP separados:
+
+| Ambiente | Project ID | Manifesto canônico | URL | Estado |
+|---|---|---|---|---|
+| Produção | `appgprj_6a7e4b46e0488191bf0e58066ab738d6` | `mcp/movidesk/.openai/hosting.json` | `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site` | Ativo, público; a instância publicada existente foi confirmada na versão 115 em 2026-11-27. |
+| Homologação | `appgprj_6b0979d5f1e081918325fab3e8b962c6` | `mcp/movidesk-environments/homolog/.openai/hosting.json` | `https://beta-mcp-homolog.thngrns.chatgpt.site` | Público; v1 implantada em 2026-11-27, deployment `appgdep_6b097e7b110c819196683dc1fd85f311` (`succeeded`), fonte `4c31865aa972d6bf1dc5fd25d7ce1bc3e61a11e9`. |
+
+As duas publicações executam o mesmo runtime. A diferença é a identidade/origem do Site e sua infraestrutura: OAuth, tokens, permissões e D1 são isolados por origem. Não manter branches funcionais divergentes nem condicionar ferramentas ao ambiente. Não copiar segredos automaticamente. Homologação tem `OAUTH_MASTER_EMAILS=matheusgregoviski@gmail.com`; ainda precisa dos próprios valores `MOVIDESK_TOKEN`, `SUPABASE_URL` e `SUPABASE_SECRET_KEY` para validar operações externas. D1 é independente e ligado ao binding `DB` do Site de Homologação.
+
+Smokes live da Homologação em 2026-11-27: `/` e `/docs` retornaram 200; discovery OAuth e protected-resource retornaram 200; `POST /mcp/` sem bearer retornou 401 com challenge apontando para os metadados de Homologação. Isso confirma publicação e roteamento OAuth, mas não confirma chamadas autenticadas às ferramentas enquanto os segredos de serviço estiverem ausentes.
+
+O sincronizador seleciona o destino por flag: o padrão permanece `production`; para Homologação use `npm run sites:sync -- <checkout_path> --target homolog [--dry-run]`. O checkout Sites continua devendo corresponder ao ID do manifesto do alvo e ser limpo antes da sincronização. Após implementar e validar uma alteração, a autorização permanente do usuário é publicá-la primeiro na Homologação. Só um pedido explícito de merge no GitHub autoriza o merge pela PR e a publicação automática do estado integrado no Site Produção. Um push isolado não atualiza Produção.
+
+As URLs dos endpoints para cadastrar as conexões estão no [`README do MCP`](../../mcp/movidesk/README.md#conexões-mcp). A criação do Sites não equivale a implantação ou a um MCP pronto para uso: confirme fonte/SHA, versão, deployment, variáveis e smokes por ambiente.
+
 ## Snapshots e origens antigas
 
 O checkout MCP local continha snapshots Git das versões do Site e um pacote `work/oauth-proxy` sem histórico Git. Os históricos das árvores `work/sites-beta-mcp-20261020*` e do antigo projeto `work/movidesk-site` foram importados em `legacy/source-archives/`; o pacote `work/oauth-proxy` e os artefatos exclusivos de preservação do antigo `source-bundle` ficavam em `legacy/artifacts/site-snapshots/` até o commit `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`. A pasta `legacy/` foi removida da árvore ativa e esses itens podem ser recuperados desse commit. O build `dist/` do snapshot `oauth-20261020` foi preservado em `dist.tar.gz`, após o checkout do marketplace no Windows falhar por nomes de arquivos gerados longos; o pacote foi verificado arquivo a arquivo contra o manifesto SHA-256 original. O manifesto de migração registra os commits e hashes.

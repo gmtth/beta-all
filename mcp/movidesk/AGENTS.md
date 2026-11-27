@@ -77,6 +77,14 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 8. Seguir o fluxo transversal de worktree, branch, commit, PR, merge e Sites definido no [`AGENTS.md` raiz](../../AGENTS.md); este arquivo não duplica regras Git gerais.
 9. Depois de merge/publicação, validar o estado por evidência direta e atualizar este `DOSSIER.md` com commit/PR, versão publicada e limitações.
 
+### Ambientes Sites
+
+- Runtime canônico: `mcp/movidesk/`. Produção usa `.openai/hosting.json`; Homologação usa `mcp/movidesk-environments/homolog/.openai/hosting.json`. São projetos Sites distintos, cada um com D1 próprio.
+- Após alterações MCP implementadas e verificadas, publique no Site de Homologação automaticamente seguindo [`docs/components/sites.md`](../../docs/components/sites.md). Use `npm run sites:sync -- <checkout> --target homolog` e verifique no checkout que o `project_id` coincide com o manifest de Homologação.
+- Não publicar Produção em resposta a pedido comum de implementação ou push. Pela autorização permanente explícita do usuário, um pedido para mesclar no GitHub aciona o merge pela PR e, após o merge confirmado na `main`, a sincronização/publicação do mesmo estado no Site Produção.
+- Nunca copiar o `project_id`, D1 ou segredos de um ambiente para o outro. Segredos de runtime são configurados separadamente no Sites; não os registrar em documentação, `hosting.json`, Git ou logs.
+- Não afirmar que Homologação está funcional para Movidesk/Supabase até confirmar suas variáveis de runtime e executar smokes autenticados apropriados. O endpoint pode estar publicado enquanto dependências externas ainda não estão provisionadas.
+
 
 ## Limites de publicação do MCP
 

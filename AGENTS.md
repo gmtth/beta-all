@@ -133,14 +133,21 @@ Além disso, leia este `AGENTS.md`, o dossier raiz e os `AGENTS.md`/dossiers ati
 - O push automático da branch ao fim do prompt é sincronização da branch e atualização/criação de PR; ele, sozinho, não equivale a um pedido explícito de merge nem de publicação. Confirme SHA remoto, PR e estado separadamente.
 - Após merge, confirme pelo GitHub que a PR foi mesclada e que o SHA entrou na `main`; rode novamente as verificações proporcionais no estado integrado quando possível. Merge não significa publicação.
 
+### Ambientes do Site MCP Movidesk
+
+- **Homologação** é um Site distinto, vinculado ao manifesto `mcp/movidesk-environments/homolog/.openai/hosting.json`. Depois de uma alteração MCP solicitada, validada e pronta para entrega, sincronize e publique a fonte nessa homologação sem exigir um pedido de publicação separado. Use `npm run sites:sync -- <checkout> --target homolog`; confira o `project_id` selecionado, build, SHA, versão, deployment, URL e smokes antes de relatar.
+- **Produção** continua sendo o Site identificado por `mcp/movidesk/.openai/hosting.json`. Não sincronize nem publique nele durante a implementação normal. A autorização permanente explícita do usuário é: quando ele pedir **merge no GitHub**, concluir o merge pela PR e, se integrado sem conflito, sincronizar exatamente o estado da `main` no Site de Produção e publicar. Um pedido apenas de push atualiza a branch/PR e a Homologação, mas não publica Produção.
+- GitHub `main` e o Site de Produção devem refletir o mesmo estado integrado após cada merge solicitado. Homologação é independente e pode conter estado ainda não integrado. Nunca trocar IDs, bindings D1, credenciais, tokens OAuth ou segredos entre ambientes implicitamente.
+- A Homologação mantém D1 próprio. Segredos de integração não são copiados do Site de Produção; configure cada valor conscientemente no Site de homologação, sem gravar credenciais no repositório. Não declarar o ambiente pronto para teste funcional de uma capacidade se o segredo correspondente estiver ausente.
+
 ### Publicação do Sites
 
-- Publicação só acontece depois do merge na `main`, quando pedida pelo usuário ou abrangida por um pedido explícito de sincronização/push segundo esta diretriz. Nunca publicar uma branch local ou um estado diferente do commit integrado.
-- Para o runtime MCP, a fonte canônica é `mcp/movidesk/`; o checkout de fonte do Sites é separado do GitHub. Siga o procedimento executável e atualizado em [`docs/components/sites.md`](docs/components/sites.md) e, para detalhes do runtime, em [`mcp/movidesk/AGENTS.md`](mcp/movidesk/AGENTS.md). Não duplique esse procedimento nos demais componentes.
+- Para o runtime MCP, a fonte canônica é `mcp/movidesk/`; os checkouts-fonte dos Sites são separados do GitHub. O alvo padrão do sincronizador continua sendo `production`; selecione `--target homolog` explicitamente para homologação.
+- Para toda publicação, confirme autorização de destino, SHA de origem, audiência e manifesto. Siga [`docs/components/sites.md`](docs/components/sites.md) para sincronizar, buildar, empacotar e publicar; não copie os manifests de uma das instâncias para a outra.
 - Confirme o Site/projeto exato, audiência atual, `project_id`, manifesto e versão implantada. Preserve audiência e configurações existentes. Mantenha credenciais em memória e envie-as somente pelo stdin do helper; nunca em argumentos, arquivos, logs ou mensagens.
 - Use o wrapper de publicação do monorepo e o helper oficial; revise o `--dry-run` do sincronizador e o diff no checkout isolado antes de sincronizar. Não sobrescreva `.git`, `.openai/`, arquivos locais ou dados ignorados; o sincronizador só pode mudar os caminhos permitidos. Preserve o checkout e o pacote até salvar/publicar com sucesso.
 - Rode build, testes e smoke tests apropriados antes do pacote e depois do deploy. Confirme diretamente versão, SHA-fonte, deployment terminal, URL, audiência e superfícies afetadas (raiz, OAuth e `/mcp/` conforme o caso). Atualize dossier e PR com evidência; se qualquer etapa falhar, relate o estado parcial sem declarar publicação concluída.
-- “Commitado”, “enviado”, “PR aberta”, “mesclado”, “versão salva”, “publicado” e “disponível ao cliente” são estados distintos; só afirmá-los com evidência direta.
+- “Commitado”, “enviado”, “PR aberta”, “mesclado”, “versão salva”, “publicado” e “disponível ao cliente” são estados distintos; só afirmá-los com evidência direta. Homologação publicada não significa PR mesclada nem produção publicada.
 
 ### Relato comum de entrega e evidências
 

@@ -56,6 +56,26 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .instructions-shell { display: block; min-height: 100vh; overflow: visible; }
 .instructions-shell .instructions-card { margin: 28px 0; }
 .instructions-shell .instructions-card { margin-left: auto; margin-right: auto; min-width: 0; }
+.docs-card { width: min(1040px, 100%); }
+.docs-heading { margin: 18px 22px 22px; }
+.docs-heading h1 { margin: 8px 0 10px; color: #f7f4f6; font-size: clamp(34px, 5vw, 54px); line-height: 1; letter-spacing: -.06em; }
+.docs-heading p { max-width: 680px; margin: 0; color: #aaa6ad; font-size: 14px; line-height: 1.6; }
+.docs-nav { position: sticky; z-index: 2; top: 8px; display: flex; flex-wrap: wrap; gap: 8px; margin: 0 22px 26px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; background: rgba(25,22,29,.94); backdrop-filter: blur(10px); }
+.docs-nav a { padding: 8px 11px; border: 1px solid transparent; border-radius: 8px; color: #c6c0c6; font-size: 11px; text-decoration: none; }
+.docs-nav a:hover,.docs-nav a:focus-visible { border-color: rgba(255,173,96,.28); color: #ffbd78; background: rgba(255,173,96,.08); outline: none; }
+.docs-sections { display: grid; gap: 34px; }
+.docs-section { min-width: 0; scroll-margin-top: 82px; }
+.docs-auth-required { display: grid; justify-items: start; gap: 10px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.025); }
+.docs-auth-required h2 { margin: 0; color: #f7f4f6; font-size: 18px; }
+.docs-auth-required p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+.docs-legal-section { padding-top: 6px; }
+.docs-legal-heading { display: grid; gap: 7px; margin: 0 0 14px; }
+.docs-legal-heading h2 { margin: 0; color: #f7f4f6; font-size: 24px; letter-spacing: -.04em; }
+.docs-legal-heading > span { color: var(--muted); font-size: 10px; }
+.docs-legal-section .privacy-content { margin-top: 0; }
+.docs-legal-section .privacy-content h2 { margin-top: 20px; }
+.docs-legal-section .privacy-content h2:first-child { margin-top: 0; }
+.docs-card .internal-brandbar { margin-bottom: 12px; }
 .instructions-content { display: grid; gap: 30px; min-width: 0; }
 .instruction-block { padding: 22px; border: 1px solid var(--line); border-radius: 18px; background: rgba(255,255,255,.035); }
 .instruction-block h2 { margin: 7px 0 8px; color: #f7f4f6; font-size: 19px; letter-spacing: -.03em; }
@@ -90,7 +110,7 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .mcp-instructions { gap: 18px; }
 .mcp-instructions .instruction-block { padding: 18px 20px; border-radius: 14px; background: rgba(255,255,255,.025); }
 .mcp-instructions .instruction-block h2 { margin: 5px 0 7px; font-size: 17px; }
-.mcp-instructions .mcp-connection h1 { margin: 5px 0 8px; font-size: clamp(28px, 4vw, 38px); line-height: 1; letter-spacing: -.055em; }
+.mcp-instructions .mcp-connection h2 { margin: 5px 0 8px; font-size: clamp(28px, 4vw, 38px); line-height: 1; letter-spacing: -.055em; }
 .mcp-instructions .copy-grid { margin-top: 16px; }
 .mcp-instructions .copy-row code { overflow-x: auto; text-overflow: clip; scrollbar-width: thin; user-select: all; }
 .mcp-instructions .notice { margin-top: 15px; }
@@ -103,7 +123,7 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .mcp-config-copy-status { margin-top: 6px; }
 .action-instructions .instruction-block { padding: 18px 20px; border-radius: 14px; background: rgba(255,255,255,.025); }
 .action-instructions .instruction-block h2 { margin: 5px 0 7px; font-size: 17px; }
-.action-instructions .action-credentials h1 { margin: 5px 0 8px; font-size: clamp(28px, 4vw, 38px); line-height: 1; letter-spacing: -.055em; }
+.action-instructions .action-credentials h2 { margin: 5px 0 8px; font-size: clamp(28px, 4vw, 38px); line-height: 1; letter-spacing: -.055em; }
 .action-instructions .action-credentials .copy-grid { margin-top: 16px; }
 .action-instructions .copy-row code { overflow-x: auto; text-overflow: clip; scrollbar-width: thin; user-select: all; }
 .copy-status { display: block; color: #aaa6ad; font-size: 10px; line-height: 1.45; }
@@ -203,6 +223,7 @@ body { margin: 0; min-height: 100vh; overflow-x: hidden; background: #100d13; co
 .latency-values { display: flex; min-width: 0; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; white-space: nowrap; }
 .latency-values strong { color: #ffb69f; font-size: 10px; }.latency-values small { color: var(--muted); font-size: 9px; }
 .latency-p95-key { background: rgba(255,128,111,.42); }.latency-p50-key { background: var(--hot); }
+@media (max-width: 700px) { .docs-heading { margin: 14px 0 18px; }.docs-nav { position: static; margin: 0 0 20px; padding: 8px; }.docs-nav a { padding: 7px 8px; font-size: 10px; }.docs-sections { gap: 26px; }.docs-legal-heading h2 { font-size: 21px; } }
 @media (max-width: 700px) { .telemetry-error-grid,.period-comparison-grid { grid-template-columns: minmax(0, 1fr); } .recent-errors-card { grid-column: auto; } .usage-bar-row { grid-template-columns: minmax(140px, 1.5fr) minmax(30px, 1fr) auto; column-gap: 8px; } .usage-metrics { gap: 3px 7px; font-size: 8px; }.usage-tool-header { gap: 8px; }.usage-tool-header > strong { font-size: 10px; }.usage-error-count { min-width: 39px; font-size: 8px; } .latency-row { grid-template-columns: minmax(150px, 1fr) minmax(40px, 1.3fr); column-gap: 8px; }.latency-tool-header { gap: 8px; }.latency-tool-header > strong { font-size: 8px; }.latency-values { gap: 3px 7px; }.latency-values strong { font-size: 9px; }.latency-values small { font-size: 8px; } }
 
 .loading-indicator { display: inline-flex; flex: 0 0 auto; align-items: center; justify-content: center; vertical-align: middle; }

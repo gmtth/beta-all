@@ -1,6 +1,6 @@
 # Dossier da Beta — índice executivo e histórico transversal
 
-Atualizado em 2026-11-17. Este dossier é a fonte de contexto compartilhado entre componentes: resume o objetivo do produto, decisões transversais, marcos de integração e pendências que atravessam mais de uma área. Estado técnico detalhado e histórico operacional pertencem aos dossiers canônicos listados abaixo.
+Atualizado em 2026-11-27. Este dossier é a fonte de contexto compartilhado entre componentes: resume o objetivo do produto, decisões transversais, marcos de integração e pendências que atravessam mais de uma área. Estado técnico detalhado e histórico operacional pertencem aos dossiers canônicos listados abaixo.
 
 ## Objetivo e escopo do produto
 
@@ -31,8 +31,11 @@ Referência: 2026-10-22. `beta-all` é a fonte de trabalho ativa; plugin, MCP/Si
 - A busca cotidiana usa a cópia sincronizada no Supabase; chamadas às fontes externas alimentam sincronização/ingestão e não são requisito para toda consulta. A busca e a ingestão têm capacidades distintas e limites próprios.
 - Telemetria operacional MCP fica no D1 do Sites. Feedback contextual e sinais de frustração/autodiagnóstico ficam no Supabase, com minimização, retenção e controles separados. Não guardar transcrições completas nem raciocínio privado.
 - “Commitado”, “enviado”, “PR aberta”, “mesclado”, “publicado” e “disponível ao cliente” são estados diferentes. O fluxo normativo e os critérios de evidência estão no [`AGENTS.md`](AGENTS.md); detalhes de Sites ficam no documento operacional acima.
+- O runtime MCP Movidesk possui agora dois destinos Sites separados com código idêntico: Homologação recebe alterações verificadas; Produção só atualiza depois do pedido explícito de merge no GitHub e da integração da PR à `main`. Cada ambiente mantém origem OAuth, tokens, permissões e D1 separados; segredos não se replicam automaticamente. Procedimento e URLs MCP em [`docs/components/sites.md`](docs/components/sites.md) e [`mcp/movidesk/README.md`](mcp/movidesk/README.md).
 
 ## Marcos transversais e proveniência
+
+- **Separação de Homologação/Produção do MCP (2026-11-27):** criado e publicado v1 o projeto Sites Homologação `appgprj_6b0979d5f1e081918325fab3e8b962c6`, URL `https://beta-mcp-homolog.thngrns.chatgpt.site`, usando o mesmo runtime de `mcp/movidesk/`. Smokes de páginas e discovery passaram; chamadas autenticadas ainda aguardam os segredos de serviço próprios do ambiente. O Site de Produção `appgprj_6a7e4b46e0488191bf0e58066ab738d6` não foi alterado. Fluxo: alterações verificadas vão primeiro para Homologação; Produção só recebe a versão correspondente após pedido explícito de merge e integração confirmada na `main`.
 
 - **Consolidação do monorepo (2026-10-20):** fontes e histórico foram importados para os caminhos canônicos, sem submódulos ativos; a proveniência e os checksums estão no [inventário](docs/migration/source-inventory.md), e a comparação documental está na [reconciliação](docs/migration/document-reconciliation.md). Os checkouts e repositórios antigos foram preservados conforme registrado ali.
 - **Governança documental (2026-10-22):** regras atuais estão nos AGENTS; fatos, decisões e evidências ficam nos dossiers. O padrão comum está em [`AGENTS.md`](AGENTS.md#padrão-comum-dos-dossiers). Este dossier raiz é executivo/transversal; cronologias e diagnósticos de um componente ficam na fonte especializada.

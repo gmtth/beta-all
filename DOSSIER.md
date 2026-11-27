@@ -31,7 +31,7 @@ Referência: 2026-10-22. `beta-all` é a fonte de trabalho ativa; plugin, MCP/Si
 - A busca cotidiana usa a cópia sincronizada no Supabase; chamadas às fontes externas alimentam sincronização/ingestão e não são requisito para toda consulta. A busca e a ingestão têm capacidades distintas e limites próprios.
 - Telemetria operacional MCP fica no D1 do Sites. Feedback contextual e sinais de frustração/autodiagnóstico ficam no Supabase, com minimização, retenção e controles separados. Não guardar transcrições completas nem raciocínio privado.
 - “Commitado”, “enviado”, “PR aberta”, “mesclado”, “publicado” e “disponível ao cliente” são estados diferentes. O fluxo normativo e os critérios de evidência estão no [`AGENTS.md`](AGENTS.md); detalhes de Sites ficam no documento operacional acima.
-- O runtime MCP Movidesk possui agora dois destinos Sites separados com código idêntico: Homologação recebe alterações verificadas; Produção só atualiza depois do pedido explícito de merge no GitHub e da integração da PR à `main`. Cada ambiente mantém origem OAuth, tokens, permissões e D1 separados; segredos não se replicam automaticamente. Procedimento e URLs MCP em [`docs/components/sites.md`](docs/components/sites.md) e [`mcp/movidesk/README.md`](mcp/movidesk/README.md).
+- O runtime MCP Movidesk possui dois destinos Sites separados com código idêntico: implementadores publicam alterações verificadas em Homologação; somente o Revisor, após revisão, pode mesclar PRs e publicar Produção no SHA aprovado e integrado à `main`. Cada ambiente mantém origem OAuth, tokens, permissões e D1 separados; segredos não se replicam automaticamente. Procedimento e URLs MCP em [`docs/components/sites.md`](docs/components/sites.md) e [`mcp/movidesk/README.md`](mcp/movidesk/README.md).
 
 ## Marcos transversais e proveniência
 
@@ -60,3 +60,7 @@ O documento [`arquitetura-base-compartilhada-beta.md`](docs/architecture/arquite
 ## Fontes e limites de evidência
 
 O backlog transversal foi reconciliado com os dossiers especializados em 2026-10-24; os estados operacionais detalhados mantêm as datas e limitações registradas em cada fonte. Os marcos acima resumem os registros canônicos; para SHAs, migrations, testes, deployments e ressalvas, siga os links de cada fonte. Relatos do usuário continuam identificados como tais nos dossiers quando não houve verificação independente.
+
+## Governança de integração e Produção (2026-11-27)
+
+Decisão vigente do usuário: somente o agente Revisor pode executar merge de PRs do monorepo e publicar o Site MCP em Produção. O Revisor deve revisar antes de cada merge e, antes da publicação, confirmar o SHA integrado e o destino; pedido de push não autoriza nenhuma dessas ações. Implementadores podem preparar/pushar PRs e publicar alterações validadas em Homologação. Regras normativas em [`AGENTS.md`](AGENTS.md) e procedimento/cobertura em [`revisor/AGENTS.md`](revisor/AGENTS.md) e [`revisor/DOSSIER.md`](revisor/DOSSIER.md). Esta atualização altera documentação local; nenhum merge ou deploy foi realizado.

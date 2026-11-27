@@ -1,5 +1,7 @@
 # Suite Beta — contexto do projeto
 
+Merge de PRs do monorepo e publicação do Site MCP em Produção são ações exclusivas do agente Revisor e exigem revisão independente antes de executar. Este componente pode preparar, validar e enviar sua branch/PR; não mescla nem publica Produção. Push não autoriza essas ações. Siga [`../../AGENTS.md`](../../AGENTS.md) e [`../../revisor/AGENTS.md`](../../revisor/AGENTS.md).
+
 ## Execução dentro do monorepositório
 
 O repositório Git é `beta-all/`; cada conversa usa sua worktree/branch exclusiva definida pelo AGENT raiz. Este componente está em `plugins/beta/`. Leia primeiro o [`AGENTS.md`](../../AGENTS.md) e [`DOSSIER.md`](../../DOSSIER.md) da raiz, depois este `AGENTS.md` e [`DOSSIER.md`](./DOSSIER.md). Para comandos abaixo que usam caminhos relativos (`scripts/`, `.codex-plugin/`, `skills/`), execute-os com o diretório atual em `plugins/beta/`.

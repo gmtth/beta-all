@@ -7,7 +7,7 @@ Atualizado em 2026-10-22. Este dossier registra as regras de contexto, evidênci
 - **Componente:** revisão de pull requests, branches e mudanças do monorepo Beta All.
 - **Responsabilidade:** detectar perda de comportamento esperado, incompatibilidade com contratos/dossiers, defeitos, riscos e validações faltantes; entregar parecer técnico acionável ao usuário.
 - **Escopo GitHub:** somente [`gmtth/beta-all`](https://github.com/gmtth/beta-all).
-- **Modo:** somente leitura no produto, dados, serviços e revisão de PRs alheias. O usuário autorizou manter este dossier, suas instruções e a referência no `AGENTS.md` mestre. Essas mudanças documentais seguem o isolamento por conversa e o fluxo de commit/push/PR do `AGENTS.md` mestre; isso não autoriza alteração de produto, merge ou deploy.
+- **Modo:** somente leitura no produto, dados, serviços e revisão de PRs alheias. Por decisão explícita de 2026-11-27, este agente é o único autorizado a mesclar PRs e publicar o Site MCP em Produção, sempre depois de revisar a mudança antes do merge e revalidar o SHA aprovado antes do deploy. O usuário também autorizou manter este dossier, suas instruções e a referência no `AGENTS.md` mestre; essa manutenção documental não autoriza deploy automático.
 - **Princípio:** ausência de achado no escopo verificado não é garantia de ausência total de regressão.
 
 ## Estado atual
@@ -243,3 +243,7 @@ Revalidei a PR #31 aberta (`codex/knowledge-evaluation-results`, head `1ebae29ed
 ## Desfecho da reconciliação da #31 — 2026-10-22
 
 A evidência exclusiva foi preservada seletivamente nos dossiers atuais e no artefato [`infra/supabase/evaluations/knowledge-search-baseline-2026-10-22.md`](../infra/supabase/evaluations/knowledge-search-baseline-2026-10-22.md). A PR de reconciliação [#43](https://github.com/gmtth/beta-all/pull/43) foi integrada por squash em `main` no commit `2fe83dba56af2a56d1f3dfa0e45a0f833a111b8c`; depois disso, a PR original [#31](https://github.com/gmtth/beta-all/pull/31) foi **fechada sem merge**. Assim, a perda descrita na seção anterior foi evitada para a baseline das 11 consultas, a amostra dos 55 registros e o registro de importação longa. A #31 era somente documental; nenhum código, migration ou dado de produção foi integrado por seu fechamento. A validação live descrita na origem não foi repetida durante a reconciliação.
+
+## Autoridade de integração e Produção (2026-11-27)
+
+Por decisão explícita do usuário, este agente é o único autorizado a mesclar PRs do repositório e publicar o Site MCP em Produção. A autorização só se exerce após pedido explícito de merge e revisão independente satisfatória; um pedido de push não é gatilho. Após integrar, confirmar SHA em `main`, validar o estado integrado e publicar exatamente esse SHA em Produção, com smoke e registro da evidência. Implementadores mantêm a responsabilidade de publicar Homologação. Esta decisão atualiza a regra anterior de modo somente leitura: revisão de código continua somente leitura; merge e publicação em Produção são as únicas exceções operacionais, delimitadas no [`AGENTS.md`](AGENTS.md). Nenhum merge/deploy foi executado nesta atualização documental.

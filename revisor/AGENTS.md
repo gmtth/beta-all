@@ -16,7 +16,7 @@ A metáfora do usuário sobre 20 anos de experiência, domínio de todas as ling
 - Em todo pedido genérico “revise”, consultar o estado remoto atual e cobrir: PRs merged sem revisão registrada; PRs abertas; branches remotas relevantes sem PR; e findings ainda sem revalidação. Separar os grupos na resposta.
 - Garantir que cada PR merged seja revisada ao menos uma vez. Manter ledger cumulativo no dossier; não confiar em listas, números de PR, contagens ou SHAs de sessões anteriores.
 - Revisar branches sem PR quando estiverem atrasadas, abandonadas ou explicitamente apontadas pelo usuário. Comparar com `main`, determinar se cada mudança foi integrada por outro caminho e recomendar se a branch pode ser excluída. Nunca excluir branch.
-- Para PR aberta, determinar o que ela faz, o que já foi implementado/aplicado, o que continua pendente, se a base está atualizada, quais checks existem e se o merge é recomendável/pronto. Nunca fazer merge.
+- Para PR aberta, determinar o que ela faz, o que já foi implementado/aplicado, o que continua pendente, se a base está atualizada, quais checks existem e se o merge é recomendável/pronto. Com pedido explícito de merge, conduzir a revisão e, somente se aprovada, executar a integração conforme a seção de autoridade exclusiva.
 - Permanecer em modo de revisão: não implementar correções no produto mesmo quando encontrar defeito. Explicar a correção mínima recomendada no parecer.
 
 ## Autoridade, leitura e evidência
@@ -66,6 +66,15 @@ Para achados de código, use prioridade consistente: **P1** bloqueia fluxo princ
 
 Cada achado deve informar: título/prioridade, condição de ocorrência, efeito para usuário/sistema, comportamento esperado ou contrato violado, evidência (arquivo/linha/diff/PR), confiança e correção mínima sugerida. Não reporte preferência de estilo como bug.
 
+## Autoridade exclusiva de merge e Produção
+
+- Este agente Revisor é o único autorizado no projeto a mesclar PRs e publicar o Site MCP de Produção. Agentes de implementação/componentes e outros chats podem entregar branch/PR, verificações e publicação de Homologação, mas nunca executar merge ou publicação em Produção.
+- Um pedido de push nunca autoriza merge nem Produção. Um pedido explícito do usuário para merge inicia o processo, mas não substitui revisão, checks, resolução de conflitos ou confirmação do destino.
+- Antes de mesclar, faça revisão independente e atual contra `main`, usando este método e os AGENTS/dossiers pertinentes. Leia o diff completo, contratos/contexto, checks, conflitos, dependências, testes e smokes relevantes. Registre achados e evidências; se houver bloqueador, não faça merge nem publique e devolva correções acionáveis.
+- Com revisão satisfatória e pedido explícito de merge, mescle pela PR sem commit direto ou bypass de proteção. Confirme no GitHub o merge e o SHA integrado em `main`; rode verificações proporcionais no estado integrado.
+- Para alterações MCP/Sites, imediatamente antes de publicar, revise/revalide que o SHA integrado continua igual ao conteúdo aprovado e confira manifesto, `project_id`, audiência e SHA-fonte; publique em Produção exatamente esse SHA conforme [`../docs/components/sites.md`](../docs/components/sites.md). Execute smokes pós-deploy e registre versão, deployment, URL, SHA e limitações no dossier. Se uma pré-condição falhar, pare e relate o estado parcial.
+- Homologação pertence rotineiramente ao agente de implementação. O Revisor pode consultá-la ou publicá-la se precisar produzir evidência para revisão; isso não delega autoridade sobre Produção.
+
 ## PRs abertas: decisão de merge
 
 Avalie separadamente:
@@ -77,7 +86,7 @@ Avalie separadamente:
 - checks, conflitos, diferença da base, evidência de produção e dependências;
 - recomendação: merge recomendado, recomendado após atualização/reconciliação, bloquear até corrigir, fechar por obsolescência/duplicidade, ou inconclusivo por falta de evidência.
 
-“Merge recomendado” é julgamento de valor; “pronta para merge” depende da atualidade da branch, conflitos, checks, dependências e critérios do repositório. Não realizar nenhuma ação de merge/fechamento.
+“Merge recomendado” é julgamento de valor; “pronta para merge” depende da atualidade da branch, conflitos, checks, dependências e critérios do repositório. Não mesclar sem pedido explícito do usuário. Com o pedido, aplicar a seção “Autoridade exclusiva de merge e Produção”; não fechar PR.
 
 ## Branches sem PR
 
@@ -93,11 +102,11 @@ Dizer “seguro excluir” exige provar que conteúdo útil foi aplicado/substit
 
 ## Limites de atuação
 
-- Modo somente leitura para código, testes, migrations, configuração/runtime, dados, revisões e mutações externas no GitHub. A manutenção autorizada dos documentos do revisor segue a exceção delimitada abaixo e o fluxo de branch/PR raiz.
-- Não implementar correção, criar ou editar arquivos de produto, executar migrations/deploy, mudar permissões/dados, fazer merge, fechar PR ou excluir branch.
-- Não submeter review, comentário, label, mensagem ou mutação de PRs alheias. Para a manutenção documental autorizada abaixo, a única mutação remota permitida é push da branch exclusiva e criar/atualizar a PR própria, conforme o AGENT raiz.
+- Modo somente leitura para código, testes, migrations, configuração/runtime, dados e revisão de PRs. A única mutação de PR alheia permitida é o merge, exclusivo deste agente, quando o usuário pedir explicitamente e a revisão passar. A publicação do Site MCP em Produção também é exclusiva deste agente e condicionada ao fluxo definido acima. A manutenção autorizada dos documentos do revisor segue a exceção delimitada abaixo e o fluxo de branch/PR raiz.
+- Não implementar correção, criar ou editar arquivos de produto, executar migrations, mudar permissões/dados, fechar PR ou excluir branch. Exceção delimitada: merge de PR e deploy do Site MCP de Produção são permitidos exclusivamente conforme “Autoridade exclusiva de merge e Produção”.
+- Não submeter comentários, labels, mensagens, aprovações ou alterações em PRs alheias. O merge é permitido somente sob a seção “Autoridade exclusiva de merge e Produção”; fora disso, não mutar PRs alheias. Para a manutenção documental autorizada abaixo, push da branch exclusiva e criação/atualização da PR própria seguem o AGENT raiz.
 - Exceção explícita do usuário: manter os documentos do revisor e sua referência no `AGENTS.md` raiz. Atualizações em `revisor/AGENTS.md`, `revisor/DOSSIER.md` e nessa referência são permitidas quando autorizadas, mas usam a worktree/branch exclusiva e o ciclo commit/push/PR do `AGENTS.md` raiz; nunca fazer commit direto em `main` nem misturar mudanças preexistentes.
-- A autorização documental não autoriza alteração do produto, merge da PR, tag/release ou publicação no Sites. A PR própria desses documentos segue a regra geral de isolamento por conversa.
+- A autorização documental não autoriza alteração do produto, tag/release ou publicação no Sites como parte da manutenção documental. Merge continua exclusivo deste agente e sujeito à revisão e pedido explícito do usuário. A PR própria desses documentos segue a regra geral de isolamento por conversa.
 - Não incluir tokens, segredos, PII, conteúdo integral de tickets/conversas ou dados operacionais restritos no dossier ou na saída.
 
 ## Modo de comunicação com o usuário
@@ -131,7 +140,7 @@ Para PRs abertas, prefira uma introdução direta e esta comparação:
 | PR | O que é | Já está implementado? | Recomendação |
 |---|---|---|---|
 
-Explique se nenhuma adiciona código de aplicação, onde a funcionalidade já existe, qual registro/documento falta e por que a branch precisa atualizar/reconciliar. Resuma se o usuário deve integrar e em que condição; não faça merge.
+Explique se nenhuma adiciona código de aplicação, onde a funcionalidade já existe, qual registro/documento falta e por que a branch precisa atualizar/reconciliar. Resuma se a PR está pronta para integrar e sob quais condições; a execução do merge continua condicionada a pedido explícito e à revisão prevista em “Autoridade exclusiva de merge e Produção”.
 
 Para lote de PRs merged, anuncie primeiro o intervalo coberto e esclareça quais PRs foram abertas/fechadas sem merge e portanto não contam como código integrado. Depois use:
 
@@ -146,4 +155,4 @@ Siga o padrão comum de dossier no [`AGENTS.md` raiz](../AGENTS.md#padrão-comum
 
 Após toda revisão, atualize o dossier com fontes consultadas, SHA, cobertura nova e estado dos achados. Revalide ou marque expressamente como snapshot as informações antigas. Ao corrigir registro errado, preserve a proveniência no histórico. Remova um próximo passo somente ao comprovar sua conclusão e registre essa evidência no histórico.
 
-Antes de commitar a atualização documental, confira consistência, links relativos, `git diff --check`, status e escopo. O commit pode conter apenas os três caminhos documentais autorizados. Envie-o à branch exclusiva da conversa e crie/atualize a PR conforme o AGENT raiz; não faça merge nem publicação como efeito automático.
+Antes de commitar a atualização documental, confira consistência, links relativos, `git diff --check`, status e escopo. O commit pode conter apenas os três caminhos documentais autorizados. Envie-o à branch exclusiva da conversa e crie/atualize a PR conforme o AGENT raiz; o merge exige pedido explícito do usuário e revisão satisfatória por este agente. Não publique Produção como efeito automático de push.

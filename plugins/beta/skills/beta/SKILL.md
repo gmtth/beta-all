@@ -2,7 +2,7 @@
 name: beta
 description: Orquestrar as famílias Beta ANL e Beta MOD em uma única entrada, escolhendo a análise funcional ou a modelagem adequada e fazendo handoffs entre elas somente quando isso alterar ou melhorar materialmente o resultado.
 metadata:
-  version: "10"
+  version: "11"
 ---
 
 # beta
@@ -15,7 +15,7 @@ Leia [protocolo-evidencias-e-handoffs.md](references/protocolo-evidencias-e-hand
 
 Em respostas funcionais substantivas, aplique o contrato de cartões de encerramento definido em [protocolo-evidencias-e-handoffs.md](references/protocolo-evidencias-e-handoffs.md). A resposta principal vem primeiro; depois, mostre diretamente os cartões, sem o título “Resumo da operação”, sem cabeçalho textual “Beta”, sem linha separadora antes dos cartões e sem cartão “Próximo passo”. O cartão “Skills acionadas” é a exceção controlada: lista somente as skills realmente ativadas, pelos nomes exibidos ao usuário; nunca liste skills apenas consideradas, ferramentas ou conectores. Não coloque os cartões dentro de artefatos copiáveis ou comentários publicados.
 
-Quando o cliente oferecer um mecanismo documentado de cartões, use-o. Nos cartões, todo texto — títulos e valores — deve usar o estilo pequeno (`text-small` no mecanismo que o oferecer); cada cartão tem título, uma divisória horizontal e o valor logo abaixo. Organize Confiabilidade, Resultado, Evidências e Validação nessa ordem na primeira linha. Na segunda linha, “Skills acionadas” aparece primeiro e sempre; Feedback e Ações vêm depois, somente quando relevantes. Em um grid de 12 colunas no breakpoint `md`, distribua igualmente a linha: Skills ocupa 12 colunas quando estiver sozinha; com um cartão opcional, cada um ocupa 6; com Feedback e Ações, cada um dos três ocupa 4. Abaixo de `md`, empilhe os cartões em largura total. Não invente XML/HTML nem prometa que Markdown será renderizado como cartões. Se não houver mecanismo de cartões disponível, use a alternativa Markdown portátil especificada no protocolo; ela não garante dimensões `col-md`.
+Quando o cliente oferecer um mecanismo documentado de cartões, use-o conforme a especificação visual do protocolo: Confiabilidade e Resultado na primeira linha; Evidências e Validação na segunda, em duas colunas iguais. Na terceira linha, Skills acionadas vem primeiro e sempre; Feedback e Ações vêm depois somente quando relevantes, com colunas iguais à quantidade de cartões visíveis. Em largura insuficiente, empilhe mantendo a ordem. Use os ícones monocromáticos fixos, os títulos, divisórias, espaçamentos e estilo pequeno definidos no protocolo; não use emojis. Não invente XML/HTML nem prometa que Markdown será renderizado como cartões. Sem componente nativo documentado, use o fallback Markdown de duas colunas por linha principal e uma a três na linha complementar, sem prometer equivalência visual ou dimensões responsivas.
 
 A Confiabilidade deve ser expressa em porcentagem inteira, em incrementos de 10 pontos, como índice heurístico da sustentação da resposta — nunca como probabilidade estatística calibrada. Use os critérios comuns do protocolo, explique a base no texto principal quando isso ajudar e não use precisão como “95%”. Em pedidos estritamente sociais/editoriais sem afirmações factuais, omita os cartões em vez de inventar uma porcentagem.
 

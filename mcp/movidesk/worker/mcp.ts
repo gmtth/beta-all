@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { createMcpHandler, fromJsonSchema, McpServer as McpServerV2, type CallToolResult, type ToolAnnotations as ToolAnnotationsV2 } from "@modelcontextprotocol/server";
+import { acceptedContent, createMcpHandler, fromJsonSchema, inputRequired, McpServer as McpServerV2, type CallToolResult, type ToolAnnotations as ToolAnnotationsV2 } from "@modelcontextprotocol/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
+import { z as zodV4 } from "zod/v4";
 import { GET as getTickets } from "../app/api/tickets/route";
 import { GET as getPersons } from "../app/api/persons/route";
 import { GET as getServices } from "../app/api/services/route";
@@ -246,6 +247,73 @@ export async function handleMcpV2Spike(request: Request, context?: TelemetryCont
         return await registered.handler(parsed?.data ?? args, extra) as CallToolResult;
       });
     }
+
+    // Safe, temporary production probe for real-client elicitation support.
+    // It never calls Movidesk and returns only whether the client accepted.
+    const probeName = "mcp_v2_elicitation_probe";
+    const probeResponseSchema = zodV4.object({ confirmed: zodV4.boolean() });
+    modernServer.registerTool(probeName, {
+      title: "Teste de confirmação MCP",
+      description: "Teste temporário de confirmação. Não altera chamados nem chama o Movidesk.",
+      inputSchema: fromJsonSchema({ type: "object" }),
+    }, async (_args, extra) => {
+      const startedAt = performance.now();
+      let outcome: "success" | "error" = "success";
+      let errorCode: string | null = null;
+      let httpStatus: number | null = null;
+      let userEmail: string | null = null;
+      try {
+        const authorization = await authorizeOAuthPrincipal(accessToken, [OAUTH_SCOPE], resource, "mcp");
+        if (!authorization.authorized) {
+          outcome = "error";
+          errorCode = "authorization";
+          return mcpAuthorizationError(authorization.error, resource, [OAUTH_SCOPE]);
+        }
+        userEmail = authorization.principal.email;
+
+        const accepted = acceptedContent(extra.mcpReq.inputResponses, "confirm", probeResponseSchema);
+        if (accepted?.confirmed === true) {
+          return { content: [{ type: "text", text: "Confirmação recebida. Nenhum chamado foi alterado." }] };
+        }
+
+        const response = extra.mcpReq.inputResponses?.confirm;
+        const responseAction = response && typeof response === "object" && "action" in response
+          && (response.action === "decline" || response.action === "cancel")
+          ? response.action
+          : undefined;
+        if (responseAction) {
+          outcome = "error";
+          errorCode = "tool_error";
+          return { isError: true, content: [{ type: "text", text: `Teste ${responseAction === "decline" ? "recusado" : "cancelado"}. Nenhum chamado foi alterado.` }] };
+        }
+
+        return inputRequired({
+          inputRequests: {
+            confirm: inputRequired.elicit({
+              message: "Confirme apenas a simulação. Nenhum chamado será alterado.",
+              requestedSchema: {
+                type: "object",
+                properties: { confirmed: { type: "boolean", description: "Confirmar simulação" } },
+                required: ["confirmed"],
+                additionalProperties: false,
+              },
+            }),
+          },
+        });
+      } catch (error) {
+        outcome = "error";
+        errorCode = toolErrorCode(error);
+        httpStatus = toolHttpStatus(error);
+        if (error instanceof McpAuthorizationFailure) return mcpAuthorizationError(error.reason, resource, [OAUTH_SCOPE]);
+        throw error;
+      } finally {
+        const persistence = recordMcpToolEvent(probeName, outcome, errorCode, performance.now() - startedAt, httpStatus, userEmail);
+        if (context) context.waitUntil(persistence);
+        else await persistence;
+      }
+    });
+    schemesByTool.set(probeName, [{ type: "oauth2", scopes: [OAUTH_SCOPE] }]);
+    schemasByTool.set(probeName, { inputSchema: { type: "object", properties: {}, additionalProperties: false } });
 
     // Restore the established input/output JSON Schemas and OpenAI OAuth
     // extension at the wire boundary; SDK v2's registered input schema stays

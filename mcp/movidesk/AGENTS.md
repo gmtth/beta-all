@@ -77,10 +77,18 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 8. Seguir o fluxo transversal de worktree, branch, commit, PR, merge e Sites definido no [`AGENTS.md` raiz](../../AGENTS.md); este arquivo não duplica regras Git gerais.
 9. Depois de merge/publicação, validar o estado por evidência direta e atualizar este `DOSSIER.md` com commit/PR, versão publicada e limitações.
 
+### Ambientes Sites
+
+- Runtime canônico: `mcp/movidesk/`. Produção usa `.openai/hosting.json`; Homologação usa `mcp/movidesk-environments/homolog/.openai/hosting.json`. São projetos Sites distintos, cada um com D1 próprio.
+- Após alterações MCP implementadas e verificadas, publique no Site de Homologação automaticamente seguindo [`docs/components/sites.md`](../../docs/components/sites.md). Use `npm run sites:sync -- <checkout> --target homolog` e verifique no checkout que o `project_id` coincide com o manifest de Homologação.
+- O agente de implementação publica somente Homologação após validação. Merge de PR e publicação no Site Produção são exclusivos do Revisor: pedido explícito de merge encaminha a PR para revisão; só após revisão satisfatória o Revisor mescla e publica o SHA integrado, seguindo o [`AGENTS.md` raiz](../../AGENTS.md) e [`revisor/AGENTS.md`](../../revisor/AGENTS.md). Push nunca autoriza Produção.
+- Nunca copiar o `project_id`, D1 ou segredos de um ambiente para o outro. Segredos de runtime são configurados separadamente no Sites; não os registrar em documentação, `hosting.json`, Git ou logs.
+- Não afirmar que Homologação está funcional para Movidesk/Supabase até confirmar suas variáveis de runtime e executar smokes autenticados apropriados. O endpoint pode estar publicado enquanto dependências externas ainda não estão provisionadas.
+
 
 ## Limites de publicação do MCP
 
-- Regras de worktree, branch, commit, PR, push, merge e autorização geral de publicação seguem exclusivamente o [`AGENTS.md` raiz](../../AGENTS.md).
+- Regras de worktree, branch, commit, PR, push, merge e autorização geral de publicação seguem exclusivamente o [`AGENTS.md` raiz](../../AGENTS.md). Este componente pode sincronizar/publicar Homologação após validação; não mesclar PRs, selecionar alvo `production`, salvar versão nem iniciar deployment em Produção. Entregue PR, evidências e SHA ao Revisor para revisão e execução autorizada.
 - A fonte canônica do runtime é `mcp/movidesk/`; o checkout de fonte Sites é separado do GitHub. Para sincronizar, empacotar e publicar o runtime, siga o procedimento único em [`docs/components/sites.md`](../../docs/components/sites.md), usando o wrapper do monorepo e preservando o checkout isolado.
 - Endpoint MCP canônico: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`; a barra final é recomendada e `/mcp` também é aceita. A raiz do Site serve página/OAuth, não as ferramentas.
 - Não alterar audiência, credenciais, bindings, OAuth ou domínio como efeito colateral de mudança funcional.

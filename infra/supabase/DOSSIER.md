@@ -169,3 +169,7 @@ A migration `20261022120000_add_movidesk_protocol_search.sql` foi aplicada no pr
 ## Diagnóstico da resposta do catálogo (2026-10-22)
 
 A RPC `beta.get_admin_database_schema()` pode reportar `columns: null` para índice de expressão, pois o índice não possui atributos de coluna que correspondam ao join do catálogo. O índice `source_record_movidesk_protocol_idx` é um caso concreto adicionado pela migration `20261022120000_add_movidesk_protocol_search.sql`. O runtime foi ajustado para interpretar esse campo nulo como ausência de nomes de colunas; a página mostra a descrição genérica de índice especial. Nenhuma migration ou dado remoto foi alterado nesta correção. A validação é local; a chamada autenticada à página em produção continua pendente até publicar o runtime.
+
+## Governança transversal (2026-11-27)
+
+Migrations e evidências Supabase seguem o fluxo geral do monorepo. Somente o agente Revisor pode mesclar PRs ou publicar o Site MCP em Produção, sempre após revisão; este componente documenta/valida o banco e não executa essas ações. Push não autoriza merge nem Produção. Fonte normativa: [`../../AGENTS.md`](../../AGENTS.md) e [`../../revisor/AGENTS.md`](../../revisor/AGENTS.md). Nenhuma migration, merge ou publicação foi executada por esta atualização documental.

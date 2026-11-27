@@ -7,6 +7,7 @@ import { accessSync, constants, existsSync, lstatSync, mkdtempSync, readFileSync
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { prependWindowsPath } from "./windows-env.mjs";
 
 const monorepoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 
@@ -258,7 +259,7 @@ async function main() {
       return;
     }
     const nodeDirectory = path.dirname(process.execPath);
-    environment.PATH = `${system32}${path.delimiter}${nodeDirectory}${path.delimiter}${environment.PATH || ""}`;
+    prependWindowsPath(environment, system32, nodeDirectory);
     // Do not let the outer `npm run sites:workflow` lifecycle redirect nested npm
     // commands to the monorepo's prefix or package metadata.
     for (const key of Object.keys(environment)) {

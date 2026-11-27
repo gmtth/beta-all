@@ -1,5 +1,7 @@
 # Pacotes Beta para ChatGPT na web
 
+Merge de PRs do monorepo e publicação do Site MCP em Produção são exclusivos do agente Revisor, após revisão independente. Este componente pode preparar e validar seus pacotes, mas não mescla PRs nem publica o Site MCP de Produção; push não autoriza essas ações. Siga [`../AGENTS.md`](../AGENTS.md) e [`../revisor/AGENTS.md`](../revisor/AGENTS.md).
+
 ## Execução dentro do monorepositório
 
 Este diretório contém os pacotes da Beta destinados ao ChatGPT na web. Leia primeiro o [`AGENTS.md`](../AGENTS.md) e [`DOSSIER.md`](../DOSSIER.md) da raiz, depois este arquivo e o [`DOSSIER.md`](./DOSSIER.md). As skills têm fonte canônica em [`plugins/beta/`](../plugins/beta/); os pacotes web são distribuições separadas e suas alterações devem ficar dentro de `webver/`.

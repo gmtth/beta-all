@@ -55,3 +55,7 @@ Inspeção dos pacotes locais em 2026-11-18:
 - [`plugins/beta/AGENTS.md`](../plugins/beta/AGENTS.md), [`plugins/beta/DOSSIER.md`](../plugins/beta/DOSSIER.md) e manifesto da fonte.
 - [`mcp/movidesk/AGENTS.md`](../mcp/movidesk/AGENTS.md) e [`mcp/movidesk/DOSSIER.md`](../mcp/movidesk/DOSSIER.md).
 - [Packaging de plugins](https://developers.openai.com/plugins/build/plugins), [Skills](https://developers.openai.com/plugins/concepts/skills) e [Plugins no ChatGPT](https://help.openai.com/en/articles/20001256-plugins-in-chatgpt).
+
+## Governança transversal (2026-11-27)
+
+Somente o agente Revisor pode mesclar PRs do monorepo e publicar o Site MCP em Produção, após revisão independente. Este componente pode preparar e validar os pacotes web; push não autoriza merge nem deploy de Produção. Fonte normativa: [`../AGENTS.md`](../AGENTS.md) e [`../revisor/AGENTS.md`](../revisor/AGENTS.md). Nenhum pacote foi publicado nesta atualização documental.

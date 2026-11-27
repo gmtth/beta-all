@@ -22,10 +22,44 @@ test("feedback admin returns to the access page with a full navigation", async (
   assert.doesNotMatch(page, /<Link className="back-link"/);
 });
 
-test("terms page returns to the access page with a full navigation", async () => {
-  const page = await read("app/terms/page.tsx");
+test("the consolidated docs page links its four sections and returns to access", async () => {
+  const page = await read("app/docs/page.tsx");
+  const home = await read("app/page.tsx");
+  assert.match(page, /getChatGPTUser\(\)/);
+  assert.match(page, /user \? <ActionInstructionsPanel/);
+  assert.match(page, /user \? <McpInstructionsPanel/);
+  assert.match(page, /chatGPTSignInPath\("\/docs"\)/);
   assert.match(page, /<a className="back-link" href="\/">← Voltar ao acesso<\/a>/);
-  assert.doesNotMatch(page, /next\/link|<Link className="back-link"/);
+  for (const section of ["action", "mcp", "terms", "privacy"]) assert.match(page, new RegExp(`id="${section}"`));
+  assert.match(home, /href="\/docs">Documentação e políticas/);
+  assert.match(home, /href="\/docs#terms"/);
+  assert.match(home, /href="\/docs#privacy"/);
+});
+
+test("legacy documentation URLs redirect to the matching docs sections without changing MCP POST", async () => {
+  const legacyRoutes = [
+    ["app/action/page.tsx", "/docs#action"],
+    ["app/setup/mcp/page.tsx", "/docs#mcp"],
+    ["app/mcp/page.tsx", "/docs#mcp"],
+    ["app/terms/page.tsx", "/docs#terms"],
+    ["app/privacy/page.tsx", "/docs#privacy"],
+  ];
+  for (const [path, target] of legacyRoutes) assert.match(await read(path), new RegExp(`redirect\\("${target.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}"\\)`));
+  const worker = await read("worker/mcp.ts");
+  assert.match(worker, /pathname !== "\/mcp" \|\| request\.method !== "POST"/);
+});
+
+test("legal documents preserve the consent version and link within docs", async () => {
+  const docs = await read("app/docs/legal-documents.tsx");
+  const authorize = await read("app/oauth/authorize/route.ts");
+  assert.match(docs, /BETA_TERMS_VERSION/);
+  assert.match(docs, /href="\/docs#privacy"/);
+  assert.match(docs, /href="\/docs#terms"/);
+  assert.match(docs, /Uso autorizado/);
+  assert.match(docs, /Base de conhecimento/);
+  assert.match(docs, /Métricas de uso/);
+  assert.match(authorize, /href="\/docs#terms"/);
+  assert.match(authorize, /href="\/docs#privacy"/);
 });
 
 test("feedback group disclosures use the admin plus/minus toggle pattern", async () => {
@@ -140,7 +174,7 @@ test("GPT Action OpenAPI schema parses and matches the OAuth client and read-onl
 });
 
 test("GPT Action setup reports secret readiness without exposing the secret", async () => {
-  const page = await read("app/action/page.tsx");
+  const page = await read("app/docs/page.tsx");
   const panel = await read("app/action-instructions-panel.tsx");
   const tokenRoute = await read("app/oauth/token/route.ts");
   const clients = await read("app/oauth/clients.ts");

@@ -1,5 +1,7 @@
 # Instruções do componente Supabase
 
+Merge de qualquer PR do monorepo e publicação do Site MCP em Produção são exclusivos do agente Revisor, após revisão independente, conforme [`../../AGENTS.md`](../../AGENTS.md) e [`../../revisor/AGENTS.md`](../../revisor/AGENTS.md). Este componente valida e documenta migrations e evidências; não executa merge nem publicação do Site de Produção. Push não autoriza essas ações.
+
 Leia primeiro o [`AGENTS.md` raiz](../../AGENTS.md) e o dossier raiz; depois este arquivo e [`DOSSIER.md`](./DOSSIER.md) antes de alterar schema, migrations, acesso, API ou a página administrativa de dados. O runtime MCP e suas rotas também obedecem a [`../../mcp/movidesk/AGENTS.md`](../../mcp/movidesk/AGENTS.md). A fonte de trabalho é o monorepo `beta-all`; snapshots em `docs/migration/` e o antigo diretório `legacy/` no histórico Git (até `fd7c090bb25b7b9086de9ebea38a1680df6bddb4`) são históricos.
 
 ## Segurança do banco

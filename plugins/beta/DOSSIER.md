@@ -218,3 +218,7 @@ Ao confirmar a conclusão de um item, retire-o desta lista e registre a evidênc
 5. Inventários, snapshots em `docs/migration/` e árvore Git até `fd7c090bb25b7b9086de9ebea38a1680df6bddb4` para proveniência, não como instruções vigentes sem reconciliação.
 
 Para identidade e comportamento de publicação do Sites/MCP, consultar [`../../docs/components/sites.md`](../../docs/components/sites.md) e [`../../mcp/movidesk/DOSSIER.md`](../../mcp/movidesk/DOSSIER.md). Para regras e estado do conhecimento Supabase, consultar [`../../infra/supabase/DOSSIER.md`](../../infra/supabase/DOSSIER.md). Em conflito, preservar a evidência, identificar escopo/data e aplicar a precedência explícita; não apagar divergências silenciosamente.
+
+## Governança transversal (2026-11-27)
+
+Somente o agente Revisor pode mesclar PRs do monorepo e publicar o Site MCP em Produção, após revisão independente. O pacote pode ser preparado, validado e enviado em sua branch/PR; push não autoriza merge nem Produção. A regra normativa fica em [`../../AGENTS.md`](../../AGENTS.md) e [`../../revisor/AGENTS.md`](../../revisor/AGENTS.md). Nenhum pacote foi publicado como parte desta atualização documental.

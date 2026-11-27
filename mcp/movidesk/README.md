@@ -2,14 +2,20 @@
 
 Servidor MCP para consulta/análise factual somente leitura no Movidesk e inclusão explícita de cópia de chamados na base interna Supabase, protegido por OAuth 2.0 Authorization Code com PKCE S256.
 
-## Conexão
+## Conexões MCP
 
-- Endpoint MCP: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`
-- Discovery OAuth: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server`
-- Client ID: `movidesk-mcp-app`
-- Scopes: `movidesk:read` para Movidesk, `knowledge:read` para listar fontes e `knowledge:write` para inclusão explícita de chamados na base.
-Para habilitar cada ferramenta, o cliente MCP precisa solicitar o scope correspondente; tokens já emitidos precisam ser reautorizados para receber scopes novos. A ferramenta de inclusão exige os scopes `movidesk:read` e `knowledge:write`.
-- PKCE: `S256` obrigatório
+Cadastre Produção e Homologação como dois servidores/conectores MCP independentes no ChatGPT. O código e as ferramentas são iguais; cada instância tem URL, OAuth, tokens, permissões e D1 próprios.
+
+| Ambiente | Endpoint MCP | Discovery OAuth |
+|---|---|---|
+| Produção | `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` | `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server` |
+| Homologação | `https://beta-mcp-homolog.thngrns.chatgpt.site/mcp/` | `https://beta-mcp-homolog.thngrns.chatgpt.site/.well-known/oauth-authorization-server` |
+
+Homologação é a mesma aplicação em projeto Sites separado, usada para validar alterações antes de integrá-las à `main`. Alterações prontas são publicadas primeiro em Homologação. Um pedido explícito de merge no GitHub inclui, após a PR entrar na `main`, a sincronização e publicação desse mesmo estado em Produção.
+
+Configuração compartilhada do cliente MCP: Client ID `movidesk-mcp-app`; PKCE `S256` obrigatório. Scopes: `movidesk:read` para Movidesk, `knowledge:read` para listar fontes e `knowledge:write` para inclusão explícita de chamados na base. As permissões são pré-cadastradas por e-mail no painel de controle; a tela OAuth informa à pessoa o acesso daquele e-mail e não permite solicitar uma lista de scopes. A autorização de um scope não deve bloquear os demais que estejam liberados. Se um scope for habilitado no painel mas ainda não constar no token, é necessária uma nova autorização para atualizar o token. A ferramenta de inclusão exige `movidesk:read` + `knowledge:write`.
+
+Os Sites têm configuração de runtime independente. Segredos não são copiados entre ambientes nem versionados; Homologação requer seus próprios `MOVIDESK_TOKEN`, `SUPABASE_URL` e `SUPABASE_SECRET_KEY` para executar todas as ferramentas. O binding D1 `DB` e as contas/tokens OAuth são separados.
 
 Mantenha a barra final em `/mcp/`. O servidor não altera tickets, status, responsáveis ou comentários no Movidesk.
 

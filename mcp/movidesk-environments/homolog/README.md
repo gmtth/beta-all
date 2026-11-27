@@ -8,4 +8,4 @@ Endpoint MCP: `https://beta-mcp-homolog.thngrns.chatgpt.site/mcp/`
 
 Discovery OAuth: `https://beta-mcp-homolog.thngrns.chatgpt.site/.well-known/oauth-authorization-server`
 
-Em 2026-11-27 foi publicada a v1 e passaram os smokes HTTP/OAuth básicos. Para validar chamadas reais às ferramentas, configure neste Site os segredos próprios `MOVIDESK_TOKEN`, `SUPABASE_URL` e `SUPABASE_SECRET_KEY`; não reutilize os de Produção automaticamente.
+Em 2026-11-27 foi publicada a v2, com a base atual de `main` e os smokes HTTP/OAuth básicos aprovados. Para validar chamadas reais às ferramentas, configure neste Site os segredos próprios `MOVIDESK_TOKEN`, `SUPABASE_URL` e `SUPABASE_SECRET_KEY`; não reutilize os de Produção automaticamente.

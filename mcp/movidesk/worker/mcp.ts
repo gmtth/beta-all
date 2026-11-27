@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { acceptedContent, createMcpHandler, fromJsonSchema, inputRequired, McpServer as McpServerV2, type CallToolResult, type ToolAnnotations as ToolAnnotationsV2 } from "@modelcontextprotocol/server";
+import { acceptedContent, CLIENT_CAPABILITIES_META_KEY, createMcpHandler, fromJsonSchema, inputRequired, McpServer as McpServerV2, type CallToolResult, type ToolAnnotations as ToolAnnotationsV2 } from "@modelcontextprotocol/server";
 import { WebStandardStreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/webStandardStreamableHttp.js";
 import { z as zodV4 } from "zod/v4";
 import { GET as getTickets } from "../app/api/tickets/route";
@@ -15,6 +15,7 @@ import { exposeToolSecuritySchemes, type ToolSecurityScheme } from "./tool-secur
 import { McpAuthorizationFailure, mcpAuthorizationError, missingMcpAuthorizationResponse } from "./oauth-auth-challenge";
 import { protectedResourceMetadata as buildProtectedResourceMetadata } from "../app/oauth/metadata";
 import { KnowledgeImportError } from "./knowledge-import-errors";
+import { hasFormElicitationCapability } from "./mcp-elicitation";
 import { resolveMovideskTicketIdentifier } from "./knowledge-ingest";
 
 const bearerToken = (authorization: string | null) => authorization?.match(/^Bearer\s+([^\s]+)$/i)?.[1];
@@ -270,6 +271,24 @@ export async function handleMcpV2Spike(request: Request, context?: TelemetryCont
           return mcpAuthorizationError(authorization.error, resource, [OAUTH_SCOPE]);
         }
         userEmail = authorization.principal.email;
+
+        const clientEnvelope = extra.mcpReq.envelope;
+        if (clientEnvelope && !hasFormElicitationCapability(clientEnvelope[CLIENT_CAPABILITIES_META_KEY])) {
+          outcome = "error";
+          errorCode = "client_capability";
+          return {
+            structuredContent: {
+              status: "unavailable",
+              reason: "client_capability_missing",
+              requiredCapability: "elicitation.form",
+              ticketAccessed: false,
+            },
+            content: [{
+              type: "text",
+              text: "Este cliente não declarou suporte a confirmação MCP em formulário (elicitation.form). O teste foi encerrado sem pedir confirmação; nenhum chamado foi consultado ou alterado.",
+            }],
+          };
+        }
 
         const accepted = acceptedContent(extra.mcpReq.inputResponses, "confirm", probeResponseSchema);
         if (accepted?.confirmed === true) {

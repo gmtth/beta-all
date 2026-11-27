@@ -106,7 +106,7 @@ As antigas orquestradoras `beta-anl-router` e `beta-mod` não fazem parte da pas
 O arquivo `.mcp.json` declara o servidor `movidesk` em modo HTTP:
 
 ```text
-https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/
+https://beta-mcp.thngrns.chatgpt.site/mcp/
 ```
 
 Preserve a barra final de `/mcp/`. As consultas ao Movidesk são somente leitura; a única escrita permitida é a importação explícita e auditada de chamados para a base interna, conforme a skill Movidesk e os escopos OAuth `movidesk:read`, `knowledge:read` e `knowledge:write`. Nunca incluir tokens ou segredos no repositório.

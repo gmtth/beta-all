@@ -21,7 +21,7 @@ O conteúdo operacional de Movidesk/ClickUp deve ser sincronizado para Supabase 
 
 Cadastre as conexões abaixo como entradas separadas no ChatGPT:
 
-- **Produção:** `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`
+- **Produção:** `https://beta-mcp.thngrns.chatgpt.site/mcp/`
 - **Homologação:** `https://beta-mcp-homolog.thngrns.chatgpt.site/mcp/`
 
 Cada Site tem seu próprio OAuth, tokens, permissões e D1. Homologação serve para validar alterações antes da integração; o merge solicitado pelo usuário sincroniza Produção depois que a PR entrar na `main`. Consulte [instruções e estado operacional do Site MCP](mcp/movidesk/README.md) antes de reconfigurar conexões.

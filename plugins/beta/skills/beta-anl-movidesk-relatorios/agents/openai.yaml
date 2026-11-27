@@ -12,7 +12,7 @@ dependencies:
       value: "movidesk"
       description: "MCP Movidesk para consultar chamados autorizados"
       transport: "streamable_http"
-      url: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/"
+      url: "https://beta-mcp.thngrns.chatgpt.site/mcp/"
 
 policy:
   allow_implicit_invocation: false

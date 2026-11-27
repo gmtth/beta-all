@@ -2,7 +2,7 @@
 name: beta-anl-movidesk
 description: Consultar e sintetizar dados reais do Movidesk ou importar explicitamente chamados selecionados para a base interna pelo MCP Beta MOV, com filtros, escopo, segurança e limites de evidência bem definidos.
 metadata:
-  version: "6"
+  version: "7"
 ---
 
 ## Protocolo transversal obrigatório
@@ -341,7 +341,7 @@ Escolha a ferramenta adequada:
 
 ## Configuração MCP
 
-- Endpoint: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`;
+- Endpoint: `https://beta-mcp.thngrns.chatgpt.site/mcp/`;
 - manter a barra final de `/mcp/`;
 - escopos: `movidesk:read` para consultas e origem da importação; `knowledge:read` para listar fontes; `knowledge:write` para inclusão explícita na base;
 - fluxo: Authorization Code com PKCE S256.

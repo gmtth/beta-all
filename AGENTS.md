@@ -94,7 +94,7 @@ Construir a Beta como assistente compartilhada por quatro analistas, com uma bas
 
 ## Runtime e integração
 
-- A Beta/MCP está hospedada no Sites em `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/`, com rota MCP `/mcp/`. O servidor hospedado em Workers deve acessar Supabase por HTTPS via Data API/PostgREST ou RPC; Workers não devem usar conexão TCP PostgreSQL direta.
+- A Beta/MCP de Produção está hospedada no Sites em `https://beta-mcp.thngrns.chatgpt.site/`, com rota MCP `/mcp/`; Homologação usa seu domínio separado registrado no dossier MCP. O servidor hospedado em Workers deve acessar Supabase por HTTPS via Data API/PostgREST ou RPC; Workers não devem usar conexão TCP PostgreSQL direta.
 - Não colocar connection string/chave no navegador nem enviar ao modelo. A configuração esperada no servidor usa `SUPABASE_URL` e `SUPABASE_SECRET_KEY`.
 - Expor somente operações estreitas necessárias. Preferir RPCs/views ou consultas server-side com colunas e limites explícitos; limitar resultados e sanitizar erros.
 

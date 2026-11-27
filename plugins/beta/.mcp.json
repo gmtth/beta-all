@@ -2,7 +2,7 @@
   "mcpServers": {
     "movidesk": {
       "type": "http",
-      "url": "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/"
+      "url": "https://beta-mcp.thngrns.chatgpt.site/mcp/"
     }
   }
 }

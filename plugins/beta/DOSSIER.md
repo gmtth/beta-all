@@ -1,10 +1,10 @@
 # Dossier do plugin Beta
 
-**Atualizado:** 2026-11-26
+**Atualizado:** 2026-11-27
 
 **Componente:** `plugins/beta/`
 
-**Manifesto:** `suite-beta`, versão `1.0.16`
+**Manifesto:** `suite-beta`, versão `1.0.17`
 
 ## Resumo e escopo
 
@@ -17,13 +17,14 @@ Este dossier foi reconstruído retroativamente após a consolidação. Baseia-se
 ## Estado atual
 
 - O pacote contém 21 skills: a orquestradora `beta` e 20 skills especializadas ANL/MOD.
-- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.16`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
+- O manifesto `.codex-plugin/plugin.json` conserva a identidade `suite-beta` e está na versão local `1.0.17`. `interface.shortDescription` tem 29 caracteres e `interface.defaultPrompt` contém três opções.
 - As referências de observabilidade e regressão foram alinhadas ao protocolo transversal e a uma fixture neutra externa. `beta` passou à revisão `"10"` e `beta-mod-artefatos` à `"4"`. A avaliação pré-merge registrou checks estruturais aprovados para três DOCX, mas não concluiu a inspeção visual; o impacto comportamental não foi demonstrado.
 - O Knowledge Master vigente é [`CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md`](./references/CENCIHUB_KNOWLEDGE_MASTER__2026-10-20__v002.md). Ele resolve duas referências quebradas com anchors explícitos; o snapshot `v001` está preservado sem alteração. O relatório correspondente está em [`KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md`](./references/KNOWLEDGE_MASTER_INTEGRITY__2026-10-20__v002.md).
-- `beta-anl-movidesk-relatorios` está na revisão `metadata.version` `"2"`; `beta-anl-movidesk` passou a `"6"` para delimitar a nova responsabilidade. `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"`; `beta` está em `"10"`, `beta-mod-artefatos` em `"4"` e `beta-anl-qatestes` em `"4"`. As demais versões seguem os registros existentes; incrementos seguem [`AGENTS.md`](./AGENTS.md).
+- `beta-anl-movidesk-relatorios` está na revisão `metadata.version` `"3"`; `beta-anl-movidesk` está na revisão `"7"`. `beta-mod-qa` e `beta-mod-sites` permanecem em `"2"`; `beta` está em `"10"`, `beta-mod-artefatos` em `"4"` e `beta-anl-qatestes` em `"4"`. As demais versões seguem os registros existentes; incrementos seguem [`AGENTS.md`](./AGENTS.md).
 - Os metadados das skills incluem nomes técnicos e exibidos vigentes, descrições, prompts, política de invocação, cores e logos. As skills ClickUp Cards e ClickUp Checklist compartilham brand color `#754FF6` e os logos small/large, copiados para cada pasta para manter o pacote autossuficiente.
 - `beta-anl-clickupchecklist` tem prompt padrão coerente com sua restrição de atualizar apenas o comentário mais recente “Checklist de testes” e com as informações necessárias da rodada.
-- A integração configurada em `.mcp.json` aponta para `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`. Consultas ao Movidesk permanecem somente leitura; a importação explicitamente solicitada de chamados para a base interna é uma escrita restrita e auditada, descrita na skill `beta-anl-movidesk`. Endpoint, publicação e migração são acompanhados pelo dossier MCP; a configuração local não prova conectividade end-to-end.
+- A integração configurada em `.mcp.json` aponta para `https://beta-mcp.thngrns.chatgpt.site/mcp/`. Consultas ao Movidesk permanecem somente leitura; a importação explicitamente solicitada de chamados para a base interna é uma escrita restrita e auditada, descrita na skill `beta-anl-movidesk`. Endpoint, publicação e migração são acompanhados pelo dossier MCP; a configuração local não prova conectividade end-to-end.
+- **Host canônico alterado (2026-11-27):** as duas skills Movidesk e o pacote Beta Web apontam para `https://beta-mcp.thngrns.chatgpt.site/mcp/`. A origem e o resource OAuth mudam com o host, então conectores migrados precisam autorizar novamente. O domínio de Homologação segue independente.
 - A skill de relatórios Movidesk usa um modelo HTML fixo, com oito indicadores, comparação de períodos equivalentes entre anos, categoria oficial, ocorrências por chamado e situação na data da consulta. Word é opcional. O modelo contém somente estrutura e os dados vêm da consulta de cada geração.
 - O marketplace GitHub **Beta** está configurado na raiz do monorepo para apontar a este pacote. A importação/sincronização no workspace e o uso pelos quatro analistas ainda precisam ser confirmados; consulte [`plugin-marketplace.md`](../../docs/components/plugin-marketplace.md).
 - A comunicação compartilhada está centralizada em `skills/beta/references/protocolo-evidencias-e-handoffs.md`: precedentes com evidência rastreável, separação entre fonte e recomendação e cartões de encerramento com campos e regras condicionais.

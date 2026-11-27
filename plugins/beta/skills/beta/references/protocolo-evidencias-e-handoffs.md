@@ -148,19 +148,151 @@ Nas respostas funcionais substantivas, encerre com cartões compactos, sem títu
 
 Ordem e conteúdo:
 
-1. **🎯 Confiabilidade** — porcentagem inteira em incrementos de 10, conforme a régua acima.
-2. **📊 Resultado** — concluído, parcial ou pendente, com descrição curta.
-3. **🔎 Evidências** — somente os protocolos/IDs/identificadores das fontes efetivamente usadas. Não acrescente quantidade de referências, rótulos redundantes como “Protocolo”/“ClickUp” ou descrição que apenas repita a origem quando o identificador basta.
-4. **🧪 Validação** — o que foi efetivamente confirmado, ou a validação material que permanece pendente.
-5. **🧩 Skills acionadas** — sempre aparece primeiro na segunda linha; lista somente as skills realmente ativadas nesta tarefa, usando seus nomes exibidos (`display_name`) em linguagem voltada ao usuário. Inclua `Beta` quando a orquestradora tiver sido ativada. Não liste skills consideradas e não acrescente ferramentas/conectores.
-6. **💬 Feedback** — opcional; exiba somente quando o usuário tiver fornecido feedback explícito ou um resultado observável que seja relevante para avaliar a ajuda. Não use “não informado” como preenchimento padrão e não infira satisfação pelo tom.
-7. **📝 Ações** — opcional; exiba somente quando a Beta realizou ou tentou uma ação externa/persistente relevante nesta interação, informando a ação e o resultado real.
+1. **Confiabilidade** — porcentagem inteira em incrementos de 10, conforme a régua acima.
+2. **Resultado** — concluído, parcial ou pendente, com descrição curta.
+3. **Evidências** — somente os protocolos/IDs/identificadores das fontes efetivamente usadas. Não acrescente quantidade de referências, rótulos redundantes como “Protocolo”/“ClickUp” ou descrição que apenas repita a origem quando o identificador basta. Quando houver URL válida da fonte consultada, torne o identificador clicável e não exponha a URL extensa.
+4. **Validação** — o que foi efetivamente confirmado, ou a validação material que permanece pendente.
+5. **Skills acionadas** — sempre aparece primeiro na segunda linha; lista somente as skills realmente ativadas nesta tarefa, usando seus nomes exibidos (`display_name`) em linguagem voltada ao usuário. Inclua `Beta` quando a orquestradora tiver sido ativada. Não liste skills consideradas e não acrescente ferramentas/conectores.
+6. **Feedback** — opcional; exiba somente quando o usuário tiver fornecido feedback explícito ou um resultado observável que seja relevante para avaliar a ajuda. Não use “não informado” como preenchimento padrão e não infira satisfação pelo tom.
+7. **Ações** — opcional; exiba somente quando a Beta realizou ou tentou uma ação externa/persistente relevante nesta interação, informando a ação e o resultado real.
 
 “Ações” significa efeitos fora da resposta que alteram ou tentam alterar estado: por exemplo, criar/editar um card ou chamado, importar/salvar conhecimento, enviar mensagem ou alterar configuração. Consultar, pesquisar, ler, analisar, resumir e recomendar são operações internas/de leitura, não ações a registrar nesse cartão. Se nenhuma ação externa/persistente ocorreu, omita o cartão; não escreva “Nenhuma”. Se a ação foi bloqueada ou falhou, o cartão pode aparecer para registrar a tentativa e o resultado.
 
-Quando o cliente oferecer mecanismo documentado de cartões, use-o. Todo texto dos cartões, incluindo títulos e valores, deve ter o mesmo tamanho pequeno (`text-small` quando essa classe existir no mecanismo), com esta estrutura visual: título, divisória horizontal curta e valor. Confiabilidade, Resultado, Evidências e Validação ficam juntos na primeira linha. Na segunda, Skills acionadas vem primeiro e sempre; Feedback e Ações vêm depois somente quando aplicáveis. Em grid de 12 colunas no breakpoint `md`, distribua os cartões da segunda linha com larguras iguais: Skills ocupa 12 colunas sozinha; com um cartão opcional, cada cartão ocupa 6; com os dois opcionais, Skills, Feedback e Ações ocupam 4 colunas cada. Abaixo de `md`, cada cartão ocupa a largura total. Não inclua logotipo/nome “Beta” fora do conteúdo da lista de skills, título “Resumo da operação” ou linha antes da grade.
+Quando o cliente oferecer um mecanismo documentado de cartões, use-o. Todo texto dos cartões, incluindo títulos e valores, deve ter o mesmo tamanho pequeno (`text-small` quando essa classe existir no mecanismo), com esta estrutura visual: título, divisória horizontal curta e valor. Os quatro cartões principais ficam sempre em duas colunas iguais e duas linhas, na ordem Confiabilidade/Resultado e Evidências/Validação; nunca expanda essa grade para quatro colunas. A linha complementar aparece depois: Skills acionadas vem primeiro e sempre; Feedback e Ações vêm depois somente quando aplicáveis. Distribua igualmente os cartões complementares entre as colunas disponíveis: uma coluna para Skills sozinha, duas para Skills com um opcional, três para Skills e ambos os opcionais. Preserve a ordem e empilhe em largura total quando não houver espaço suficiente. Não inclua logotipo/nome “Beta” fora do conteúdo da lista de skills, título “Resumo da operação” ou linha antes da grade.
 
-Se não houver mecanismo de cartões disponível, use tabela Markdown portátil sem fingir que é componente nativo: quatro colunas na primeira linha (Confiabilidade, Resultado, Evidências, Validação); na segunda, Skills acionadas sempre primeiro, seguida de Feedback e/ou Ações quando aplicáveis. Valores devem ser curtos; IDs podem quebrar dentro da célula. Markdown não garante proporções `col-md`. Não use caixas ASCII, XML/HTML inventado ou texto redundante. Se formato rígido do usuário ou do artefato exigir outra saída, não inserir os cartões dentro do artefato.
+Use esta especificação declarativa como contrato visual em qualquer skill e independentemente de usuário, memória ou conversa, respeitando as exceções do protocolo. Ela descreve a composição desejada; não é uma API nem habilita renderização por si só:
+
+```yaml
+presentation:
+  name: beta_summary_cards
+  scope: all_beta_skills
+  applicability: existing_protocol
+  preserve_existing_visibility_and_exceptions: true
+  consistency:
+    user_independent: true
+    memory_independent: true
+    conversation_independent: true
+    skill_independent: true
+  visual_variations: false
+  prefer_documented_native_components: true
+
+  container:
+    width: "100%"
+    gap: 8px
+    alignment: left
+    external_heading: false
+    external_divider: false
+    external_logo: false
+
+  layout:
+    main_cards:
+      columns: 2
+      equal_width: true
+      equal_row_height: true
+      rows:
+        - [reliability, result]
+        - [evidence, validation]
+      never_expand_to_four_columns: true
+    complementary_cards:
+      position: after_main_cards
+      order: [skills, feedback, actions]
+      columns: number_of_visible_cards
+      equal_width: true
+      equal_row_height: true
+      scenarios:
+        skills_only: {columns: 1, cards: [skills]}
+        skills_and_feedback: {columns: 2, cards: [skills, feedback]}
+        skills_and_actions: {columns: 2, cards: [skills, actions]}
+        all_complementary_cards: {columns: 3, cards: [skills, feedback, actions]}
+    responsive:
+      stack_when_insufficient_width: true
+      preserve_order: true
+      main_grid_max_columns: 2
+
+  card:
+    appearance: neutral
+    border: subtle
+    corners: rounded
+    background: theme_adaptive
+    shadow: none
+    padding: compact
+    internal_gap: 4px
+    header:
+      direction: horizontal
+      alignment: left
+      vertical_alignment: center
+      font_size: small
+      text_color: secondary
+      icon:
+        position: before_title
+        library: lucide_or_native_equivalent
+        size: small
+        style: outline
+        color: monochromatic
+        fixed_per_card: true
+        allow_emoji: false
+    divider: {visible: true, orientation: horizontal, color: subtle, position: after_header}
+    content:
+      font_size: small
+      text_color: default
+      alignment: left
+      allow_wrapping: true
+      preserve_clickable_links: true
+
+  cards:
+    reliability: {title: Confiabilidade, icon: target, visibility: existing_protocol}
+    result: {title: Resultado, icon: clipboard-check, visibility: existing_protocol}
+    evidence:
+      title: Evidências
+      icon: search
+      visibility: existing_protocol
+      links: {label: source_identifier, clickable: true, raw_url: false, invented: false}
+    validation: {title: Validação, icon: shield-check, visibility: existing_protocol}
+    skills: {title: Skills acionadas, icon: puzzle, visibility: existing_protocol, separator: " · "}
+    feedback: {title: Feedback, icon: message-square, visibility: existing_protocol, optional: true}
+    actions: {title: Ações, icon: list-checks, visibility: existing_protocol, optional: true}
+
+  restrictions:
+    invent_content: false
+    empty_optional_cards: false
+    colored_emojis: false
+    decorative_colors_or_gradients: false
+    oversized_titles: false
+    external_summary_heading: false
+    external_beta_heading: false
+    decorative_logo: false
+    next_step_card: false
+    embed_in_copyable_deliverables: false
+    override_functional_rules: false
+    create_renderer_or_api: false
+    add_unnecessary_dependencies: false
+
+  fallback:
+    enabled: true
+    condition: native_components_unavailable
+    format: markdown_tables
+    preserve_order_and_information: true
+    represent_main_cards_as_two_two_column_rows: true
+    represent_complementary_cards_in_one_to_three_columns: true
+    promise_native_visual_fidelity: false
+```
+
+Lógica declarativa de composição (não é código executável nem representa funções/APIs reais):
+
+```text
+se o protocolo vigente não exigir cartões para esta resposta: omitir a grade
+senão:
+  primeira linha principal = [Confiabilidade, Resultado]
+  segunda linha principal = [Evidências, Validação]
+  linha complementar = [Skills acionadas]
+  anexar Feedback e Ações somente se seus critérios vigentes forem atendidos
+  escolher quantidade de colunas complementares igual à quantidade de cartões visíveis
+  usar componentes nativos documentados quando disponíveis; caso contrário, usar o fallback Markdown
+  em larguras insuficientes, empilhar em largura total sem mudar a ordem
+  obter valores exclusivamente das regras existentes, sem recalcular ou inventar conteúdo
+```
+
+Os ícones fixos da especificação só podem ser usados por componentes realmente disponíveis. No fallback Markdown, use três tabelas compactas: uma tabela de duas colunas para cada linha principal e uma tabela complementar com uma, duas ou três colunas; use títulos de campo como cabeçalhos e os valores na linha seguinte, sem emojis. Não simule ícones, bordas arredondadas ou componentes nativos. Markdown não garante proporções, espaçamento, estilo `text-small`, tema adaptativo ou equivalência visual com os prints. Não use caixas ASCII, XML/HTML inventado ou texto redundante. Se formato rígido do usuário ou do artefato exigir outra saída, não inserir os cartões dentro do artefato.
 
 ### Outros componentes nativos e layouts avançados
 

@@ -160,7 +160,7 @@ test("GPT Action OpenAPI schema parses and matches the OAuth client and read-onl
   assert.ok(match, "OpenAPI schema literal should be present");
   const schema = yaml.load(match[1]);
   assert.equal(schema.openapi, "3.1.0");
-  assert.deepEqual(schema.servers, [{ url: "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site" }]);
+  assert.deepEqual(schema.servers, [{ url: "https://beta-mcp.thngrns.chatgpt.site" }]);
   assert.deepEqual(Object.keys(schema.paths).sort(), ["/api/ticket-content", "/api/tickets"]);
   for (const [path, item] of Object.entries(schema.paths)) {
     assert.deepEqual(Object.keys(item), ["get"], `${path} remains read-only`);
@@ -169,8 +169,8 @@ test("GPT Action OpenAPI schema parses and matches the OAuth client and read-onl
   assert.deepEqual(schema.components.securitySchemes.MovideskOAuth.flows.authorizationCode.scopes, {
     "movidesk:read": "Consultar tickets (somente leitura).",
   });
-  assert.equal(schema.components.securitySchemes.MovideskOAuth.flows.authorizationCode.authorizationUrl, "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/oauth/authorize");
-  assert.equal(schema.components.securitySchemes.MovideskOAuth.flows.authorizationCode.tokenUrl, "https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/oauth/token");
+  assert.equal(schema.components.securitySchemes.MovideskOAuth.flows.authorizationCode.authorizationUrl, "https://beta-mcp.thngrns.chatgpt.site/oauth/authorize");
+  assert.equal(schema.components.securitySchemes.MovideskOAuth.flows.authorizationCode.tokenUrl, "https://beta-mcp.thngrns.chatgpt.site/oauth/token");
 });
 
 test("GPT Action setup reports secret readiness without exposing the secret", async () => {
@@ -205,6 +205,9 @@ test("ticket date filters use the documented UTC literal", async () => {
 
 test("MCP instructions document the published tools and ticket id search", async () => {
   const panel = await read("app/mcp-instructions-panel.tsx");
+  assert.match(panel, /"serverUrl": "https:\/\/beta-mcp\.thngrns\.chatgpt\.site\/mcp\/"/);
+  assert.match(panel, /"authorizationServer": "https:\/\/beta-mcp\.thngrns\.chatgpt\.site"/);
+  assert.doesNotMatch(panel, /movidesk-oauth-proxy-pkce\.thngrns\.chatgpt\.site/);
   const registrations = await Promise.all([
     read("worker/mcp-tools.ts"),
     read("worker/knowledge-tools.ts"),

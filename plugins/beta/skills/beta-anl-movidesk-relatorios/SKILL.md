@@ -2,7 +2,7 @@
 name: beta-anl-movidesk-relatorios
 description: Gerar o relatório executivo padrão de chamados do Movidesk em HTML e, quando solicitado, em Word com os mesmos dados. Para consultas e sínteses sem relatório, use beta-anl-movidesk.
 metadata:
-  version: "2"
+  version: "3"
 ---
 
 Antes de responder, aplique o [protocolo compartilhado](../beta/references/protocolo-evidencias-e-handoffs.md). Se a skill foi acionada pela beta, complemente o protocolo já carregado com as regras abaixo.

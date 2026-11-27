@@ -90,7 +90,7 @@ Há regressão? -> bloquear entrega; preservar a ferramenta que já funcionava.
 
 - Regras de worktree, branch, commit, PR, push, merge e autorização geral de publicação seguem exclusivamente o [`AGENTS.md` raiz](../../AGENTS.md). Este componente pode sincronizar/publicar Homologação após validação; não mesclar PRs, selecionar alvo `production`, salvar versão nem iniciar deployment em Produção. Entregue PR, evidências e SHA ao Revisor para revisão e execução autorizada.
 - A fonte canônica do runtime é `mcp/movidesk/`; o checkout de fonte Sites é separado do GitHub. Para sincronizar, empacotar e publicar o runtime, siga o procedimento único em [`docs/components/sites.md`](../../docs/components/sites.md), usando o wrapper do monorepo e preservando o checkout isolado.
-- Endpoint MCP canônico: `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/`; a barra final é recomendada e `/mcp` também é aceita. A raiz do Site serve página/OAuth, não as ferramentas.
+- Endpoint MCP canônico de Produção: `https://beta-mcp.thngrns.chatgpt.site/mcp/`; a barra final é recomendada e `/mcp` também é aceita. Homologação usa seu próprio host. A raiz do Site serve página/OAuth, não as ferramentas.
 - Não alterar audiência, credenciais, bindings, OAuth ou domínio como efeito colateral de mudança funcional.
 ## Padrão obrigatório de autenticação das ferramentas MCP
 

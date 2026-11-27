@@ -8,10 +8,12 @@ Cadastre Produção e Homologação como dois servidores/conectores MCP independ
 
 | Ambiente | Endpoint MCP | Discovery OAuth |
 |---|---|---|
-| Produção | `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/mcp/` | `https://movidesk-oauth-proxy-pkce.thngrns.chatgpt.site/.well-known/oauth-authorization-server` |
+| Produção | `https://beta-mcp.thngrns.chatgpt.site/mcp/` | `https://beta-mcp.thngrns.chatgpt.site/.well-known/oauth-authorization-server` |
 | Homologação | `https://beta-mcp-homolog.thngrns.chatgpt.site/mcp/` | `https://beta-mcp-homolog.thngrns.chatgpt.site/.well-known/oauth-authorization-server` |
 
 Homologação é a mesma aplicação em projeto Sites separado, usada para validar alterações antes de integrá-las à `main`. Alterações prontas são publicadas primeiro em Homologação. Um pedido explícito de merge no GitHub inclui, após a PR entrar na `main`, a sincronização e publicação desse mesmo estado em Produção.
+
+Produção usa `https://beta-mcp.thngrns.chatgpt.site` como origem canônica. Ao trocar um conector configurado com o host antigo para o novo endpoint, reconecte o OAuth: access/refresh tokens são vinculados ao URI de recurso e à origem usados na autorização.
 
 Configuração compartilhada do cliente MCP: Client ID `movidesk-mcp-app`; PKCE `S256` obrigatório. Scopes: `movidesk:read` para Movidesk, `knowledge:read` para listar fontes e `knowledge:write` para inclusão explícita de chamados na base. As permissões são pré-cadastradas por e-mail no painel de controle; a tela OAuth informa à pessoa o acesso daquele e-mail e não permite solicitar uma lista de scopes. A autorização de um scope não deve bloquear os demais que estejam liberados. Se um scope for habilitado no painel mas ainda não constar no token, é necessária uma nova autorização para atualizar o token. A ferramenta de inclusão exige `movidesk:read` + `knowledge:write`.
 

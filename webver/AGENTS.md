@@ -25,6 +25,12 @@ Reconstrua a partir da versão mais recente de `plugins/beta/`, mantenha o nome 
 5. Confira a lista de arquivos e compare os bytes com a fonte; as diferenças permitidas são somente a remoção de `.mcp.json`, a remoção de `mcpServers` e as duas mudanças de identidade.
 6. Registre a versão da fonte, SHA-256 e resultado da validação neste dossier.
 
+## Distribuição e publicação
+
+- `Beta-Web.zip` é um artefato versionado no repositório; reconstruí-lo ou mesclar a atualização em `main` não instala o pacote nas contas ChatGPT nem comprova que ele está disponível no cliente web.
+- O marketplace GitHub configurado no monorepo aponta para `plugins/beta/`, não para `webver/`. Siga [`../docs/components/plugin-marketplace.md`](../docs/components/plugin-marketplace.md) somente para sincronizar aquele plugin; não declare que essa sincronização publicou `Beta-Web.zip`.
+- Não há neste componente um mecanismo automatizado de upload/publicação do ZIP para o ChatGPT Web. Se o usuário pedir publicação, atualize e valide o artefato e sua distribuição no GitHub conforme o fluxo de PR do monorepo; relate separadamente qualquer instalação/sincronização que dependa de ação administrativa ou de um canal ainda não configurado.
+
 ## Atualização de `Beta-MCP.zip`
 
 - Mantenha o app ID registrado em `.app.json`, a chave de mapeamento do app e o identificador técnico `name`; eles formam a ligação com o app provisionado.
@@ -36,4 +42,5 @@ Reconstrua a partir da versão mais recente de `plugins/beta/`, mantenha o nome 
 
 - Use os dois nomes de arquivo e nomes exibidos definidos neste documento.
 - Atualize este AGENT e [`DOSSIER.md`](./DOSSIER.md) junto com cada mudança dos pacotes.
+- Em cada atualização de `Beta-Web.zip`, registre também o SHA completo do commit fonte `plugins/beta/` para tornar a origem reproduzível.
 - Não alterar ou remover itens de `webver/` fora do escopo pedido; para renomear pacotes, atualize os links e registros deste diretório.

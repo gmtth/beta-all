@@ -10,9 +10,9 @@ Este componente mantém duas distribuições para o ChatGPT na web: `Beta-Web.zi
 
 ## Estado atual e limites da evidência
 
-Inspeção dos pacotes locais em 2026-11-18:
+Inspeção dos pacotes em 2026-11-27, no checkout de preparação baseado na `main` `6cf44098e9516c4ad2801a88038ff1b0d2028639`:
 
-- `Beta-Web.zip`: nome técnico `suite-beta-web`, nome exibido `Beta Web`, versão `1.0.17` (copiada da fonte canônica). Não contém `.mcp.json` nem `mcpServers`. SHA-256: `6C15111ECD2B29839BBED1C4C7EDF3671CE5C130201AF7E9EF4CAE03FBAC1864`.
+- `Beta-Web.zip`: nome técnico `suite-beta-web`, nome exibido `Beta Web`, versão `1.0.18` (copiada da fonte canônica). Contém 132 arquivos; não contém `.mcp.json` nem `mcpServers`. SHA-256: `1A3A2ECF5B080C16CB411D2507A062FD7C9412DF4B75DAFA78A43092D70416D0`.
 - `Beta-MCP.zip`: nome exibido `Beta MCP`, versão `1.0.1`; preserva o identificador técnico e o app ID já registrados no `.app.json`. SHA-256: `1E4C9E1ACD816D2FF23A8039187647C507A367C9E785B913FC463B8C4FF29072`.
 - O host canônico de Produção da skill Beta Web agora é `https://beta-mcp.thngrns.chatgpt.site/mcp/`. `Beta-MCP.zip` não contém a URL do endpoint; não precisou ser alterado.
 - Os pacotes foram inspecionados e os manifestos conferidos. Isso não comprova instalação, conexão OAuth nem funcionamento no ChatGPT na web.
@@ -24,7 +24,7 @@ Inspeção dos pacotes locais em 2026-11-18:
 - `Beta-Web.zip` mantém a versão da fonte e difere do plugin canônico somente pela remoção de `.mcp.json`, remoção de `mcpServers` e as duas mudanças de identidade autorizadas.
 - `Beta-MCP.zip` mantém o app ID e o identificador técnico para preservar o vínculo com o app provisionado; a revisão da alteração de nome exibido levou sua versão do pacote a `1.0.1`.
 - A restrição de invocação exclusiva pela Beta permanece um requisito não atendido por configuração de pacote. Para garanti-la será necessário um mecanismo de plataforma ou uma decisão de arquitetura/servidor; não inventar um campo de manifesto.
-- Nenhum pacote foi instalado, publicado ou conectado durante esta alteração.
+- O ZIP `Beta-Web` foi reconstruído e validado neste checkout; isso não instala o pacote, sincroniza o marketplace ou comprova conexão OAuth/funcionamento no cliente web. O marketplace configurado aponta para `plugins/beta/`, não para `webver/`; não há mecanismo automatizado de publicação deste ZIP ao ChatGPT Web documentado neste componente.
 
 ## Componentes, dependências e fontes de verdade
 
@@ -42,7 +42,8 @@ Inspeção dos pacotes locais em 2026-11-18:
 - **2026-11-18 — renomeação dos pacotes:** por solicitação do usuário, os arquivos passaram a `Beta-Web.zip` e `Beta-MCP.zip`, com nomes exibidos `Beta Web` e `Beta MCP`. O pacote de skills mantém `1.0.12` da fonte; o pacote MCP passou de `1.0.0` a `1.0.1`. No MCP foi preservado o app ID/identificador técnico. A estrutura dos dois ZIPs e a integridade dos manifestos foram verificadas; nenhum arquivo fora de `webver/` foi alterado nesta etapa.
 
 - **2026-11-25 — sincronização com a fonte:** Beta Web atualizado para 1.0.15 a partir da main integrada pela PR #55. Validados 127 arquivos, conteúdo da fonte e apenas as diferenças de manifesto e MCP autorizadas. Beta MCP preserva o vínculo com o app anterior.
-- **2026-11-27 — novo domínio canônico:** Sites confirmou `https://beta-mcp.thngrns.chatgpt.site` como URL atual do mesmo projeto de Produção. `Beta-Web.zip` foi reconstruído da fonte `plugins/beta/` v1.0.17; 129 arquivos conferidos byte a byte, com somente remoção de `.mcp.json`, remoção de `mcpServers` e as duas mudanças de identidade. SHA-256 `6C15111ECD2B29839BBED1C4C7EDF3671CE5C130201AF7E9EF4CAE03FBAC1864`. `Beta-MCP.zip` permaneceu inalterado porque não carrega o endpoint.
+- **2026-11-27 — novo domínio canônico:** Sites confirmou `https://beta-mcp.thngrns.chatgpt.site` como URL atual do mesmo projeto de Produção. Naquele estado, `Beta-Web.zip` foi reconstruído da fonte `plugins/beta/` v1.0.17; 129 arquivos foram conferidos byte a byte, com somente remoção de `.mcp.json`, remoção de `mcpServers` e as duas mudanças de identidade. SHA-256 `6C15111ECD2B29839BBED1C4C7EDF3671CE5C130201AF7E9EF4CAE03FBAC1864`. `Beta-MCP.zip` permaneceu inalterado porque não carrega o endpoint.
+- **2026-11-27 — atualização para a fonte v1.0.18:** reconstruído `Beta-Web.zip` da `plugins/beta/` no commit `6cf44098e9516c4ad2801a88038ff1b0d2028639`. Foram comparados os 132 arquivos do pacote: 131 são byte a byte iguais à fonte; o manifesto conserva todos os campos, exceto as duas mudanças de identidade e a remoção de `mcpServers`; `.mcp.json` foi removido. A validação da lista, conteúdo e manifesto passou. SHA-256 do ZIP: `1A3A2ECF5B080C16CB411D2507A062FD7C9412DF4B75DAFA78A43092D70416D0`. `Beta-MCP.zip` permaneceu inalterado. Esta atualização do repositório, por si só, não publica o ZIP no cliente ChatGPT Web.
 
 ## Próximos passos
 
